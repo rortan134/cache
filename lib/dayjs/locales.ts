@@ -1,7 +1,12 @@
-import "dayjs/locale/ca";
+import "dayjs/locale/da";
 import "dayjs/locale/de";
-import "dayjs/locale/es";
-import "dayjs/locale/gl";
-import "dayjs/locale/it";
+import "dayjs/locale/en";
+import "dayjs/locale/es-mx";
+import "dayjs/locale/fr";
+import "dayjs/locale/ja";
+import "dayjs/locale/ko";
 import "dayjs/locale/nl";
-import "dayjs/locale/pt";
+import "dayjs/locale/pt-br";
+import "dayjs/locale/sv";
+import "dayjs/locale/zh-cn";
+import "dayjs/locale/zh-tw";
