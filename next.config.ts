@@ -1,3 +1,4 @@
+import { BASE_URL } from "@/lib/constants";
 import { withGTConfig } from "gt-next/config";
 import type { NextConfig } from "next";
 
@@ -25,6 +26,7 @@ const securityHeaders = [
 ] as const;
 
 const nextConfig: NextConfig = {
+    assetPrefix: BASE_URL,
     cacheComponents: true,
     experimental: {
         optimizePackageImports: ["@base-ui/react", "zod", "better-auth"],
