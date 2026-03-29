@@ -26,3 +26,55 @@ body {
     color: var(--foreground);
     background: var(--background);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Custom utilities                                                           */
+/* -------------------------------------------------------------------------- */
+
+@utility padding-stable {
+    padding-right: env(safe-area-inset-right, "0px");
+    padding-left: env(safe-area-inset-left, "0px");
+}
+
+@utility max-w-readable-sm {
+    @apply max-w-[calc(1080px*0.25*2)];
+}
+
+@utility max-w-readable {
+    @apply max-w-[calc(1080px*0.25*3)];
+}
+
+@utility max-w-readable-lg {
+    @apply max-w-[calc(1080px*0.25*4)];
+}
+
+@utility animate-shine {
+    @apply pointer-events-none absolute inset-0 transform-gpu overflow-hidden transition-opacity group-active:opacity-0;
+
+    &::before {
+        transform: translateX(calc(150% * -1)) skewX(-15deg);
+        animation: ShimmerWave 3s infinite;
+        @apply absolute top-0 left-0 h-full w-14 transform-gpu bg-white/50 blur-[30px] duration-700 content-[""] motion-safe:block;
+    }
+
+    &::after {
+        transform: translateX(calc(150% * -1)) skewX(-15deg);
+        animation: ShimmerWave 3s infinite;
+        @apply absolute top-0 left-0 h-full w-7 transform-gpu bg-white/30 blur-[5px] duration-700 motion-safe:block;
+    }
+}
+
+@keyframes ShimmerWave {
+    0% {
+        transform: translateX(-200px) skewX(-15deg);
+    }
+
+    20%,
+    100% {
+        transform: translateX(500px) skewX(-15deg);
+    }
+}
+
+@view-transition {
+    navigation: auto;
+}

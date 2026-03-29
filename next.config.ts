@@ -1,7 +1,6 @@
 import { withGTConfig } from "gt-next/config";
 import type { NextConfig } from "next";
 
-/** Baseline security headers (see Next.js headers docs). */
 const securityHeaders = [
     {
         key: "Strict-Transport-Security",

@@ -13,6 +13,7 @@ const inter = Inter({
 
 export async function generateMetadata(): Promise<Metadata> {
     const gt = await getGT();
+
     return {
         description: gt("Cache"),
         title: gt("Cache"),
