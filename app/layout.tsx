@@ -1,6 +1,7 @@
 import "@/lib/dayjs/locales";
 
 import { GTProvider } from "gt-next";
+import { getGT, getLocale } from "gt-next/server";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -10,18 +11,23 @@ const inter = Inter({
     variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-    description: "Cache",
-    title: "Cache",
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const gt = await getGT();
+    return {
+        description: gt("Cache"),
+        title: gt("Cache"),
+    };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const locale = await getLocale();
+
     return (
-        <html className={`${inter.variable} h-full antialiased`} lang="en">
+        <html className={`${inter.variable} h-full antialiased`} lang={locale}>
             <body className="flex min-h-full flex-col">
                 <GTProvider>{children}</GTProvider>
             </body>

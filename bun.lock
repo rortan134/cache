@@ -5,6 +5,7 @@
     "": {
       "name": "cache",
       "dependencies": {
+        "@arcjet/redact": "^1.3.0",
         "@base-ui/react": "^1.3.0",
         "@better-auth/stripe": "^1.5.6",
         "@radix-ui/react-slot": "^1.2.4",
@@ -41,6 +42,10 @@
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
+
+    "@arcjet/redact": ["@arcjet/redact@1.3.0", "", { "dependencies": { "@arcjet/redact-wasm": "1.3.0" } }, "sha512-L9PF5gGmf/B2DNwUEXwz+jWMCBShI926cRU8bBRBgkZuMDXUJPD5E/YXWDxJZkcR1N/J3bk9U40ggS78X7bhxQ=="],
+
+    "@arcjet/redact-wasm": ["@arcjet/redact-wasm@1.3.0", "", {}, "sha512-2wbdGFFtZGmJ5+gj+po8i2NogmUk7nedO69huqcFTDckOXul86r1R3CJ2BaLd1O4dLEemYP31e6nDNW7HjJz6A=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
 
