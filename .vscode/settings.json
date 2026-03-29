@@ -1,0 +1,36 @@
+{
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "typescript.preferences.useAliasesForRenames": false,
+    "typescript.reportStyleChecksAsWarnings": false,
+    "emmet.showExpandedAbbreviation": "never",
+    "tailwindCSS.experimental.classRegex": [
+        ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+    ],
+    "search.exclude": {
+        "**/.git": true,
+        "**/*node_modules": true,
+        "**/*.next": true,
+        "*.tsbuildinfo": true
+    },
+    "eslint.enable": false,
+    "stylelint.enable": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.biome": "explicit",
+        "source.organizeImports.biome": "explicit"
+    },
+    "editor.defaultFormatter": "biomejs.biome",
+    "[javascript][typescript][javascriptreact][typescriptreact][json][jsonc][css]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[mdx]": {
+        "editor.defaultFormatter": "unifiedjs.vscode-mdx"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "redhat.vscode-xml"
+    }
+}

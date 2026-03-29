@@ -1,0 +1,64 @@
+{
+    "compilerOptions": {
+        /* Base Options: */
+        "target": "es2022",
+        "moduleDetection": "force",
+        "allowJs": true,
+        "inlineSources": false,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "declarationMap": false,
+        "composite": false,
+
+        /* Strictness */
+        "checkJs": true,
+        "strict": true,
+        "alwaysStrict": true,
+        "useDefineForClassFields": true,
+        "noImplicitAny": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "exactOptionalPropertyTypes": false,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedParameters": false,
+        "noUnusedLocals": false,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitThis": true,
+        "noImplicitOverride": true,
+        "noEmitOnError": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictPropertyInitialization": true,
+        "allowSyntheticDefaultImports": true,
+        "useUnknownInCatchVariables": true,
+        "preserveConstEnums": true,
+        "allowImportingTsExtensions": true,
+
+        /* Bundled projects */
+        "removeComments": true,
+        "lib": ["dom", "dom.iterable", "ESNext"],
+        "noEmit": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "resolveJsonModule": true,
+        "resolvePackageJsonExports": true,
+        "preserveWatchOutput": true,
+        "incremental": true,
+
+        /* Path Aliases */
+        "paths": { "@/*": ["./*"] },
+        "plugins": [{ "name": "next" }]
+    },
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        ".next/types/**/*.ts",
+        ".next/dev/types/**/*.ts",
+        "**/*.mts"
+    ],
+    "exclude": ["node_modules"]
+}

@@ -1,0 +1,54 @@
+{
+    "name": "cache",
+    "type": "module",
+    "version": "1.0.0",
+    "private": true,
+    "packageManager": "bun@1.3.11",
+    "scripts": {
+        "clean": "find . -name node_modules -o -name .next -o -name .swc -o -name tsconfig.buildinfo -type d -prune | xargs rm -rf",
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "ultracite check",
+        "lint:fix": "ultracite fix",
+        "type-check": "tsc --noEmit",
+        "validate": "knip --production --exclude types",
+        "prepare": "husky"
+    },
+    "dependencies": {
+        "@base-ui/react": "^1.3.0",
+        "@better-auth/stripe": "^1.5.6",
+        "@radix-ui/react-slot": "^1.2.4",
+        "better-auth": "^1.5.6",
+        "clsx": "^2.1.1",
+        "copy-to-clipboard": "^3.3.3",
+        "dayjs": "^1.11.20",
+        "gt-next": "^6.14.8",
+        "motion": "^12.38.0",
+        "nanoid": "^5.1.7",
+        "next": "16.2.1",
+        "react": "19.2.4",
+        "react-dom": "19.2.4",
+        "react-sticky-box": "^2.0.5",
+        "tailwind-merge": "^3.5.0",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.4.9",
+        "@tailwindcss/postcss": "^4",
+        "@types/bun": "^1.3.11",
+        "@types/node": "^25",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "babel-plugin-react-compiler": "1.0.0",
+        "gt": "^2.13.2",
+        "husky": "^9.1.7",
+        "knip": "^6.1.0",
+        "tailwindcss": "^4",
+        "typescript": "^6",
+        "ultracite": "^7.4.0"
+    },
+    "engines": {
+        "node": "24.x"
+    }
+}
