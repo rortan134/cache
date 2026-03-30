@@ -1,9 +1,9 @@
-import { stripe } from "@better-auth/stripe";
+import { getStripeClient, getStripeWebhookSecret } from "@/lib/billing/client";
 import { prisma } from "@/prisma";
+import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import Stripe from "stripe";
 
 /* Pinterest generic OAuth — disabled until Pinterest app approval.
 import type { OAuth2Tokens } from "@better-auth/core/oauth2";
@@ -88,10 +88,6 @@ const trustedOrigins = [
         .filter(Boolean) ?? []),
 ];
 
-const stripeBillingClient = new Stripe(requiredEnv("STRIPE_SECRET_KEY"), {
-    apiVersion: "2026-03-25.dahlia",
-});
-
 export const auth = betterAuth({
     account: {
         accountLinking: {
@@ -112,14 +108,14 @@ export const auth = betterAuth({
         nextCookies(),
         stripe({
             createCustomerOnSignUp: true,
-            stripeClient: stripeBillingClient,
-            stripeWebhookSecret: requiredEnv("STRIPE_WEBHOOK_SECRET"),
+            stripeClient: getStripeClient(),
+            stripeWebhookSecret: getStripeWebhookSecret(),
             subscription: {
                 enabled: true,
                 plans: [
                     {
                         annualDiscountPriceId: requiredEnv(
-                            "STRIPE_PRICE_ID_YEARLY"
+                            "STRIPE_PRICE_ID_YEARLY",
                         ),
                         name: "pro",
                         priceId: requiredEnv("STRIPE_PRICE_ID_MONTHLY"),
