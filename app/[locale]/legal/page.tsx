@@ -1,6 +1,6 @@
 import { SITE_APP_NAME } from "@/lib/constants";
 import { gtPublicString } from "@/lib/gt-public-json";
-import { T } from "gt-next";
+import { T, Var } from "gt-next";
 import { ArrowRight, Cookie, Scale, Shield } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -78,7 +78,9 @@ export default async function LegalIndexPage({
 
             <header className="relative flex flex-col gap-3 text-pretty">
                 <p className="font-medium text-[0.7rem] text-stone-500 uppercase tracking-[0.22em]">
-                    <T context="Legal section eyebrow label">{SITE_APP_NAME}</T>
+                    <T context="Legal section eyebrow label">
+                        <Var>{SITE_APP_NAME}</Var>
+                    </T>
                 </p>
                 <h1 className="font-semibold text-3xl text-stone-950 tracking-tight sm:text-[2rem] sm:leading-tight">
                     <T>Legal & policies</T>

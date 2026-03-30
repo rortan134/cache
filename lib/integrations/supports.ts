@@ -3,7 +3,7 @@ import {
     Photos,
     // Pinterest, // disabled until Pinterest API approval
     TikTok,
-} from "@/components/integration-icons";
+} from "@/components/shared/integration-icons";
 import type { ComponentType, SVGProps } from "react";
 
 export type IntegrationCategory = "media" | "social";

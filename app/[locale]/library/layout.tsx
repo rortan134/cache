@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const DEFAULT_LOCALE = "en-US";
 
@@ -20,5 +21,5 @@ export default async function LibraryLayout({
         redirect(`/${locale || DEFAULT_LOCALE}`);
     }
 
-    return children;
+    return <NuqsAdapter>{children}</NuqsAdapter>;
 }

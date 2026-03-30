@@ -1,6 +1,6 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { Chrome } from "@/components/integration-icons";
-import { PageShell, PageSidebarShell } from "@/components/layouts";
+import { Chrome } from "@/components/shared/integration-icons";
+import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import {
     SessionHint,
     SignedInOnly,

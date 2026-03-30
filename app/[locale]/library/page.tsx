@@ -1,5 +1,5 @@
-import { PageShell, PageSidebarShell } from "@/components/layouts";
 import { ExtensionLibraryGrids } from "@/components/library/extension-library-grids";
+import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/server";

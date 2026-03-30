@@ -38,6 +38,7 @@
         "mcp-handler": "^1.1.0",
         "nanoid": "^5.1.7",
         "next": "16.2.1",
+        "nuqs": "^2.8.9",
         "react": "19.2.4",
         "react-dom": "19.2.4",
         "server-only": "^0.0.1",

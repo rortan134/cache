@@ -1,4 +1,4 @@
-import { PageShell } from "@/components/layouts";
+import { PageShell } from "@/components/shared/layouts";
 import type * as React from "react";
 
 export default function LegalLayout({
