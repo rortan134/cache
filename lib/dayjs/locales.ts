@@ -6,6 +6,7 @@ import "dayjs/locale/fr";
 import "dayjs/locale/ja";
 import "dayjs/locale/ko";
 import "dayjs/locale/nl";
+import "dayjs/locale/pl";
 import "dayjs/locale/pt-br";
 import "dayjs/locale/sv";
 import "dayjs/locale/zh-cn";

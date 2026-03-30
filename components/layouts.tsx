@@ -16,4 +16,31 @@ const PageShell = ({
     />
 );
 
-export { PageShell };
+function PageSidebarShell({
+    top,
+    bottom,
+    className,
+    ...props
+}: React.ComponentProps<"aside"> & {
+    top: React.ReactNode;
+    bottom?: React.ReactNode;
+}) {
+    return (
+        <aside
+            {...props}
+            className={cn(
+                "relative flex min-h-full w-full shrink-0 flex-col gap-8 p-8 lg:max-w-[400px] lg:justify-between",
+                className
+            )}
+        >
+            <div className="flex w-full flex-col gap-6 lg:sticky lg:top-8">
+                {top}
+            </div>
+            <div className="flex w-full flex-col gap-6 lg:sticky lg:bottom-8">
+                {bottom}
+            </div>
+        </aside>
+    );
+}
+
+export { PageShell, PageSidebarShell };

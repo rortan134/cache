@@ -50,6 +50,7 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
     --animate-skeleton: skeleton 2s -1s infinite linear;
+
     @keyframes skeleton {
         to {
             background-position: -200% 0;
@@ -70,16 +71,8 @@ body {
     padding-left: env(safe-area-inset-left, "0px");
 }
 
-@utility max-w-readable-sm {
-    @apply max-w-[calc(1080px*0.25*2)];
-}
-
 @utility max-w-readable {
     @apply max-w-[calc(1080px*0.25*3)];
-}
-
-@utility max-w-readable-lg {
-    @apply max-w-[calc(1080px*0.25*4)];
 }
 
 @utility animate-shine {

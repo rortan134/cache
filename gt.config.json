@@ -12,12 +12,13 @@
         "zh-CN",
         "zh-TW",
         "sv-SE",
-        "da-DK"
+        "da-DK",
+        "pl-PL"
     ],
     "files": {
         "gt": {
             "output": "public/_gt/[locale].json"
         }
     },
-    "_versionId": "34b887df7c2b6c3e9d99da47c237ecbb4d7173fef6cf0133d89c0db8d429c812"
+    "_versionId": "da7abe57bdf7a3bf96c1ccf4ec395fd1f7ff7b3c1a14e586663684b5b5c8300d"
 }

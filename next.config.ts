@@ -2,29 +2,6 @@ import { BASE_URL } from "@/lib/constants";
 import { withGTConfig } from "gt-next/config";
 import type { NextConfig } from "next";
 
-const securityHeaders = [
-    {
-        key: "Strict-Transport-Security",
-        value: "max-age=63072000; includeSubDomains; preload",
-    },
-    {
-        key: "X-Content-Type-Options",
-        value: "nosniff",
-    },
-    {
-        key: "X-Frame-Options",
-        value: "SAMEORIGIN",
-    },
-    {
-        key: "Referrer-Policy",
-        value: "origin-when-cross-origin",
-    },
-    {
-        key: "Permissions-Policy",
-        value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
-    },
-] as const;
-
 const nextConfig: NextConfig = {
     // In dev, BASE_URL is localhost; assetPrefix would make imported images
     // absolute URLs. next/image then fetches that URL and blocks loopback (SSRF).
@@ -65,8 +42,30 @@ const nextConfig: NextConfig = {
             },
         ];
     },
-    typedRoutes: true,
 };
+
+const securityHeaders = [
+    {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload",
+    },
+    {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+    },
+    {
+        key: "X-Frame-Options",
+        value: "SAMEORIGIN",
+    },
+    {
+        key: "Referrer-Policy",
+        value: "origin-when-cross-origin",
+    },
+    {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    },
+] as const;
 
 export default withGTConfig(nextConfig, {
     experimentalLocaleResolution: true,

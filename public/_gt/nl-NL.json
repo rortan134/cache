@@ -1,12 +1,90 @@
 {
-  "7681eeb7dd5c459b": [
+  "00b4452cb65b2b3f": [
     {
-      "c": "Breng al je bladwijzers samen.",
+      "c": "Ontdek alles via één centrale feed",
+      "i": 1,
+      "t": "p"
+    },
+    {
+      "c": "Maak het bekijken en terugvinden van je opgeslagen content eenvoudiger met één overzicht.",
+      "i": 2,
+      "t": "p"
+    }
+  ],
+  "0a54a0a5ac68344e": "Extensie downloaden",
+  "15833184c459d240": {
+    "c": "Servicevoorwaarden",
+    "i": 1,
+    "t": "p"
+  },
+  "250837e7ce6817d3": [
+    {
+      "c": "Blijf georganiseerd en ruim verouderde bladwijzers moeiteloos op",
+      "i": 1,
+      "t": "p"
+    },
+    {
+      "c": "Importeer je bladwijzers en ga in een paar minuten van chaos naar overzicht, zodat je daarna makkelijker kunt zoeken, beheren en groeperen.",
+      "i": 2,
+      "t": "p"
+    }
+  ],
+  "3c61319be1bc2db7": "*Externe platforms waarmee je via de Service verbinding maakt, worden onafhankelijk van Cache beheerd. Cache heeft geen zeggenschap over hun beleid of over de manier waarop zij dat handhaven, en is niet verantwoordelijk voor beslissingen die deze platforms nemen met betrekking tot je accounts of je toegang tot hun diensten—met inbegrip van, maar niet beperkt tot, wijzigingen in de beschikbaarheid—al dan niet in verband met je gebruik van Cache. Je bent zelf verantwoordelijk voor naleving van de voorwaarden, het beleid en de communityrichtlijnen van elk platform. Cache is niet aansprakelijk voor enig ongemak, verlies of andere gevolgen die voortvloeien uit je relatie met die platforms of uit je gebruik van de Service in samenhang daarmee. Meer informatie vind je",
+  "4570406e2d38d956": {
+    "c": "Privacybeleid",
+    "i": 1,
+    "t": "p"
+  },
+  "4ea8e8c3d6b1830d": [
+    {
+      "c": "Stop met uitstellen",
+      "i": 1,
+      "t": "p"
+    },
+    {
+      "c": "Creëer meer concrete kansen voor jezelf door je meest waardevolle opgeslagen content top-of-mind te houden.",
+      "i": 2,
+      "t": "p"
+    }
+  ],
+  "6c231374bfad8483": {
+    "c": "Cookiebeleid",
+    "i": 1,
+    "t": "p"
+  },
+  "845a529bdfeb7a5e": [
+    {
+      "c": "Integreer al je socialmediaplatforms",
+      "i": 1,
+      "t": "p"
+    },
+    {
+      "c": "Stop met eindeloos scrollen en schakelen tussen meerdere platforms om te vinden wat voor jou belangrijk is.",
+      "i": 2,
+      "t": "p"
+    }
+  ],
+  "98b2679554f88edd": [
+    {
+      "c": "Stel een bibliotheek samen waar je van houdt",
+      "i": 1,
+      "t": "p"
+    },
+    {
+      "c": "Doe inspiratie op en vind die les, tip, dat recept of idee waar je naar op zoek was, gewoon binnen één koffiepauze.",
+      "i": 2,
+      "t": "p"
+    }
+  ],
+  "c26fd6852bfece9e": "Doorgaan met Google",
+  "cadd38da1bb28078": [
+    {
+      "c": "Breng je bladwijzers samen.",
       "i": 1,
       "t": "h1"
     },
     {
-      "c": "Eén plek om al je bladwijzers op verschillende platforms overzichtelijk te bekijken, beheren en organiseren.",
+      "c": "Maak kennis met Cache: één plek om al je bladwijzers op verschillende platforms centraal te bekijken, beheren en ordenen.",
       "i": 2,
       "t": "p"
     }

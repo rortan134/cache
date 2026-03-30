@@ -1,12 +1,34 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Chrome } from "@/components/integration-icons";
-import { PageShell } from "@/components/layouts";
+import { PageShell, PageSidebarShell } from "@/components/layouts";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import QRCodeDownloadImage from "@/public/download-qrcode.png";
+import { gtPublicString } from "@/lib/gt-public-json";
 import { LocaleSelector, T } from "gt-next";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+    const { locale } = await params;
+    return {
+        description: gtPublicString(
+            locale,
+            "home.metadata.description",
+            "One place to view, manage, and organize bookmarks across browsers and platforms — built for power users who save at volume."
+        ),
+        title: gtPublicString(
+            locale,
+            "home.metadata.title",
+            "Unify your bookmarks across every platform"
+        ),
+    };
+}
 
 export default async function Home({
     params,
@@ -14,80 +36,87 @@ export default async function Home({
     params: Promise<{ locale: string }>;
 }>) {
     const { locale } = await params;
+
     return (
         <PageShell>
             <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
-                <aside className="relative flex min-h-full w-full shrink-0 flex-col gap-8 p-8 lg:max-w-[400px] lg:justify-between">
-                    <div className="flex w-full flex-col gap-6 lg:sticky lg:top-8">
-                        <Image
-                            alt="App Icon"
-                            className="block"
-                            fetchPriority="high"
-                            height={50}
-                            loading="eager"
-                            priority
-                            src={LogoIconImage}
-                            width={200}
-                        />
-                        <div className="flex flex-col gap-2 text-balance md:gap-4">
-                            <T>
-                                <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
-                                    Unify your bookmarks.
-                                </h1>
-                                <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                    Meet Cache – One place to view, manage, and
-                                    organize all of your bookmarks across
-                                    platforms at volume.
-                                </p>
-                            </T>
-                        </div>
-                        <GoogleSignInButton locale={locale}>
-                            <T context="Sign in/up CTA button">
-                                Continue with Google
-                            </T>
-                        </GoogleSignInButton>
-                    </div>
-                    <div className="flex w-full flex-col gap-6 lg:sticky lg:bottom-8">
-                        <div className="hidden items-center gap-5 lg:flex">
-                            <Image
-                                alt="Download QR Code"
-                                className="size-16"
-                                height={64}
-                                src={QRCodeDownloadImage}
-                                width={64}
-                            />
-                            <div className="flex flex-col gap-[6px] pb-[2px]">
-                                <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
-                                    <T context="Chrome web store browser extension">
-                                        Download the extension
-                                    </T>
-                                </p>
-                                <p className="flex shrink-0 flex-row items-center gap-[6px] truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
-                                    <span>
-                                        <Chrome className="size-4" />
-                                    </span>
-                                    <span className="opacity-50">
-                                        Chrome Web Store
-                                    </span>
-                                </p>
+                <PageSidebarShell
+                    bottom={
+                        <>
+                            <div className="hidden items-center gap-5 lg:flex">
+                                <Image
+                                    alt="Download QR Code"
+                                    className="size-20"
+                                    height={80}
+                                    src={QRCodeDownloadImage}
+                                    width={80}
+                                />
+                                <div className="flex flex-col gap-[6px] pb-[2px]">
+                                    <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
+                                        <T context="Chrome web store browser extension">
+                                            Download the extension
+                                        </T>
+                                    </p>
+                                    <p className="flex shrink-0 flex-row items-center gap-[6px] truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
+                                        <span>
+                                            <Chrome className="size-4" />
+                                        </span>
+                                        <span className="opacity-50">
+                                            Chrome Web Store
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <LocaleSelector />
-                    </div>
-                </aside>
+                            <LocaleSelector />
+                        </>
+                    }
+                    top={
+                        <>
+                            <Image
+                                alt="App Icon"
+                                className="block"
+                                fetchPriority="high"
+                                height={50}
+                                loading="eager"
+                                priority
+                                src={LogoIconImage}
+                                width={200}
+                            />
+                            <div className="flex flex-col gap-2 text-balance md:gap-4">
+                                <T>
+                                    <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
+                                        Unify your bookmarks.
+                                    </h1>
+                                    <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
+                                        Meet Cache – One place to view, manage,
+                                        and organize all of your bookmarks
+                                        across platforms at volume.
+                                    </p>
+                                </T>
+                            </div>
+                            <GoogleSignInButton locale={locale}>
+                                <T context="Sign in/up CTA button">
+                                    Continue with Google
+                                </T>
+                            </GoogleSignInButton>
+                        </>
+                    }
+                />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
                     {/* Main content */}
                     <div className="aspect-video h-auto w-full rounded-2xl bg-stone-200" />
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
-                            <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                Curate a library you love
-                            </p>
-                            <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                Get inspired, find that one lesson, advice,
-                                recipe, or idea you've been looking for in the
-                                span of a coffee break.
-                            </p>
+                            <T context="Library">
+                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                    Curate a library you love
+                                </p>
+                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
+                                    Get inspired, find that one lesson, advice,
+                                    recipe, or idea you've been looking for, in
+                                    the span of a coffee break.
+                                </p>
+                            </T>
                         </div>
                         <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
                             <figure className="overflow-hidden">
@@ -97,14 +126,16 @@ export default async function Home({
                     </div>
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
-                            <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                Integrate any social media platform
-                            </p>
-                            <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                Ditch the endless scrolling and tabbing through
-                                multiple platforms to find what you're looking
-                                for.
-                            </p>
+                            <T context="Integrations">
+                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                    Integrate any social media platform
+                                </p>
+                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
+                                    Ditch the endless scrolling and tabbing
+                                    through multiple platforms to find what
+                                    matters to you.
+                                </p>
+                            </T>
                         </div>
                         <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
                             <figure className="overflow-hidden">
@@ -114,13 +145,15 @@ export default async function Home({
                     </div>
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
-                            <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                Explore through one centralized feed
-                            </p>
-                            <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                Streamline the way you consume and reengage with
-                                your saved content with a single view.
-                            </p>
+                            <T context="Feed">
+                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                    Explore through one centralized feed
+                                </p>
+                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
+                                    Streamline the way you consume and reengage
+                                    with your saved content with a single view.
+                                </p>
+                            </T>
                         </div>
                         <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
                             <figure className="overflow-hidden">
@@ -130,14 +163,17 @@ export default async function Home({
                     </div>
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
-                            <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                Stay organized and delete stale bookmarks with
-                                ease
-                            </p>
-                            <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                Import and go from messy bookmarks to organized
-                                in minutes, then search, manage or group.
-                            </p>
+                            <T context="Organization">
+                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                    Stay organized and delete stale bookmarks
+                                    with ease
+                                </p>
+                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
+                                    Import and go from messy bookmarks to
+                                    organized in minutes, then search, manage or
+                                    group.
+                                </p>
+                            </T>
                         </div>
                         <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
                             <figure className="overflow-hidden">
@@ -147,14 +183,16 @@ export default async function Home({
                     </div>
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
-                            <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                Stop leaving it for later
-                            </p>
-                            <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                Create more actionable opportunities for
-                                yourself by having your most insightful saved
-                                content on top of your mind.
-                            </p>
+                            <T context="Habits">
+                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                    Stop leaving it for later
+                                </p>
+                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
+                                    Create more actionable opportunities for
+                                    yourself by having your most insightful
+                                    saved content on top of your mind.
+                                </p>
+                            </T>
                         </div>
                         <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
                             <figure className="overflow-hidden">
@@ -174,7 +212,7 @@ export default async function Home({
                                     <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%]">
                                         <Link
                                             className="underline"
-                                            href="/terms-of-service"
+                                            href="/legal/terms-of-service"
                                             target="_blank"
                                         >
                                             <T>
@@ -183,7 +221,7 @@ export default async function Home({
                                         </Link>
                                         <Link
                                             className="underline"
-                                            href="/privacy-policy"
+                                            href="/legal/privacy-policy"
                                             target="_blank"
                                         >
                                             <T>
@@ -192,7 +230,7 @@ export default async function Home({
                                         </Link>
                                         <Link
                                             className="underline"
-                                            href="/cookie-policy"
+                                            href="/legal/cookie-policy"
                                             target="_blank"
                                         >
                                             <T>
@@ -203,7 +241,7 @@ export default async function Home({
                                 </div>
                                 <div className="col-span-full flex flex-col items-start justify-between font-sans text-[0.8rem] leading-[1.22] tracking-[-3%]">
                                     <span>
-                                        <T>
+                                        <T context="Disclaimer">
                                             *Third-party platforms you connect
                                             through the Service are operated
                                             independently of Cache. Cache does

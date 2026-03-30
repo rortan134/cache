@@ -1,32 +1,50 @@
 import "@/lib/dayjs/locales";
 
-import { BASE_URL } from "@/lib/constants";
+import { BASE_URL, SITE_APP_NAME, SITE_DEFAULT_TITLE } from "@/lib/constants";
+import { GTProvider, getLocale } from "gt-next/server";
 import { Inter } from "next/font/google";
+import type { Metadata } from "next";
 import type * as React from "react";
 import "./globals.css";
+
+export async function generateMetadata(): Promise<Metadata> {
+    const locale = await getLocale();
+
+    return {
+        openGraph: {
+            locale,
+        },
+        title: {
+            default: SITE_DEFAULT_TITLE,
+            template: `%s | ${SITE_APP_NAME}`,
+        },
+    };
+}
 
 const inter = Inter({
     subsets: ["latin"],
     variable: "--font-inter",
 });
 
-const ROOT_HTML_LANG = "en-US";
-
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const locale = await getLocale();
+
     return (
         <html
             className={`${inter.variable} h-full antialiased`}
-            lang={ROOT_HTML_LANG}
+            lang={locale}
             suppressHydrationWarning
         >
             <head>
                 <NextChatSDKBootstrap baseUrl={BASE_URL} />
             </head>
-            <body className="flex min-h-full flex-col">{children}</body>
+            <body className="flex min-h-full flex-col">
+                <GTProvider>{children}</GTProvider>
+            </body>
         </html>
     );
 }
