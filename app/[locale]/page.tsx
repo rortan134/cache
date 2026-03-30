@@ -148,7 +148,7 @@ export default async function Home({
                                     <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%]">
                                         <Link
                                             className="underline"
-                                            href="/legal/terms-of-service"
+                                            href="/terms-of-service"
                                             target="_blank"
                                         >
                                             <T>
@@ -157,7 +157,7 @@ export default async function Home({
                                         </Link>
                                         <Link
                                             className="underline"
-                                            href="/legal/privacy-policy"
+                                            href="/privacy-policy"
                                             target="_blank"
                                         >
                                             <T>
@@ -166,7 +166,7 @@ export default async function Home({
                                         </Link>
                                         <Link
                                             className="underline"
-                                            href="/legal/cookie-policy"
+                                            href="/cookie-policy"
                                             target="_blank"
                                         >
                                             <T>
