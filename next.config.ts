@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     cacheComponents: true,
     experimental: {
         optimizePackageImports: ["@base-ui/react", "zod", "better-auth"],
+        turbopackFileSystemCacheForBuild: true,
         turbopackFileSystemCacheForDev: true,
     },
     async headers() {
