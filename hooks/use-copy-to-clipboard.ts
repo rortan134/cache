@@ -1,5 +1,6 @@
 "use client";
 
+import copy from "copy-to-clipboard";
 import * as React from "react";
 
 export function useCopyToClipboard({
@@ -13,7 +14,7 @@ export function useCopyToClipboard({
     const timeoutIdRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const copyToClipboard = (value: string): void => {
-        if (typeof window === "undefined" || !navigator.clipboard.writeText) {
+        if (typeof window === "undefined") {
             return;
         }
 
@@ -21,23 +22,24 @@ export function useCopyToClipboard({
             return;
         }
 
-        navigator.clipboard.writeText(value).then(() => {
-            if (timeoutIdRef.current) {
-                clearTimeout(timeoutIdRef.current);
-            }
-            setIsCopied(true);
+        const immediate = copy(value);
 
-            if (onCopy) {
-                onCopy();
-            }
+        if (!immediate) {
+            return;
+        }
 
-            if (timeout !== 0) {
-                timeoutIdRef.current = setTimeout(() => {
-                    setIsCopied(false);
-                    timeoutIdRef.current = null;
-                }, timeout);
-            }
-        }, console.error);
+        if (timeoutIdRef.current) {
+            clearTimeout(timeoutIdRef.current);
+        }
+        setIsCopied(true);
+        onCopy?.();
+
+        if (timeout !== 0) {
+            timeoutIdRef.current = setTimeout(() => {
+                setIsCopied(false);
+                timeoutIdRef.current = null;
+            }, timeout);
+        }
     };
 
     // Cleanup timeout on unmount

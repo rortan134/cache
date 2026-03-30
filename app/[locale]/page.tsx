@@ -1,8 +1,10 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { PageShell } from "@/components/layouts";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
+import LogoIconImage from "@/public/images/cache-app-icon.png";
 import { LocaleSelector, T } from "gt-next";
 import Image from "next/image";
+import Link from "next/link";
 
 export default async function Home({
     params,
@@ -22,7 +24,7 @@ export default async function Home({
                             height={50}
                             loading="eager"
                             priority
-                            src="/images/cache-app-icon.png"
+                            src={LogoIconImage}
                             width={200}
                         />
                         <div className="flex flex-col gap-2 text-balance md:gap-4">
@@ -144,48 +146,60 @@ export default async function Home({
                             <div className="!mb-0 !pb-4 md:!pb-6 lg:!pb-8 relative z-20 col-span-full mx-auto mb-[72px] flex grid w-full grid-cols-12 flex-col gap-6 gap-x-[min(2.25vw,_32px)] lg:mb-20 lg:py-8">
                                 <div className="col-span-full flex flex-col gap-4">
                                     <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%]">
-                                        <a
-                                            className="text-base-gray-200 underline"
-                                            href="https://wallet.coinbase.com/terms-of-service"
-                                            rel="noopener"
+                                        <Link
+                                            className="underline"
+                                            href="/terms-of-service"
                                             target="_blank"
                                         >
-                                            <p>Terms of Service</p>
-                                        </a>
-                                        <a
-                                            className="text-base-gray-200 underline"
-                                            href="https://wallet.coinbase.com/privacy-policy"
-                                            rel="noopener"
+                                            <T>
+                                                <p>Terms of Service</p>
+                                            </T>
+                                        </Link>
+                                        <Link
+                                            className="underline"
+                                            href="/privacy-policy"
                                             target="_blank"
                                         >
-                                            <p>Privacy Policy</p>
-                                        </a>
-                                        <a
-                                            className="text-base-gray-200 underline"
-                                            href="https://docs.base.org/cookie-policy"
-                                            rel="noopener"
+                                            <T>
+                                                <p>Privacy Policy</p>
+                                            </T>
+                                        </Link>
+                                        <Link
+                                            className="underline"
+                                            href="/cookie-policy"
                                             target="_blank"
                                         >
-                                            <p>Cookie Policy</p>
-                                        </a>
+                                            <T>
+                                                <p>Cookie Policy</p>
+                                            </T>
+                                        </Link>
                                     </div>
                                 </div>
-                                <div className="col-span-full flex flex-col items-start justify-between font-sans text-[0.8rem] text-base-gray-200 leading-[1.22] tracking-[-3%]">
+                                <div className="col-span-full flex flex-col items-start justify-between font-sans text-[0.8rem] leading-[1.22] tracking-[-3%]">
                                     <span>
-                                        *Coinbase does not intend for the
-                                        reward-bearing products described herein
-                                        to constitute a securities offering, and
-                                        purchasing these products is not the
-                                        same as investing in a securities
-                                        offering. The rewards rate (up to 3.35 %
-                                        APY) is subject to change, set at
-                                        Coinbase's discretion, and shown in-app
-                                        for eligible users. USDC Rewards on Base
-                                        App is rolling out in the U.S. and is
-                                        unavailable in the EU or Canada; U.S.
-                                        Base App users must link a Coinbase
-                                        account to earn. Additional detail may
-                                        be found
+                                        <T>
+                                            *Third-party platforms you connect
+                                            through the Service are operated
+                                            independently of Cache. Cache does
+                                            not control their policies or how
+                                            they apply them, and is not
+                                            responsible for decisions those
+                                            platforms make regarding your
+                                            accounts or access to their
+                                            services—including, without
+                                            limitation, changes to
+                                            availability—whether or not related
+                                            to your use of Cache. You are
+                                            responsible for complying with each
+                                            platform's terms, policies, and
+                                            community guidelines. Cache is not
+                                            liable for any inconvenience, loss,
+                                            or other outcome arising from your
+                                            relationship with those platforms or
+                                            your use of the Service in
+                                            connection with them. Additional
+                                            detail may be found
+                                        </T>
                                     </span>
                                 </div>
                             </div>
