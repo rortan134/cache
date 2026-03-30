@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { nanoid } from "nanoid";
 
 /**
- * Returns the current extension ingest token (may be null until generated).
+ * Returns the extension ingest token for the signed-in user, creating one if missing.
  */
 export async function GET() {
     const session = await auth.api.getSession({
@@ -19,7 +19,17 @@ export async function GET() {
         where: { id: session.user.id },
     });
 
-    return Response.json({ token: user?.extensionIngestToken ?? null });
+    if (user?.extensionIngestToken) {
+        return Response.json({ token: user.extensionIngestToken });
+    }
+
+    const token = nanoid(48);
+    await prisma.user.update({
+        data: { extensionIngestToken: token },
+        where: { id: session.user.id },
+    });
+
+    return Response.json({ token });
 }
 
 /**

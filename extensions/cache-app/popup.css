@@ -75,12 +75,3 @@ body {
     font-size: 12px;
     color: color-mix(in oklab, CanvasText 78%, transparent);
 }
-
-.footer {
-    margin: 10px 0 0;
-    font-size: 11px;
-}
-
-.footer a {
-    color: color-mix(in oklab, CanvasText 70%, transparent);
-}

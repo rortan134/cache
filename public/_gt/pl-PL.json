@@ -32,5 +32,7 @@
   "home.metadata.description": "Jedno miejsce do przeglądania, zarządzania i porządkowania zakładek w przeglądarkach i na platformach — stworzone dla zaawansowanych użytkowników, którzy zapisują dużo treści.",
   "home.metadata.title": "Zsynchronizuj zakładki na wszystkich platformach",
   "library.metadata.description": "Wpisy zsynchronizowane z rozszerzenia pojawiają się poniżej, pogrupowane według źródła.",
-  "library.metadata.title": "Biblioteka"
+  "library.metadata.title": "Biblioteka",
+  "logout.metadata.description": "Trwa bezpieczne wylogowywanie.",
+  "logout.metadata.title": "Wyloguj się"
 }

@@ -3,26 +3,9 @@ const syncBtn = document.getElementById("sync");
 const openCacheBtn = document.getElementById("openCache");
 const instagramMetaEl = document.getElementById("instagramMeta");
 const tiktokMetaEl = document.getElementById("tiktokMeta");
-const openOptionsEl = document.getElementById("openOptions");
 
 /** Default locale path segment for opening the web app (matches Next `[locale]` routes). */
 const CACHE_APP_DEFAULT_LOCALE = "en-US";
-
-/**
- * @param {string} raw
- * @returns {string | null}
- */
-function deriveOriginFromSyncEndpoint(raw) {
-    const s = (raw ?? "").trim();
-    if (!s) {
-        return null;
-    }
-    try {
-        return new URL(s).origin;
-    } catch {
-        return null;
-    }
-}
 
 /**
  * @param {string} origin
@@ -126,32 +109,44 @@ async function refreshFromStorage() {
 }
 
 /**
- * Enables Sync only when sync URL is set and a Cache session cookie exists for that origin.
+ * Sync is allowed when the configured Cache origin has a session cookie and the site
+ * bootstrap has stored an ingest token.
  */
 async function applyCacheSessionGate() {
     if (!syncBtn) {
         return;
     }
-    const data = await chrome.storage.local.get(["syncEndpoint"]);
-    const endpoint =
-        typeof data.syncEndpoint === "string" ? data.syncEndpoint : "";
-    const origin = deriveOriginFromSyncEndpoint(endpoint);
-
-    if (!origin) {
+    const appOrigin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(
+        /\/$/,
+        "",
+    );
+    if (!appOrigin) {
         syncBtn.disabled = true;
         setStatus(
-            "Set your Cache ingest URL in Options (copy from Library page).",
-            "idle"
+            "Extension is missing CACHE_APP_ORIGIN in cache-config.js.",
+            "error",
         );
         return;
     }
 
-    const signedIn = await originHasBetterAuthSessionCookie(origin);
+    const signedIn = await originHasBetterAuthSessionCookie(appOrigin);
     if (!signedIn) {
         syncBtn.disabled = true;
         setStatus(
-            "Sign in to Cache in this browser (same site as your sync URL), then reopen this popup.",
-            "error"
+            "Sign in to Cache in this browser, then open any Cache page once to link the extension.",
+            "error",
+        );
+        return;
+    }
+
+    const keyData = await chrome.storage.local.get(["syncApiKey"]);
+    const token =
+        typeof keyData.syncApiKey === "string" ? keyData.syncApiKey.trim() : "";
+    if (!token) {
+        syncBtn.disabled = true;
+        setStatus(
+            "Open any Cache page while signed in once so the extension receives your sync token.",
+            "error",
         );
         return;
     }
@@ -210,9 +205,9 @@ chrome.runtime.onMessage.addListener((msg) => {
         setStatus(
             formatErrorMessage(
                 typeof msg.code === "string" ? msg.code : "UNKNOWN",
-                typeof msg.message === "string" ? msg.message : undefined
+                typeof msg.message === "string" ? msg.message : undefined,
             ),
-            "error"
+            "error",
         );
         if (btn) {
             btn.disabled = false;
@@ -248,7 +243,7 @@ syncBtn?.addEventListener("click", async () => {
         ) {
             setStatus(
                 "Open Instagram or TikTok in this tab (Saved or Favorites).",
-                "error"
+                "error",
             );
             syncBtn.disabled = false;
             await applyCacheSessionGate();
@@ -259,7 +254,7 @@ syncBtn?.addEventListener("click", async () => {
     } catch {
         setStatus(
             "Could not reach this page. Reload the tab and try again.",
-            "error"
+            "error",
         );
         syncBtn.disabled = false;
         await applyCacheSessionGate();
@@ -267,22 +262,15 @@ syncBtn?.addEventListener("click", async () => {
 });
 
 openCacheBtn?.addEventListener("click", async () => {
-    const data = await chrome.storage.local.get(["syncEndpoint"]);
-    const origin = deriveOriginFromSyncEndpoint(
-        typeof data.syncEndpoint === "string" ? data.syncEndpoint : ""
+    const appOrigin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(
+        /\/$/,
+        "",
     );
-    if (origin) {
+    if (appOrigin) {
         await chrome.tabs.create({
-            url: `${origin}/${CACHE_APP_DEFAULT_LOCALE}`,
+            url: `${appOrigin}/${CACHE_APP_DEFAULT_LOCALE}`,
         });
-    } else {
-        await chrome.runtime.openOptionsPage();
     }
-});
-
-openOptionsEl?.addEventListener("click", (e) => {
-    e.preventDefault();
-    chrome.runtime.openOptionsPage();
 });
 
 window.addEventListener("focus", () => {
@@ -291,10 +279,12 @@ window.addEventListener("focus", () => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes.syncEndpoint) {
+    if (area !== "local") {
         return;
     }
-    void applyCacheSessionGate();
+    if (changes.syncApiKey || changes.syncEndpoint) {
+        void applyCacheSessionGate();
+    }
 });
 
 void refreshFromStorage();

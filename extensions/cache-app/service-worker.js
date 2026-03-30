@@ -1,3 +1,5 @@
+importScripts("cache-config.js");
+
 /** @typedef {{ shortcode: string, url: string, thumbnailUrl: string, caption: string, scrapedAt: string }} InstagramSavedItem */
 /** @typedef {{ id: string, url: string, thumbnailUrl: string, caption: string, scrapedAt: string }} TikTokFavoriteItem */
 
@@ -22,6 +24,18 @@ const SYNC_KEYS = {
     syncApiKey: "syncApiKey",
     syncEndpoint: "syncEndpoint",
 };
+
+/**
+ * @returns {string}
+ */
+function defaultIngestEndpoint() {
+    const o = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
+    const p = String(globalThis.CACHE_INGEST_PATH ?? "");
+    if (!o || !p.startsWith("/")) {
+        return "";
+    }
+    return `${o}${p}`;
+}
 
 /**
  * @param {unknown} msg
@@ -222,6 +236,12 @@ async function postToOptionalBackend(endpoint, apiKey, items, source) {
     if (!endpoint?.trim()) {
         return;
     }
+    if (!apiKey?.trim()) {
+        console.warn(
+            "[Cache App] Skipping server sync: no ingest token. Open any Cache page while signed in once.",
+        );
+        return;
+    }
     const sessionOk = await originHasBetterAuthSessionCookie(endpoint);
     if (!sessionOk) {
         console.warn(
@@ -285,10 +305,11 @@ async function persistInstagramItems(items, final) {
         patch[INSTAGRAM_KEYS.lastSyncAt] = lastSyncAt;
         await chrome.storage.local.set(patch);
 
-        const endpoint =
+        const stored =
             typeof data[SYNC_KEYS.syncEndpoint] === "string"
                 ? data[SYNC_KEYS.syncEndpoint]
                 : "";
+        const endpoint = stored.trim() || defaultIngestEndpoint();
         const apiKey =
             typeof data[SYNC_KEYS.syncApiKey] === "string"
                 ? data[SYNC_KEYS.syncApiKey]
@@ -354,10 +375,11 @@ async function persistTikTokItems(items, final) {
         patch[TIKTOK_KEYS.lastSyncAt] = lastSyncAt;
         await chrome.storage.local.set(patch);
 
-        const endpoint =
+        const stored =
             typeof data[SYNC_KEYS.syncEndpoint] === "string"
                 ? data[SYNC_KEYS.syncEndpoint]
                 : "";
+        const endpoint = stored.trim() || defaultIngestEndpoint();
         const apiKey =
             typeof data[SYNC_KEYS.syncApiKey] === "string"
                 ? data[SYNC_KEYS.syncApiKey]
@@ -422,6 +444,23 @@ async function notifySyncError(code, message) {
 }
 
 chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.type === "CACHE_SITE_BRIDGE") {
+        (async () => {
+            const endpoint =
+                typeof msg.endpoint === "string" ? msg.endpoint.trim() : "";
+            const token =
+                typeof msg.token === "string" ? msg.token.trim() : "";
+            if (!endpoint || !token) {
+                return;
+            }
+            await chrome.storage.local.set({
+                [SYNC_KEYS.syncApiKey]: token,
+                [SYNC_KEYS.syncEndpoint]: endpoint,
+            });
+        })();
+        return true;
+    }
+
     if (msg?.type === "BOOKMARKS_CHUNK" || msg?.type === "BOOKMARKS_COMPLETE") {
         (async () => {
             try {

@@ -11,7 +11,10 @@
       "t": "p"
     }
   ],
+  "019869a6c0157892": "Conditions d’utilisation",
   "0a54a0a5ac68344e": "Télécharger l’extension",
+  "0e0f0cb623f12ffc": "Cookies et technologies similaires utilisés sur nos sites et dans nos produits.",
+  "11503a3d12f43fdd": "Documents officiels qui régissent votre relation avec nous et expliquent comment nous traitons les données. Choisissez un sujet ci-dessous pour lire le texte complet.",
   "15833184c459d240": {
     "c": "Conditions d’utilisation",
     "i": 1,
@@ -47,11 +50,13 @@
       "t": "p"
     }
   ],
+  "69a327815dc1270a": "Politique relative aux cookies",
   "6c231374bfad8483": {
     "c": "Politique relative aux cookies",
     "i": 1,
     "t": "p"
   },
+  "7721d8d00edabeda": "Déconnexion…",
   "845a529bdfeb7a5e": [
     {
       "c": "Connectez n’importe quelle plateforme de réseaux sociaux",
@@ -64,6 +69,7 @@
       "t": "p"
     }
   ],
+  "94c20ff6b75d8acb": "Comment nous recueillons, utilisons et protégeons les informations personnelles.",
   "98b2679554f88edd": [
     {
       "c": "Créez une bibliothèque que vous aimerez vraiment",
@@ -76,6 +82,7 @@
       "t": "p"
     }
   ],
+  "a4ecc2d52fb9c50b": "Politique de confidentialité",
   "c26fd6852bfece9e": "Continuer avec Google",
   "cadd38da1bb28078": [
     {
@@ -88,5 +95,8 @@
       "i": 2,
       "t": "p"
     }
-  ]
+  ],
+  "e87d348b3dd99eca": "Mentions légales et politiques",
+  "f76f62457e672828": "Ces pages peuvent être mises à jour de temps à autre. La version figurant sur ce site est celle en vigueur lors de votre visite.",
+  "fee961fc81f1f189": "Règles relatives à l’utilisation du service, des comptes et à l’usage acceptable."
 }

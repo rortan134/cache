@@ -11,7 +11,10 @@
       "t": "p"
     }
   ],
+  "019869a6c0157892": "Nutzungsbedingungen",
   "0a54a0a5ac68344e": "Erweiterung herunterladen",
+  "0e0f0cb623f12ffc": "Cookies und ähnliche Technologien, die auf unseren Websites und in unseren Produkten verwendet werden.",
+  "11503a3d12f43fdd": "Offizielle Dokumente, die Ihre Beziehung zu uns regeln und erläutern, wie wir mit Daten umgehen. Wählen Sie unten ein Thema aus, um den vollständigen Text zu lesen.",
   "15833184c459d240": {
     "c": "Nutzungsbedingungen",
     "i": 1,
@@ -47,11 +50,13 @@
       "t": "p"
     }
   ],
+  "69a327815dc1270a": "Cookie-Richtlinie",
   "6c231374bfad8483": {
     "c": "Cookie-Richtlinie",
     "i": 1,
     "t": "p"
   },
+  "7721d8d00edabeda": "Abmeldung läuft …",
   "845a529bdfeb7a5e": [
     {
       "c": "Integrieren Sie jede Social-Media-Plattform",
@@ -64,6 +69,7 @@
       "t": "p"
     }
   ],
+  "94c20ff6b75d8acb": "Wie wir personenbezogene Daten erfassen, verwenden und schützen.",
   "98b2679554f88edd": [
     {
       "c": "Stellen Sie sich eine Bibliothek zusammen, die Sie lieben",
@@ -76,6 +82,7 @@
       "t": "p"
     }
   ],
+  "a4ecc2d52fb9c50b": "Datenschutzerklärung",
   "c26fd6852bfece9e": "Mit Google fortfahren",
   "cadd38da1bb28078": [
     {
@@ -88,5 +95,8 @@
       "i": 2,
       "t": "p"
     }
-  ]
+  ],
+  "e87d348b3dd99eca": "Rechtliches & Richtlinien",
+  "f76f62457e672828": "Diese Seiten können von Zeit zu Zeit aktualisiert werden. Es gilt die zum Zeitpunkt Ihres Besuchs auf dieser Website aktuelle Version.",
+  "fee961fc81f1f189": "Regeln für die Nutzung des Dienstes, für Konten und zur zulässigen Nutzung."
 }

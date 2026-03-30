@@ -3,7 +3,7 @@ import { getDefaultLocale, getLocales } from "gt-next/server";
 import type { MetadataRoute } from "next";
 
 /** Path segments after `/{locale}` that should be indexed. */
-const publicPaths = ["", "/library"] as const;
+const publicPaths = ["", "/library", "/legal"] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const locales = getLocales();

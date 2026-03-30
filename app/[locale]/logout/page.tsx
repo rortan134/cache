@@ -1,0 +1,23 @@
+import { gtPublicString } from "@/lib/gt-public-json";
+import type { Metadata } from "next";
+import { LogoutPageClient } from "./logout-page-client";
+
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+    const { locale } = await params;
+    return {
+        description: gtPublicString(
+            locale,
+            "logout.metadata.description",
+            "You are being signed out securely."
+        ),
+        title: gtPublicString(locale, "logout.metadata.title", "Sign out"),
+    };
+}
+
+export default function LogoutPage() {
+    return <LogoutPageClient />;
+}

@@ -11,7 +11,10 @@
       "t": "p"
     }
   ],
+  "019869a6c0157892": "Termos de Serviço",
   "0a54a0a5ac68344e": "Baixar a extensão",
+  "0e0f0cb623f12ffc": "Cookies e tecnologias semelhantes usados em nossos sites e produtos.",
+  "11503a3d12f43fdd": "Documentos oficiais que regem sua relação conosco e explicam como lidamos com dados. Escolha um tópico abaixo para ler o texto completo.",
   "15833184c459d240": {
     "c": "Termos de Serviço",
     "i": 1,
@@ -47,11 +50,13 @@
       "t": "p"
     }
   ],
+  "69a327815dc1270a": "Política de Cookies",
   "6c231374bfad8483": {
     "c": "Política de Cookies",
     "i": 1,
     "t": "p"
   },
+  "7721d8d00edabeda": "Saindo…",
   "845a529bdfeb7a5e": [
     {
       "c": "Integre qualquer plataforma de mídia social",
@@ -64,6 +69,7 @@
       "t": "p"
     }
   ],
+  "94c20ff6b75d8acb": "Como coletamos, usamos e protegemos informações pessoais.",
   "98b2679554f88edd": [
     {
       "c": "Monte uma biblioteca do seu jeito",
@@ -76,6 +82,7 @@
       "t": "p"
     }
   ],
+  "a4ecc2d52fb9c50b": "Política de Privacidade",
   "c26fd6852bfece9e": "Continuar com o Google",
   "cadd38da1bb28078": [
     {
@@ -88,5 +95,8 @@
       "i": 2,
       "t": "p"
     }
-  ]
+  ],
+  "e87d348b3dd99eca": "Jurídico e Políticas",
+  "f76f62457e672828": "Estas páginas podem ser atualizadas periodicamente. A versão publicada neste site é a válida no momento da sua visita.",
+  "fee961fc81f1f189": "Regras para usar o serviço, as contas e o uso aceitável."
 }

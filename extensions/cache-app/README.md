@@ -1,6 +1,6 @@
 # Cache App (Chrome extension)
 
-Manifest V3 extension that reads **Instagram Saved** on `https://www.instagram.com` and **TikTok Favorites (videos)** on `https://www.tiktok.com` while you are logged in. Metadata is stored in **`chrome.storage.local`**. It does not run on other sites.
+Manifest V3 extension that reads **Instagram Saved** on `https://www.instagram.com` and **TikTok Favorites (videos)** on `https://www.tiktok.com` while you are logged in. Metadata is stored in **`chrome.storage.local`**. It does not run on other social sites.
 
 ## Load unpacked
 
@@ -8,23 +8,31 @@ Manifest V3 extension that reads **Instagram Saved** on `https://www.instagram.c
 2. Enable **Developer mode**.
 3. **Load unpacked** → choose this folder (`extensions/cache-app`).
 
+## Point the extension at your deployment
+
+1. Edit **`cache-config.js`**: set `CACHE_APP_ORIGIN` to the same origin as `NEXT_PUBLIC_APP_URL` / `BETTER_AUTH_URL` (e.g. `https://your-domain.com` in production).
+2. Edit **`manifest.json`**:
+   - Add a `host_permissions` entry for that origin (e.g. `https://your-domain.com/*`).
+   - Duplicate the **Cache site** `content_scripts` block’s `matches` for that origin (same pattern as `http://localhost:3000/*`).
+3. Reload the extension in `chrome://extensions`.
+
+The **content script** `cache-site-bootstrap.js` runs only on those origins. It performs a same-origin `GET /api/user/extension-ingest-token` (session cookies included). The app creates an ingest token on first request if needed; the extension stores the token and ingest URL for the service worker.
+
 ## Use with the Cache web app
 
-1. **Sign in** to your Cache deployment in Chrome (same profile as the extension).
-2. Open **Library** (`/{locale}/library` while signed in).
-3. Click **Generate token** (or copy the existing token) and set **Sync endpoint URL** to your ingest URL, e.g. `https://your-app.com/api/integrations/instagram/saved`.
-4. Paste the token into extension **Options** as **Extension ingest token (Bearer)** and save (grant host permission if prompted).
-5. **Sync** stays disabled until a Better Auth **session cookie** exists for that URL’s origin. After signing in, reopen the popup (or focus it) so it can detect the cookie.
-6. On Instagram Saved or TikTok Favorites, click **Sync**. Local storage updates immediately; if Options are configured, each completed platform sync **POST**s to your app with `Authorization: Bearer <token>` and JSON `source` (`instagram` | `tiktok`) plus `items`.
+1. **Sign in** to Cache in Chrome (same profile as the extension).
+2. **Open any page** on your Cache origin (home, Library, etc.) so the bootstrap script can run once.
+3. **Sync** in the popup stays disabled until a Better Auth **session** cookie exists for `CACHE_APP_ORIGIN` **and** the bootstrap has stored a token. Reopen or focus the popup after step 2 if needed.
+4. On **Instagram → Saved** or **TikTok → Favorites**, click **Sync**. Local storage updates; each completed platform sync **POST**s to `/api/integrations/instagram/saved` with `Authorization: Bearer <token>` and JSON `source` (`instagram` | `tiktok`) plus `items`.
 
-**Open Cache** in the popup opens your app’s home at `/{defaultLocale}` derived from the sync URL origin (`en-US` if you use the default path).
+**Open Cache** opens `/{defaultLocale}` on `CACHE_APP_ORIGIN` (`en-US` in the popup).
 
-## Optional server sync
+## Server sync guardrails
 
-The service worker skips server POSTs when no Cache session cookie is present for the sync endpoint origin (same rule as the popup).
+The service worker skips server POSTs when there is no ingest token or no Cache session cookie for the POST URL’s origin (same idea as the popup).
 
 ## Privacy and limitations
 
 - **Personal / best-effort:** Instagram and TikTok UIs change often; selectors may need updates.
-- **Local by default:** Data stays in the browser; the server only receives what you configure.
+- **Account linking:** Visiting Cache while signed in is required so the extension can receive a token; Next.js client navigations after the first load may not re-run the script—refresh or open a new tab if the popup still asks you to visit Cache.
 - Respect each platform’s terms; use at your own risk.

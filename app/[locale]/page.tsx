@@ -1,10 +1,16 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Chrome } from "@/components/integration-icons";
 import { PageShell, PageSidebarShell } from "@/components/layouts";
+import {
+    SessionHint,
+    SignedInOnly,
+    SignedOutOnly,
+} from "@/components/shared/session";
+import { Button } from "@/components/ui/button";
+import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import QRCodeDownloadImage from "@/public/download-qrcode.png";
-import { gtPublicString } from "@/lib/gt-public-json";
 import { LocaleSelector, T } from "gt-next";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -94,16 +100,27 @@ export default async function Home({
                                     </p>
                                 </T>
                             </div>
-                            <GoogleSignInButton locale={locale}>
-                                <T context="Sign in/up CTA button">
-                                    Continue with Google
-                                </T>
-                            </GoogleSignInButton>
+                            <SignedOutOnly>
+                                <GoogleSignInButton locale={locale}>
+                                    <T context="Sign in/up CTA button">
+                                        Continue with Google
+                                    </T>
+                                </GoogleSignInButton>
+                            </SignedOutOnly>
+                            <SignedInOnly>
+                                <Button
+                                    render={
+                                        <Link href="/library">
+                                            Go to my library
+                                        </Link>
+                                    }
+                                />
+                            </SignedInOnly>
+                            <SessionHint />
                         </>
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                    {/* Main content */}
                     <div className="aspect-video h-auto w-full rounded-2xl bg-stone-200" />
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">

@@ -1,15 +1,17 @@
-import { ExtensionIngestPanel } from "@/components/library/extension-ingest-panel";
-import { ExtensionLibraryGrids } from "@/components/library/extension-library-grids";
 import { PageShell, PageSidebarShell } from "@/components/layouts";
+import { ExtensionLibraryGrids } from "@/components/library/extension-library-grids";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/server";
-import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
-import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { gtPublicString } from "@/lib/gt-public-json";
-import { prisma } from "@/prisma";
-import { headers } from "next/headers";
+import { INTEGRATIONS } from "@/lib/integrations/supports";
+import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
+import LogoIconImage from "@/public/cache-app-icon.png";
+import { LocaleSelector } from "gt-next";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Image from "next/image";
+import Link from "next/link";
 
 export async function generateMetadata({
     params,
@@ -23,19 +25,19 @@ export async function generateMetadata({
             "library.metadata.description",
             "Posts synced from the extension appear below by source."
         ),
-        title: gtPublicString(locale, "library.metadata.title", "Library"),
+        title: gtPublicString(locale, "library.metadata.title", "My library"),
     };
 }
 
 const EMPTY_SYNC_HINT =
-    "Run a sync from the Cache browser extension after setting your ingest URL and token. Items appear here after each successful server sync.";
+    "Sign in on the Cache site in this browser once (so the extension can link), then run a sync from the extension on Instagram Saved or TikTok Favorites. Items appear here after each successful sync.";
 
 export default async function LibraryPage({
     params,
 }: Readonly<{
     params: Promise<{ locale: string }>;
 }>) {
-    const { locale } = await params;
+    await params;
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -44,18 +46,21 @@ export default async function LibraryPage({
         return null;
     }
 
-    const [user, { instagram, tiktok }] = await Promise.all([
-        prisma.user.findUnique({
-            select: { extensionIngestToken: true },
-            where: { id: userId },
-        }),
-        getLibraryItemsForUser(userId),
-    ]);
+    const { instagram, tiktok } = await getLibraryItemsForUser(userId);
 
     return (
         <PageShell>
             <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
                 <PageSidebarShell
+                    bottom={
+                        <>
+                            <Button
+                                render={<Link href="/logout">Log out</Link>}
+                                variant="ghost"
+                            />
+                            <LocaleSelector />
+                        </>
+                    }
                     top={
                         <>
                             <Image
@@ -65,7 +70,7 @@ export default async function LibraryPage({
                                 height={50}
                                 loading="eager"
                                 priority
-                                src="/images/cache-app-icon.png"
+                                src={LogoIconImage}
                                 width={200}
                             />
                             <div className="flex flex-col gap-3 text-balance md:gap-4">
@@ -101,11 +106,11 @@ export default async function LibraryPage({
                                         )
                                     )}
                                 </ul>
+                                <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
+                                    Cache is most effective when two or more
+                                    accounts are connected.
+                                </p>
                             </div>
-                            <ExtensionIngestPanel
-                                locale={locale}
-                                token={user?.extensionIngestToken ?? null}
-                            />
                         </>
                     }
                 />
