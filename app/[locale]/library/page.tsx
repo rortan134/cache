@@ -2,14 +2,14 @@ import { ExtensionLibraryGrids } from "@/components/library/extension-library-gr
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth/server";
+import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector } from "gt-next";
+import { Info } from "lucide-react";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -32,16 +32,10 @@ export async function generateMetadata({
 const EMPTY_SYNC_HINT =
     "Sign in on the Cache site in this browser once (so the extension can link), then run a sync from the extension on Instagram Saved or TikTok Favorites. Items appear here after each successful sync.";
 
-export default async function LibraryPage({
-    params,
-}: Readonly<{
-    params: Promise<{ locale: string }>;
-}>) {
-    await params;
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+export default async function LibraryPage() {
+    const session = await getServerSession();
     const userId = session?.user?.id;
+
     if (!userId) {
         return null;
     }
@@ -63,30 +57,32 @@ export default async function LibraryPage({
                     }
                     top={
                         <>
-                            <Image
-                                alt="App Icon"
-                                className="block"
-                                fetchPriority="high"
-                                height={50}
-                                loading="eager"
-                                priority
-                                src={LogoIconImage}
-                                width={200}
-                            />
-                            <div className="flex flex-col gap-3 text-balance md:gap-4">
+                            <Link href="/library">
+                                <Image
+                                    alt="App Icon"
+                                    className="block"
+                                    fetchPriority="high"
+                                    height={50}
+                                    loading="eager"
+                                    priority
+                                    src={LogoIconImage}
+                                    width={200}
+                                />
+                            </Link>
+                            <div className="flex flex-col gap-2 text-balance md:gap-4">
                                 <span className="font-medium text-sm">
                                     Connected accounts
                                 </span>
-                                <ul className="flex flex-col gap-1">
+                                <ul className="flex flex-col gap-2">
                                     {INTEGRATIONS.map(
                                         ({ id, label, description, Icon }) => (
                                             <li key={id}>
                                                 <div className="flex items-center gap-3 rounded-xl py-2 pr-2">
                                                     <Avatar
                                                         aria-label={label}
-                                                        className="size-10 rounded-xl ring-1 ring-border/60"
+                                                        className="size-10 rounded-lg ring-1 ring-border/60"
                                                     >
-                                                        <AvatarFallback className="rounded-xl bg-card text-foreground">
+                                                        <AvatarFallback className="rounded-lg bg-card text-foreground">
                                                             <Icon
                                                                 aria-hidden
                                                                 className="size-5 shrink-0"
@@ -106,10 +102,13 @@ export default async function LibraryPage({
                                         )
                                     )}
                                 </ul>
-                                <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                    Cache is most effective when two or more
-                                    accounts are connected.
-                                </p>
+                                <div className="flex items-center gap-2">
+                                    <Info className="size-4 text-[#0A0B0D] opacity-50" />
+                                    <p className="font-medium text-[#0A0B0D] text-xs leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
+                                        Cache is most effective when two or more
+                                        accounts are connected.
+                                    </p>
+                                </div>
                             </div>
                         </>
                     }

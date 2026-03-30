@@ -2,8 +2,8 @@ import "@/lib/dayjs/locales";
 
 import { BASE_URL, SITE_APP_NAME, SITE_DEFAULT_TITLE } from "@/lib/constants";
 import { GTProvider, getLocale } from "gt-next/server";
-import { Inter } from "next/font/google";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import type * as React from "react";
 import "./globals.css";
 
@@ -43,6 +43,7 @@ export default async function RootLayout({
                 <NextChatSDKBootstrap baseUrl={BASE_URL} />
             </head>
             <body className="flex min-h-full flex-col">
+                <h1 className="sr-only">{SITE_APP_NAME}</h1>
                 <GTProvider>{children}</GTProvider>
             </body>
         </html>

@@ -208,7 +208,7 @@ export default async function Home({
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Create more actionable opportunities for
                                     yourself by having your most insightful
-                                    saved content on top of your mind.
+                                    saved content on top of mind.
                                 </p>
                             </T>
                         </div>
@@ -257,7 +257,7 @@ export default async function Home({
                                         </Link>
                                     </div>
                                 </div>
-                                <div className="col-span-full flex flex-col items-start justify-between font-sans text-[0.8rem] leading-[1.22] tracking-[-3%]">
+                                <div className="col-span-full flex flex-col items-start justify-between font-sans text-xs leading-[1.22] tracking-[-3%]">
                                     <span>
                                         <T context="Disclaimer">
                                             *Third-party platforms you connect
