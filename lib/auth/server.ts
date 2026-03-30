@@ -115,7 +115,7 @@ export const auth = betterAuth({
                 plans: [
                     {
                         annualDiscountPriceId: requiredEnv(
-                            "STRIPE_PRICE_ID_YEARLY",
+                            "STRIPE_PRICE_ID_YEARLY"
                         ),
                         name: "pro",
                         priceId: requiredEnv("STRIPE_PRICE_ID_MONTHLY"),

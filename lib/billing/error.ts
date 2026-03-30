@@ -9,5 +9,5 @@ export const StripeError = NamedError.create(
             .optional(),
         message: z.string(),
         operation: z.string(),
-    }),
+    })
 );

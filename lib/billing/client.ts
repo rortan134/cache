@@ -40,7 +40,7 @@ type WithStripeCallback<T> = (client: Stripe) => Promise<T> | T;
  * @throws {StripeError} If configuration is invalid
  */
 export const withStripe = async <T>(
-    callbackFn: WithStripeCallback<T>,
+    callbackFn: WithStripeCallback<T>
 ): Promise<T | null> => {
     try {
         if (!isStripeEnabled()) {
