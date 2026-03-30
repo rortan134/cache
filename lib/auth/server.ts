@@ -1,35 +1,13 @@
-import type { OAuth2Tokens } from "@better-auth/core/oauth2";
 import { stripe } from "@better-auth/stripe";
 import { prisma } from "@/prisma";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { genericOAuth } from "better-auth/plugins";
 import Stripe from "stripe";
 
-function requiredEnv(name: string): string {
-    const value = process.env[name];
-    if (value === undefined || value === "") {
-        throw new Error(`Missing required environment variable: ${name}`);
-    }
-    return value;
-}
-
-const baseURL =
-    process.env.BETTER_AUTH_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000";
-
-const trustedOrigins = [
-    baseURL,
-    ...(process.env.TRUSTED_ORIGINS?.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean) ?? []),
-];
-
-const stripeBillingClient = new Stripe(requiredEnv("STRIPE_SECRET_KEY"), {
-    apiVersion: "2026-03-25.dahlia",
-});
+/* Pinterest generic OAuth — disabled until Pinterest app approval.
+import type { OAuth2Tokens } from "@better-auth/core/oauth2";
+import { genericOAuth } from "better-auth/plugins";
 
 interface PinterestUserAccount {
     id?: string;
@@ -69,24 +47,7 @@ async function pinterestUserFromTokens(tokens: OAuth2Tokens): Promise<{
     };
 }
 
-export const auth = betterAuth({
-    account: {
-        accountLinking: {
-            allowDifferentEmails: true,
-            enabled: true,
-            trustedProviders: ["google", "pinterest"],
-        },
-    },
-    appName: "Cache",
-    baseURL,
-    database: prismaAdapter(prisma, {
-        provider: "postgresql",
-    }),
-    emailAndPassword: {
-        enabled: false,
-    },
-    plugins: [
-        nextCookies(),
+Then add to plugins after nextCookies():
         genericOAuth({
             config: [
                 {
@@ -103,6 +64,52 @@ export const auth = betterAuth({
                 },
             ],
         }),
+And set trustedProviders to ["google", "pinterest"].
+Also restore genericOAuthClient() in lib/auth/client.ts.
+*/
+
+function requiredEnv(name: string): string {
+    const value = process.env[name];
+    if (value === undefined || value === "") {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+    return value;
+}
+
+const baseURL =
+    process.env.BETTER_AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000";
+
+const trustedOrigins = [
+    baseURL,
+    ...(process.env.TRUSTED_ORIGINS?.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean) ?? []),
+];
+
+const stripeBillingClient = new Stripe(requiredEnv("STRIPE_SECRET_KEY"), {
+    apiVersion: "2026-03-25.dahlia",
+});
+
+export const auth = betterAuth({
+    account: {
+        accountLinking: {
+            allowDifferentEmails: true,
+            enabled: true,
+            trustedProviders: ["google"],
+        },
+    },
+    appName: "Cache",
+    baseURL,
+    database: prismaAdapter(prisma, {
+        provider: "postgresql",
+    }),
+    emailAndPassword: {
+        enabled: false,
+    },
+    plugins: [
+        nextCookies(),
         stripe({
             createCustomerOnSignUp: true,
             stripeClient: stripeBillingClient,

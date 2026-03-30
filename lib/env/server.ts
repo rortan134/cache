@@ -18,8 +18,9 @@ export const serverEnv = createEnv({
         GT_API_KEY: z.string(),
         GT_PROJECT_ID: z.string(),
 
-        PINTEREST_CLIENT_ID: z.string().optional(),
-        PINTEREST_CLIENT_SECRET: z.string().optional(),
+        // Pinterest — re-enable when API approved
+        // PINTEREST_CLIENT_ID: z.string().optional(),
+        // PINTEREST_CLIENT_SECRET: z.string().optional(),
 
         STRIPE_PRICE_ID_MONTHLY: z.string().startsWith("price_"), // Stripe price ID for monthly subscription
         STRIPE_PRICE_ID_YEARLY: z.string().startsWith("price_"), // Stripe price ID for yearly subscription

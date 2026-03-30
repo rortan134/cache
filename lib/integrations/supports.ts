@@ -1,7 +1,7 @@
 import {
     Instagram,
     Photos,
-    Pinterest,
+    // Pinterest, // disabled until Pinterest API approval
     TikTok,
 } from "@/components/integration-icons";
 import type { ComponentType, SVGProps } from "react";
@@ -13,7 +13,7 @@ export type IntegrationIcon = ComponentType<SVGProps<SVGSVGElement>>;
 export type IntegrationId =
     | "google-photos"
     | "instagram"
-    | "pinterest"
+    // | "pinterest" // disabled until Pinterest API approval
     | "tiktok";
 
 export interface SupportedIntegration {
@@ -52,14 +52,15 @@ export const INTEGRATIONS = [
         id: "google-photos",
         label: "Google Photos",
     },
-    {
-        capabilities: { bookmarks: true },
-        category: "social",
-        description: "Pins you save to boards.",
-        Icon: Pinterest,
-        id: "pinterest",
-        label: "Pinterest",
-    },
+    // Pinterest — disabled until API approval
+    // {
+    //     capabilities: { bookmarks: true },
+    //     category: "social",
+    //     description: "Pins you save to boards.",
+    //     Icon: Pinterest,
+    //     id: "pinterest",
+    //     label: "Pinterest",
+    // },
 ] satisfies readonly SupportedIntegration[];
 
 const INTEGRATION_BY_ID = new Map<IntegrationId, SupportedIntegration>(
