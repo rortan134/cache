@@ -1,6 +1,7 @@
 "use client";
 
 import { ExtensionLibraryGrid } from "@/components/library/extension-library-grid";
+import { Button } from "@/components/ui/button";
 import {
     Command,
     CommandCollection,
@@ -13,9 +14,15 @@ import {
     CommandPanel,
 } from "@/components/ui/command";
 import { useSearchQuery } from "@/hooks/use-search-query";
+import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { XIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+
+/** Base UI combobox close reason when an item is activated (inline mode still emits this). */
+const COMBOBOX_ITEM_PRESS_REASON = "item-press";
 
 type GroupByMode = "none" | "source" | "domain" | "month";
 
@@ -74,6 +81,163 @@ function formatGroupHeading(mode: GroupByMode, key: string): string {
     return key;
 }
 
+/** Inner field: pill chrome lives on CommandInput wrapper. */
+const libraryCommandFieldClassName =
+    "rounded-none border-0 !bg-transparent shadow-none ring-0 outline-none before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0";
+
+const libraryCommandBarClassName =
+    "min-h-10 w-full max-w-md rounded-full bg-muted px-2 py-1.5 ring-1 ring-border/40 dark:ring-border/50";
+
+function PaletteChip({
+    label,
+    onRemove,
+}: {
+    readonly label: string;
+    readonly onRemove: () => void;
+}) {
+    return (
+        <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-0.5 rounded-md border border-border/60 bg-background/90 py-0.5 ps-2 pe-0.5 font-medium text-foreground text-xs shadow-xs/5 dark:bg-background/40">
+            <span className="min-w-0 truncate">{label}</span>
+            <button
+                aria-label={`Remove ${label}`}
+                className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition hover:bg-muted/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRemove();
+                }}
+                type="button"
+            >
+                <XIcon className="size-3.5 shrink-0 opacity-80" />
+            </button>
+        </span>
+    );
+}
+
+function sourceFilterChipLabel(source: SourceFilter): string | null {
+    if (source === "all") {
+        return null;
+    }
+    if (source === LibraryItemSource.instagram) {
+        return "Instagram";
+    }
+    if (source === LibraryItemSource.tiktok) {
+        return "TikTok";
+    }
+    return "Other";
+}
+
+function groupByChipLabel(mode: GroupByMode): string | null {
+    if (mode === "none") {
+        return null;
+    }
+    if (mode === "source") {
+        return "Source";
+    }
+    if (mode === "domain") {
+        return "Domain";
+    }
+    return "Month";
+}
+
+function LibraryPaletteTrailing({
+    clearLibraryPalette,
+    groupBy,
+    paletteInput,
+    searchQuery,
+    setGroupBy,
+    setSearchQuery,
+    setSourceFilter,
+    setThumbFilter,
+    sourceFilter,
+    thumbFilter,
+}: {
+    readonly clearLibraryPalette: () => Promise<void>;
+    readonly groupBy: GroupByMode;
+    readonly paletteInput: string;
+    readonly searchQuery: string;
+    readonly setGroupBy: (value: GroupByMode) => void;
+    readonly setSearchQuery: (value: null) => Promise<unknown>;
+    readonly setSourceFilter: (value: SourceFilter) => void;
+    readonly setThumbFilter: (value: ThumbnailFilter) => void;
+    readonly sourceFilter: SourceFilter;
+    readonly thumbFilter: ThumbnailFilter;
+}) {
+    const chips: ReactNode[] = [];
+    const q = searchQuery.trim();
+    if (q) {
+        const short = q.length > 22 ? `${q.slice(0, 22)}…` : q;
+        chips.push(
+            <PaletteChip
+                key="search"
+                label={`Search: ${short}`}
+                onRemove={() => {
+                    setSearchQuery(null).catch(() => undefined);
+                }}
+            />
+        );
+    }
+    const sourceLabel = sourceFilterChipLabel(sourceFilter);
+    if (sourceLabel) {
+        chips.push(
+            <PaletteChip
+                key="source"
+                label={`Source: ${sourceLabel}`}
+                onRemove={() => setSourceFilter("all")}
+            />
+        );
+    }
+    if (thumbFilter === "with") {
+        chips.push(
+            <PaletteChip
+                key="thumb"
+                label="With preview"
+                onRemove={() => setThumbFilter("any")}
+            />
+        );
+    } else if (thumbFilter === "without") {
+        chips.push(
+            <PaletteChip
+                key="thumb"
+                label="Without preview"
+                onRemove={() => setThumbFilter("any")}
+            />
+        );
+    }
+    const groupLabel = groupByChipLabel(groupBy);
+    if (groupLabel) {
+        chips.push(
+            <PaletteChip
+                key="group"
+                label={`Group: ${groupLabel}`}
+                onRemove={() => setGroupBy("none")}
+            />
+        );
+    }
+
+    const canReset = chips.length > 0 || paletteInput.trim().length > 0;
+
+    return (
+        <>
+            {chips}
+            {canReset ? (
+                <Button
+                    aria-label="Clear search, filters, grouping, and command input"
+                    className="size-8 shrink-0 rounded-full text-muted-foreground sm:size-7"
+                    onClick={() => {
+                        clearLibraryPalette().catch(() => undefined);
+                    }}
+                    size="icon-sm"
+                    type="button"
+                    variant="ghost"
+                >
+                    <XIcon className="size-4 opacity-80 sm:size-3.5" />
+                </Button>
+            ) : null}
+        </>
+    );
+}
+
 interface Props {
     readonly items: LibraryItem[];
 }
@@ -88,15 +252,73 @@ export function LibraryBrowser({ items }: Props) {
         useState<PaletteSection>("search");
     const [commandListOpen, setCommandListOpen] = useState(false);
     const commandPanelContainerRef = useRef<HTMLDivElement>(null);
+    /** Skips one combobox-driven close right after entering filter/group drill-down. */
+    const suppressNextCommandCloseRef = useRef(false);
 
-    useEffect(() => {
+    const handleCommandOpenChange = useCallback(
+        (nextOpen: boolean, eventDetails?: { readonly reason?: string }) => {
+            setCommandListOpen(() => {
+                if (!nextOpen && suppressNextCommandCloseRef.current) {
+                    suppressNextCommandCloseRef.current = false;
+                    return true;
+                }
+
+                if (!nextOpen) {
+                    const shell = commandPanelContainerRef.current;
+                    const active = document.activeElement;
+                    const focusInsidePalette =
+                        shell &&
+                        active instanceof Node &&
+                        shell.contains(active);
+                    const reason = eventDetails?.reason;
+
+                    // Inline autocomplete always requests close on item pick; keep the list
+                    // visible while focus stays in the palette so the field matches the list.
+                    if (
+                        focusInsidePalette &&
+                        reason === COMBOBOX_ITEM_PRESS_REASON
+                    ) {
+                        return true;
+                    }
+                }
+
+                if (nextOpen) {
+                    suppressNextCommandCloseRef.current = false;
+                }
+
+                return nextOpen;
+            });
+        },
+        []
+    );
+
+    const handlePaletteShellPointerDownCapture = useCallback(
+        (event: React.PointerEvent<HTMLDivElement>) => {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+            if (!target.closest("[data-library-command-field]")) {
+                return;
+            }
+            if (target.closest("[data-library-palette-trailing]")) {
+                return;
+            }
+            setCommandListOpen(true);
+        },
+        []
+    );
+
+    useLayoutEffect(() => {
         const el = commandPanelContainerRef.current;
         if (!el) {
             return;
         }
 
-        const handleFocusIn = () => {
-            setCommandListOpen(true);
+        const handleFocusIn = (event: globalThis.FocusEvent) => {
+            if (event.target instanceof HTMLInputElement) {
+                setCommandListOpen(true);
+            }
         };
 
         const handleFocusOut = (event: globalThis.FocusEvent) => {
@@ -104,11 +326,13 @@ export function LibraryBrowser({ items }: Props) {
             if (relatedTarget instanceof Node && el.contains(relatedTarget)) {
                 return;
             }
-            queueMicrotask(() => {
+            const closeIfLeft = () => {
                 if (!el.contains(document.activeElement)) {
                     setCommandListOpen(false);
                 }
-            });
+            };
+            queueMicrotask(closeIfLeft);
+            window.setTimeout(closeIfLeft, 0);
         };
 
         el.addEventListener("focusin", handleFocusIn);
@@ -123,6 +347,16 @@ export function LibraryBrowser({ items }: Props) {
         setPaletteInput(next);
         setCommandListOpen(true);
     }, []);
+
+    const clearLibraryPalette = useCallback(async () => {
+        setPaletteInput("");
+        setSourceFilter("all");
+        setThumbFilter("any");
+        setGroupBy("none");
+        setPaletteSection("search");
+        await setSearchQuery(null);
+        setCommandListOpen(false);
+    }, [setSearchQuery]);
 
     const {
         commandItemGroups,
@@ -154,40 +388,66 @@ export function LibraryBrowser({ items }: Props) {
             });
         }
 
+        const leaveDrillDownAfterApply = () => {
+            setPaletteSection("search");
+            setPaletteInput("");
+        };
+
         const nextFilterItems: CommandPaletteItem[] = [
             {
                 label: "Filter by: All sources",
-                onSelect: () => setSourceFilter("all"),
+                onSelect: () => {
+                    setSourceFilter("all");
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter by all sources",
             },
             {
                 label: "Filter by: Instagram",
-                onSelect: () => setSourceFilter(LibraryItemSource.instagram),
+                onSelect: () => {
+                    setSourceFilter(LibraryItemSource.instagram);
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter by instagram source",
             },
             {
                 label: "Filter by: TikTok",
-                onSelect: () => setSourceFilter(LibraryItemSource.tiktok),
+                onSelect: () => {
+                    setSourceFilter(LibraryItemSource.tiktok);
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter by tiktok source",
             },
             {
                 label: "Filter by: Other",
-                onSelect: () => setSourceFilter(LibraryItemSource.other),
+                onSelect: () => {
+                    setSourceFilter(LibraryItemSource.other);
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter by other source",
             },
             {
                 label: "Filter by: Any preview",
-                onSelect: () => setThumbFilter("any"),
+                onSelect: () => {
+                    setThumbFilter("any");
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter preview any thumbnail",
             },
             {
                 label: "Filter by: With preview",
-                onSelect: () => setThumbFilter("with"),
+                onSelect: () => {
+                    setThumbFilter("with");
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter preview with thumbnail",
             },
             {
                 label: "Filter by: Without preview",
-                onSelect: () => setThumbFilter("without"),
+                onSelect: () => {
+                    setThumbFilter("without");
+                    leaveDrillDownAfterApply();
+                },
                 value: "filter preview without thumbnail",
             },
         ];
@@ -195,22 +455,34 @@ export function LibraryBrowser({ items }: Props) {
         const nextGroupItems: CommandPaletteItem[] = [
             {
                 label: "Group by: None",
-                onSelect: () => setGroupBy("none"),
+                onSelect: () => {
+                    setGroupBy("none");
+                    leaveDrillDownAfterApply();
+                },
                 value: "group by none flat list",
             },
             {
                 label: "Group by: Source",
-                onSelect: () => setGroupBy("source"),
+                onSelect: () => {
+                    setGroupBy("source");
+                    leaveDrillDownAfterApply();
+                },
                 value: "group by source integration",
             },
             {
                 label: "Group by: Domain",
-                onSelect: () => setGroupBy("domain"),
+                onSelect: () => {
+                    setGroupBy("domain");
+                    leaveDrillDownAfterApply();
+                },
                 value: "group by domain hostname",
             },
             {
                 label: "Group by: Month",
-                onSelect: () => setGroupBy("month"),
+                onSelect: () => {
+                    setGroupBy("month");
+                    leaveDrillDownAfterApply();
+                },
                 value: "group by month scraped",
             },
         ];
@@ -228,16 +500,24 @@ export function LibraryBrowser({ items }: Props) {
             {
                 label: "Filter by…",
                 onSelect: () => {
+                    suppressNextCommandCloseRef.current = true;
                     setPaletteSection("filter");
                     setPaletteInput("");
+                    queueMicrotask(() => {
+                        setCommandListOpen(true);
+                    });
                 },
                 value: "mode open filter options refine library",
             },
             {
                 label: "Group by…",
                 onSelect: () => {
+                    suppressNextCommandCloseRef.current = true;
                     setPaletteSection("group");
                     setPaletteInput("");
+                    queueMicrotask(() => {
+                        setCommandListOpen(true);
+                    });
                 },
                 value: "mode open group options organize library",
             },
@@ -287,7 +567,7 @@ export function LibraryBrowser({ items }: Props) {
 
     let inputPlaceholder = "Group…";
     if (paletteSection === "search") {
-        inputPlaceholder = "Search library…";
+        inputPlaceholder = "Type to search or filter…";
     } else if (paletteSection === "filter") {
         inputPlaceholder = "Filter…";
     }
@@ -347,27 +627,74 @@ export function LibraryBrowser({ items }: Props) {
 
     return (
         <div className="flex w-full flex-col gap-8">
-            <div className="w-full max-w-xl" ref={commandPanelContainerRef}>
-                <CommandPanel className="w-full">
+            <div
+                className="w-full max-w-xl"
+                onPointerDownCapture={handlePaletteShellPointerDownCapture}
+                ref={commandPanelContainerRef}
+            >
+                <CommandPanel className="w-full" unstyled>
                     <Command
                         items={commandItemGroups}
-                        onOpenChange={setCommandListOpen}
+                        onOpenChange={handleCommandOpenChange}
                         onValueChange={handlePaletteInputChange}
                         open={commandListOpen}
                         value={paletteInput}
                     >
                         <CommandInput
                             autoFocus={false}
+                            className={libraryCommandFieldClassName}
                             placeholder={inputPlaceholder}
+                            trailing={
+                                <LibraryPaletteTrailing
+                                    clearLibraryPalette={clearLibraryPalette}
+                                    groupBy={groupBy}
+                                    paletteInput={paletteInput}
+                                    searchQuery={searchQuery}
+                                    setGroupBy={setGroupBy}
+                                    setSearchQuery={setSearchQuery}
+                                    setSourceFilter={setSourceFilter}
+                                    setThumbFilter={setThumbFilter}
+                                    sourceFilter={sourceFilter}
+                                    thumbFilter={thumbFilter}
+                                />
+                            }
+                            wrapperClassName={libraryCommandBarClassName}
                         />
-                        <CommandEmpty>No results found.</CommandEmpty>
-                        <CommandList>
-                            {paletteSection === "search" ? (
-                                <>
-                                    {searchItems.length > 0 ? (
-                                        <CommandGroup items={searchItems}>
+                        <div
+                            className={cn(
+                                !commandListOpen && "hidden",
+                                "mt-2 max-w-md overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-sm"
+                            )}
+                        >
+                            <CommandEmpty>No results found.</CommandEmpty>
+                            <CommandList>
+                                {paletteSection === "search" ? (
+                                    <>
+                                        {searchItems.length > 0 ? (
+                                            <CommandGroup items={searchItems}>
+                                                <CommandGroupLabel>
+                                                    Search
+                                                </CommandGroupLabel>
+                                                <CommandCollection>
+                                                    {(
+                                                        item: CommandPaletteItem
+                                                    ) => (
+                                                        <CommandItem
+                                                            key={item.value}
+                                                            onClick={
+                                                                item.onSelect
+                                                            }
+                                                            value={item.value}
+                                                        >
+                                                            {item.label}
+                                                        </CommandItem>
+                                                    )}
+                                                </CommandCollection>
+                                            </CommandGroup>
+                                        ) : null}
+                                        <CommandGroup items={modeNavItems}>
                                             <CommandGroupLabel>
-                                                Search
+                                                Refine library
                                             </CommandGroupLabel>
                                             <CommandCollection>
                                                 {(item: CommandPaletteItem) => (
@@ -381,10 +708,12 @@ export function LibraryBrowser({ items }: Props) {
                                                 )}
                                             </CommandCollection>
                                         </CommandGroup>
-                                    ) : null}
-                                    <CommandGroup items={modeNavItems}>
+                                    </>
+                                ) : null}
+                                {paletteSection === "filter" ? (
+                                    <CommandGroup items={filterPaletteItems}>
                                         <CommandGroupLabel>
-                                            Refine library
+                                            Filter by…
                                         </CommandGroupLabel>
                                         <CommandCollection>
                                             {(item: CommandPaletteItem) => (
@@ -398,49 +727,30 @@ export function LibraryBrowser({ items }: Props) {
                                             )}
                                         </CommandCollection>
                                     </CommandGroup>
-                                </>
-                            ) : null}
-                            {paletteSection === "filter" ? (
-                                <CommandGroup items={filterPaletteItems}>
-                                    <CommandGroupLabel>
-                                        Filter by…
-                                    </CommandGroupLabel>
-                                    <CommandCollection>
-                                        {(item: CommandPaletteItem) => (
-                                            <CommandItem
-                                                key={item.value}
-                                                onClick={item.onSelect}
-                                                value={item.value}
-                                            >
-                                                {item.label}
-                                            </CommandItem>
-                                        )}
-                                    </CommandCollection>
-                                </CommandGroup>
-                            ) : null}
-                            {paletteSection === "group" ? (
-                                <CommandGroup items={groupPaletteItems}>
-                                    <CommandGroupLabel>
-                                        Group by…
-                                    </CommandGroupLabel>
-                                    <CommandCollection>
-                                        {(item: CommandPaletteItem) => (
-                                            <CommandItem
-                                                key={item.value}
-                                                onClick={item.onSelect}
-                                                value={item.value}
-                                            >
-                                                {item.label}
-                                            </CommandItem>
-                                        )}
-                                    </CommandCollection>
-                                </CommandGroup>
-                            ) : null}
-                        </CommandList>
+                                ) : null}
+                                {paletteSection === "group" ? (
+                                    <CommandGroup items={groupPaletteItems}>
+                                        <CommandGroupLabel>
+                                            Group by…
+                                        </CommandGroupLabel>
+                                        <CommandCollection>
+                                            {(item: CommandPaletteItem) => (
+                                                <CommandItem
+                                                    key={item.value}
+                                                    onClick={item.onSelect}
+                                                    value={item.value}
+                                                >
+                                                    {item.label}
+                                                </CommandItem>
+                                            )}
+                                        </CommandCollection>
+                                    </CommandGroup>
+                                ) : null}
+                            </CommandList>
+                        </div>
                     </Command>
                 </CommandPanel>
             </div>
-
             <div className="flex w-full flex-col gap-10">
                 {sections.map((section) => (
                     <div

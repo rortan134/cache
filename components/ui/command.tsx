@@ -1,10 +1,6 @@
 "use client";
 
 export { Dialog as CommandDialogPrimitive } from "@base-ui/react/dialog";
-import { Dialog as CommandDialogPrimitive } from "@base-ui/react/dialog";
-import { SearchIcon } from "lucide-react";
-import type * as React from "react";
-import { cn } from "@/lib/utils";
 import {
     Autocomplete,
     AutocompleteCollection,
@@ -16,6 +12,10 @@ import {
     AutocompleteList,
     AutocompleteSeparator,
 } from "@/components/ui/autocomplete";
+import { cn } from "@/lib/utils";
+import { Dialog as CommandDialogPrimitive } from "@base-ui/react/dialog";
+import { SearchIcon } from "lucide-react";
+import type * as React from "react";
 
 export const CommandDialog: typeof CommandDialogPrimitive.Root =
     CommandDialogPrimitive.Root;
@@ -113,21 +113,56 @@ export function CommandInput({
     autoFocus = true,
     className,
     placeholder = undefined,
+    trailing,
+    wrapperClassName,
     ...props
-}: React.ComponentProps<typeof AutocompleteInput>): React.ReactElement {
-    return (
-        <div className="px-2.5 py-1.5">
-            <AutocompleteInput
-                autoFocus={autoFocus}
+}: React.ComponentProps<typeof AutocompleteInput> & {
+    /** Padding around the field; default matches dialog command palettes. */
+    readonly wrapperClassName?: string;
+    /** Renders after the field (e.g. chips + clear). Enables a horizontal flex layout. */
+    readonly trailing?: React.ReactNode;
+}): React.ReactElement {
+    const field = (
+        <AutocompleteInput
+            autoFocus={autoFocus}
+            className={cn(
+                "border-transparent! bg-transparent! shadow-none before:hidden has-focus-visible:ring-0",
+                className
+            )}
+            placeholder={placeholder}
+            size="lg"
+            startAddon={<SearchIcon className="opacity-50" />}
+            {...props}
+        />
+    );
+
+    if (trailing) {
+        return (
+            <div
                 className={cn(
-                    "border-transparent! bg-transparent! shadow-none before:hidden has-focus-visible:ring-0",
-                    className
+                    "flex min-w-0 items-center gap-1.5",
+                    wrapperClassName
                 )}
-                placeholder={placeholder}
-                size="lg"
-                startAddon={<SearchIcon />}
-                {...props}
-            />
+            >
+                <div className="min-w-0 flex-1" data-library-command-field="">
+                    {field}
+                </div>
+                <div
+                    className="flex shrink-0 flex-wrap items-center justify-end gap-1"
+                    data-library-palette-trailing=""
+                >
+                    {trailing}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className={cn("px-2.5 py-1.5", wrapperClassName)}
+            data-library-command-field=""
+        >
+            {field}
         </div>
     );
 }
@@ -160,12 +195,22 @@ export function CommandEmpty({
 
 export function CommandPanel({
     className,
+    unstyled = false,
     ...props
-}: React.ComponentProps<"div">): React.ReactElement {
+}: React.ComponentProps<"div"> & {
+    /**
+     * When true, skips popover shell (border, shadow, bg-popover) for inline
+     * page-embedded command fields.
+     */
+    readonly unstyled?: boolean;
+}): React.ReactElement {
     return (
         <div
             className={cn(
-                "relative -mx-px not-has-[+[data-slot=command-footer]]:-mb-px min-h-0 rounded-t-xl not-has-[+[data-slot=command-footer]]:rounded-b-2xl border border-b-0 bg-popover bg-clip-padding shadow-xs/5 [clip-path:inset(0_1px)] not-has-[+[data-slot=command-footer]]:[clip-path:inset(0_1px_1px_1px_round_0_0_calc(var(--radius-2xl)-1px)_calc(var(--radius-2xl)-1px))] before:pointer-events-none before:absolute before:inset-0 before:rounded-t-[calc(var(--radius-xl)-1px)] **:data-[slot=scroll-area-scrollbar]:mt-2",
+                !unstyled &&
+                    "relative -mx-px not-has-[+[data-slot=command-footer]]:-mb-px min-h-0 rounded-t-xl not-has-[+[data-slot=command-footer]]:rounded-b-2xl border border-b-0 bg-popover bg-clip-padding shadow-xs/5 [clip-path:inset(0_1px)] not-has-[+[data-slot=command-footer]]:[clip-path:inset(0_1px_1px_1px_round_0_0_calc(var(--radius-2xl)-1px)_calc(var(--radius-2xl)-1px))] before:pointer-events-none before:absolute before:inset-0 before:rounded-t-[calc(var(--radius-xl)-1px)] **:data-[slot=scroll-area-scrollbar]:mt-2",
+                unstyled &&
+                    "relative min-h-0 w-full border-0 bg-transparent p-0 shadow-none before:hidden",
                 className
             )}
             {...props}

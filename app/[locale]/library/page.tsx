@@ -1,5 +1,5 @@
 import { LibraryBrowser } from "@/components/library/library-browser";
-import { IntegrationSetupHeading } from "@/components/library/wizard-setup";
+import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector } from "gt-next";
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,13 +32,15 @@ export async function generateMetadata({
 
 export default async function LibraryPage() {
     const session = await getServerSession();
-    const userId = session?.user?.id;
+    const _userId = session?.user?.id;
 
-    if (!userId) {
-        return null;
-    }
+    // if (!_userId) {
+    //     return redirect("/");
+    // }
 
-    const { items } = await getLibraryItemsForUser(userId);
+    const { items } = await getLibraryItemsForUser(
+        "6Mm0Hj1SqT1oACJONhDpMQ1USibha4Fd"
+    );
 
     return (
         <PageShell>
@@ -47,17 +50,19 @@ export default async function LibraryPage() {
                         <>
                             <Button
                                 render={<Link href="/logout">Log out</Link>}
-                                variant="ghost"
+                                size="xs"
+                                variant="link"
                             />
                             <LocaleSelector />
                         </>
                     }
                     top={
                         <>
-                            <Link href="/library">
+                            <Link draggable={false} href="/library">
                                 <Image
                                     alt="App Icon"
-                                    className="block"
+                                    className="block select-none"
+                                    draggable={false}
                                     fetchPriority="high"
                                     height={50}
                                     loading="eager"
@@ -66,13 +71,13 @@ export default async function LibraryPage() {
                                     width={200}
                                 />
                             </Link>
-                            <div className="flex flex-col gap-2 text-balance md:gap-4">
+                            <div className="flex flex-col gap-3 text-balance">
                                 <IntegrationSetupHeading items={items} />
                                 <ul className="flex flex-col gap-1">
                                     {INTEGRATIONS.map(
                                         ({ id, label, description, Icon }) => (
                                             <li key={id}>
-                                                <div className="flex items-center gap-3 rounded-xl py-2 pr-2">
+                                                <div className="flex items-center gap-2 rounded-xl py-2 pr-2">
                                                     <Avatar
                                                         aria-label={label}
                                                         className="size-10 rounded-lg ring-1 ring-border/60"
@@ -92,6 +97,18 @@ export default async function LibraryPage() {
                                                             {description}
                                                         </span>
                                                     </div>
+                                                    <Button
+                                                        className="ml-auto"
+                                                        size="sm"
+                                                        variant="ghost"
+                                                    >
+                                                        <Plus
+                                                            aria-hidden
+                                                            className="size-4"
+                                                            focusable="false"
+                                                        />
+                                                        Connect
+                                                    </Button>
                                                 </div>
                                             </li>
                                         )

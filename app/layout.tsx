@@ -1,6 +1,7 @@
 import "@/lib/dayjs/locales";
 
 import { BASE_URL, SITE_APP_NAME, SITE_DEFAULT_TITLE } from "@/lib/constants";
+import { Analytics } from "@vercel/analytics/next";
 import { GTProvider, getLocale } from "gt-next/server";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -45,6 +46,7 @@ export default async function RootLayout({
             <body className="flex min-h-full flex-col">
                 <h1 className="sr-only">{SITE_APP_NAME}</h1>
                 <GTProvider>{children}</GTProvider>
+                <Analytics />
             </body>
         </html>
     );

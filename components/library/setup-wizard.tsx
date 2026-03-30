@@ -66,7 +66,7 @@ function integrationSetupHeadingText(args: {
         return "Connected accounts";
     }
     if (connectedCount === 0) {
-        return "Get started by connecting your first account";
+        return "Get setup with your first account";
     }
     if (connectedCount < syncable) {
         return `Connect ${formatEnglishList(missingLabels)} to unify your saved posts in one library`;
@@ -97,7 +97,7 @@ export function IntegrationSetupHeading({
     );
 
     return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 rounded-full bg-muted/90 px-2.5 py-1.5">
             <span aria-hidden="true" className="shrink-0 leading-none">
                 <RadialChart size={36} value={progressPercent} />
             </span>

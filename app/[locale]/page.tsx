@@ -78,17 +78,20 @@ export default async function Home({
                     }
                     top={
                         <>
-                            <Image
-                                alt="App Icon"
-                                className="block"
-                                fetchPriority="high"
-                                height={50}
-                                loading="eager"
-                                priority
-                                src={LogoIconImage}
-                                width={200}
-                            />
-                            <div className="flex flex-col gap-2 text-balance md:gap-4">
+                            <Link draggable={false} href="/library">
+                                <Image
+                                    alt="App Icon"
+                                    className="block select-none"
+                                    draggable={false}
+                                    fetchPriority="high"
+                                    height={50}
+                                    loading="eager"
+                                    priority
+                                    src={LogoIconImage}
+                                    width={200}
+                                />
+                            </Link>
+                            <div className="flex flex-col gap-3 text-balance">
                                 <T>
                                     <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
                                         Unify your bookmarks.
