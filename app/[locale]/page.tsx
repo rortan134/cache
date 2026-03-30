@@ -114,6 +114,7 @@ export default async function Home({
                                             Go to my library
                                         </Link>
                                     }
+                                    size="lg"
                                 />
                             </SignedInOnly>
                             <SessionHint />

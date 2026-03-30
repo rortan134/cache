@@ -115,15 +115,6 @@ export default async function LibraryPage({
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                    <div className="flex w-full flex-col gap-2">
-                        <h1 className="font-semibold text-2xl tracking-tight">
-                            Library
-                        </h1>
-                        <p className="max-w-prose text-muted-foreground text-sm leading-relaxed">
-                            Posts synced from the extension appear below by
-                            source.
-                        </p>
-                    </div>
                     <ExtensionLibraryGrids
                         emptyHint={EMPTY_SYNC_HINT}
                         instagram={instagram}

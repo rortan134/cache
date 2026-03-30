@@ -75,6 +75,7 @@ export function GoogleSignInButton({
                 className="border border-[#747775] bg-white text-[#1f1f1f] shadow-xs hover:bg-[#f8f9fa] dark:border-input dark:bg-popover dark:text-foreground dark:hover:bg-accent/50"
                 loading={loading}
                 onClick={handleSignIn}
+                size="lg"
                 type="button"
                 variant="outline"
             >
@@ -82,7 +83,11 @@ export function GoogleSignInButton({
                 {children}
             </Button>
             {errorMessage ? (
-                <p className="text-destructive text-sm" role="alert">
+                <p
+                    aria-live="polite"
+                    className="text-destructive text-sm underline decoration-dotted underline-offset-4"
+                    role="alert"
+                >
                     {errorMessage}
                 </p>
             ) : null}
