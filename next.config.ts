@@ -26,7 +26,9 @@ const securityHeaders = [
 ] as const;
 
 const nextConfig: NextConfig = {
-    assetPrefix: BASE_URL,
+    // In dev, BASE_URL is localhost; assetPrefix would make imported images
+    // absolute URLs. next/image then fetches that URL and blocks loopback (SSRF).
+    assetPrefix: process.env.NODE_ENV === "development" ? undefined : BASE_URL,
     cacheComponents: true,
     experimental: {
         optimizePackageImports: ["@base-ui/react", "zod", "better-auth"],

@@ -1,7 +1,9 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { Chrome } from "@/components/integration-icons";
 import { PageShell } from "@/components/layouts";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
+import QRCodeDownloadImage from "@/public/download-qrcode.png";
 import { LocaleSelector, T } from "gt-next";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,13 +41,37 @@ export default async function Home({
                                 </p>
                             </T>
                         </div>
-                        <T>
-                            <GoogleSignInButton locale={locale}>
+                        <GoogleSignInButton locale={locale}>
+                            <T context="Sign in/up CTA button">
                                 Continue with Google
-                            </GoogleSignInButton>
-                        </T>
+                            </T>
+                        </GoogleSignInButton>
                     </div>
                     <div className="flex w-full flex-col gap-6 lg:sticky lg:bottom-8">
+                        <div className="hidden items-center gap-5 lg:flex">
+                            <Image
+                                alt="Download QR Code"
+                                className="size-16"
+                                height={64}
+                                src={QRCodeDownloadImage}
+                                width={64}
+                            />
+                            <div className="flex flex-col gap-[6px] pb-[2px]">
+                                <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
+                                    <T context="Chrome web store browser extension">
+                                        Download the extension
+                                    </T>
+                                </p>
+                                <p className="flex shrink-0 flex-row items-center gap-[6px] truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
+                                    <span>
+                                        <Chrome className="size-4" />
+                                    </span>
+                                    <span className="opacity-50">
+                                        Chrome Web Store
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
                         <LocaleSelector />
                     </div>
                 </aside>
