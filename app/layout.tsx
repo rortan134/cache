@@ -36,7 +36,7 @@ export default async function RootLayout({
 
     return (
         <html
-            className={`${inter.variable} h-full antialiased`}
+            className={`${inter.variable} h-full antialiased [scrollbar-gutter:stable]`}
             lang={locale}
             suppressHydrationWarning
         >

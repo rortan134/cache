@@ -1,4 +1,5 @@
 import { LibraryBrowser } from "@/components/library/library-browser";
+import { LogoutConfirmButton } from "@/components/library/logout-confirm-button";
 import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +14,7 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export async function generateMetadata({
     params,
@@ -32,15 +34,13 @@ export async function generateMetadata({
 
 export default async function LibraryPage() {
     const session = await getServerSession();
-    const _userId = session?.user?.id;
+    const userId = session?.user?.id;
 
-    // if (!_userId) {
-    //     return redirect("/");
-    // }
+    if (!userId) {
+        return redirect("/");
+    }
 
-    const { items } = await getLibraryItemsForUser(
-        "6Mm0Hj1SqT1oACJONhDpMQ1USibha4Fd"
-    );
+    const { items } = await getLibraryItemsForUser(userId);
 
     return (
         <PageShell>
@@ -48,11 +48,7 @@ export default async function LibraryPage() {
                 <PageSidebarShell
                     bottom={
                         <>
-                            <Button
-                                render={<Link href="/logout">Log out</Link>}
-                                size="xs"
-                                variant="link"
-                            />
+                            <LogoutConfirmButton />
                             <LocaleSelector />
                         </>
                     }

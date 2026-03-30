@@ -1,6 +1,9 @@
 "use client";
 
-import { ExtensionLibraryGrid } from "@/components/library/extension-library-grid";
+import {
+    ExtensionLibraryEmptyMasonryPeek,
+    ExtensionLibraryGrid,
+} from "@/components/library/extension-library-grid";
 import { Button } from "@/components/ui/button";
 import {
     Command,
@@ -80,13 +83,6 @@ function formatGroupHeading(mode: GroupByMode, key: string): string {
     }
     return key;
 }
-
-/** Inner field: pill chrome lives on CommandInput wrapper. */
-const libraryCommandFieldClassName =
-    "rounded-none border-0 !bg-transparent shadow-none ring-0 outline-none before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0";
-
-const libraryCommandBarClassName =
-    "min-h-10 w-full max-w-md rounded-full bg-muted px-2 py-1.5 ring-1 ring-border/40 dark:ring-border/50";
 
 function PaletteChip({
     label,
@@ -625,10 +621,49 @@ export function LibraryBrowser({ items }: Props) {
             }));
     }, [filteredItems, groupBy]);
 
+    const hasActiveFilters = useMemo(
+        () =>
+            searchQuery.trim() !== "" ||
+            sourceFilter !== "all" ||
+            thumbFilter !== "any",
+        [searchQuery, sourceFilter, thumbFilter]
+    );
+
+    const showEmptyLibraryPeek =
+        items.length === 0 && filteredItems.length === 0 && !hasActiveFilters;
+
+    const showNoFilteredResults =
+        filteredItems.length === 0 && !showEmptyLibraryPeek;
+
+    let libraryGridBody: ReactNode;
+    if (showEmptyLibraryPeek) {
+        libraryGridBody = <ExtensionLibraryEmptyMasonryPeek />;
+    } else if (showNoFilteredResults) {
+        libraryGridBody = (
+            <p className="py-16 text-center text-muted-foreground text-sm">
+                No results found.
+            </p>
+        );
+    } else {
+        libraryGridBody = sections.map((section) => (
+            <div
+                className="flex w-full flex-col gap-3"
+                key={section.title ?? "all"}
+            >
+                {section.title ? (
+                    <h2 className="font-medium text-foreground text-sm">
+                        {section.title}
+                    </h2>
+                ) : null}
+                <ExtensionLibraryGrid items={section.items} />
+            </div>
+        ));
+    }
+
     return (
         <div className="flex w-full flex-col gap-8">
             <div
-                className="w-full max-w-xl"
+                className="relative z-10 w-full max-w-md"
                 onPointerDownCapture={handlePaletteShellPointerDownCapture}
                 ref={commandPanelContainerRef}
             >
@@ -642,7 +677,7 @@ export function LibraryBrowser({ items }: Props) {
                     >
                         <CommandInput
                             autoFocus={false}
-                            className={libraryCommandFieldClassName}
+                            className="!bg-transparent rounded-none border-0 shadow-none outline-none ring-0 before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0"
                             placeholder={inputPlaceholder}
                             trailing={
                                 <LibraryPaletteTrailing
@@ -658,12 +693,12 @@ export function LibraryBrowser({ items }: Props) {
                                     thumbFilter={thumbFilter}
                                 />
                             }
-                            wrapperClassName={libraryCommandBarClassName}
+                            wrapperClassName="min-h-10 w-full max-w-md rounded-full bg-muted px-2 py-1.5 ring-1 ring-border/40 dark:ring-border/50"
                         />
                         <div
                             className={cn(
                                 !commandListOpen && "hidden",
-                                "mt-2 max-w-md overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-sm"
+                                "absolute top-full left-0 z-50 mt-2 max-h-[min(23rem,70vh)] w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-md"
                             )}
                         >
                             <CommandEmpty>No results found.</CommandEmpty>
@@ -751,20 +786,8 @@ export function LibraryBrowser({ items }: Props) {
                     </Command>
                 </CommandPanel>
             </div>
-            <div className="flex w-full flex-col gap-10">
-                {sections.map((section) => (
-                    <div
-                        className="flex w-full flex-col gap-3"
-                        key={section.title ?? "all"}
-                    >
-                        {section.title ? (
-                            <h2 className="font-medium text-foreground text-sm">
-                                {section.title}
-                            </h2>
-                        ) : null}
-                        <ExtensionLibraryGrid items={section.items} />
-                    </div>
-                ))}
+            <div className="relative z-0 flex w-full flex-col gap-10">
+                {libraryGridBody}
             </div>
         </div>
     );
