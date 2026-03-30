@@ -122,12 +122,12 @@ export default async function Home({
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                    <div className="aspect-video h-auto w-full rounded-2xl bg-stone-200" />
+                    <div className="aspect-video h-auto w-full rounded-2xl bg-muted" />
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Library">
                                 <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Curate a library you love
+                                    Curate a library of all the content you love
                                 </p>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Get inspired, find that one lesson, advice,
@@ -136,7 +136,7 @@ export default async function Home({
                                 </p>
                             </T>
                         </div>
-                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
+                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
                             <figure className="overflow-hidden">
                                 {/* <Image alt="" height={800} src="" width={800} /> */}
                             </figure>
@@ -155,7 +155,7 @@ export default async function Home({
                                 </p>
                             </T>
                         </div>
-                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
+                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
                             <figure className="overflow-hidden">
                                 {/* <Image alt="" height={800} src="" width={800} /> */}
                             </figure>
@@ -169,11 +169,11 @@ export default async function Home({
                                 </p>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Streamline the way you consume and reengage
-                                    with your saved content with a single view.
+                                    with your saved content from a single view.
                                 </p>
                             </T>
                         </div>
-                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
+                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
                             <figure className="overflow-hidden">
                                 {/* <Image alt="" height={800} src="" width={800} /> */}
                             </figure>
@@ -183,17 +183,15 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Organization">
                                 <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Stay organized and delete stale bookmarks
-                                    with ease
+                                    Stay organized. Spot stale bookmarks easily
                                 </p>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                    Import and go from messy bookmarks to
-                                    organized in minutes, then search, manage or
-                                    group.
+                                    Import once and go from messy to organized
+                                    in minutes, then search, manage or group.
                                 </p>
                             </T>
                         </div>
-                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
+                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
                             <figure className="overflow-hidden">
                                 {/* <Image alt="" height={800} src="" width={800} /> */}
                             </figure>
@@ -212,7 +210,7 @@ export default async function Home({
                                 </p>
                             </T>
                         </div>
-                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-stone-200 md:order-last">
+                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
                             <figure className="overflow-hidden">
                                 {/* <Image alt="" height={800} src="" width={800} /> */}
                             </figure>

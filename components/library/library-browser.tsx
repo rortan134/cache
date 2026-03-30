@@ -15,13 +15,15 @@ import {
 import { useSearchQuery } from "@/hooks/use-search-query";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type GroupByMode = "none" | "source" | "domain" | "month";
 
 type SourceFilter = "all" | LibraryItemSource;
 
 type ThumbnailFilter = "any" | "with" | "without";
+
+type PaletteSection = "search" | "filter" | "group";
 
 interface CommandPaletteItem {
     readonly label: string;
@@ -82,105 +84,213 @@ export function LibraryBrowser({ items }: Props) {
     const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
     const [thumbFilter, setThumbFilter] = useState<ThumbnailFilter>("any");
     const [groupBy, setGroupBy] = useState<GroupByMode>("none");
+    const [paletteSection, setPaletteSection] =
+        useState<PaletteSection>("search");
+    const [commandListOpen, setCommandListOpen] = useState(false);
+    const commandPanelContainerRef = useRef<HTMLDivElement>(null);
 
-    const { commandItemGroups, filterItems, groupItems, searchItems } =
-        useMemo(() => {
-            const draft = paletteInput.trim();
+    useEffect(() => {
+        const el = commandPanelContainerRef.current;
+        if (!el) {
+            return;
+        }
 
-            const nextSearchItems: CommandPaletteItem[] = [];
-            if (draft) {
-                nextSearchItems.push({
-                    label: `Search for "${draft}"`,
-                    onSelect: async () => {
-                        await setSearchQuery(draft || null);
-                        setPaletteInput("");
-                    },
-                    value: `search apply for ${draft} query`,
-                });
+        const handleFocusIn = () => {
+            setCommandListOpen(true);
+        };
+
+        const handleFocusOut = (event: globalThis.FocusEvent) => {
+            const { relatedTarget } = event;
+            if (relatedTarget instanceof Node && el.contains(relatedTarget)) {
+                return;
             }
-            if (searchQuery) {
-                nextSearchItems.push({
-                    label: "Clear search",
-                    onSelect: async () => {
-                        await setSearchQuery(null);
-                    },
-                    value: "search clear url committed",
-                });
-            }
+            queueMicrotask(() => {
+                if (!el.contains(document.activeElement)) {
+                    setCommandListOpen(false);
+                }
+            });
+        };
 
-            const nextFilterItems: CommandPaletteItem[] = [
-                {
-                    label: "Filter by: All sources",
-                    onSelect: () => setSourceFilter("all"),
-                    value: "filter by all sources",
-                },
-                {
-                    label: "Filter by: Instagram",
-                    onSelect: () =>
-                        setSourceFilter(LibraryItemSource.instagram),
-                    value: "filter by instagram source",
-                },
-                {
-                    label: "Filter by: TikTok",
-                    onSelect: () => setSourceFilter(LibraryItemSource.tiktok),
-                    value: "filter by tiktok source",
-                },
-                {
-                    label: "Filter by: Other",
-                    onSelect: () => setSourceFilter(LibraryItemSource.other),
-                    value: "filter by other source",
-                },
-                {
-                    label: "Filter by: Any preview",
-                    onSelect: () => setThumbFilter("any"),
-                    value: "filter preview any thumbnail",
-                },
-                {
-                    label: "Filter by: With preview",
-                    onSelect: () => setThumbFilter("with"),
-                    value: "filter preview with thumbnail",
-                },
-                {
-                    label: "Filter by: Without preview",
-                    onSelect: () => setThumbFilter("without"),
-                    value: "filter preview without thumbnail",
-                },
-            ];
+        el.addEventListener("focusin", handleFocusIn);
+        el.addEventListener("focusout", handleFocusOut);
+        return () => {
+            el.removeEventListener("focusin", handleFocusIn);
+            el.removeEventListener("focusout", handleFocusOut);
+        };
+    }, []);
 
-            const nextGroupItems: CommandPaletteItem[] = [
-                {
-                    label: "Group by: None",
-                    onSelect: () => setGroupBy("none"),
-                    value: "group by none flat list",
-                },
-                {
-                    label: "Group by: Source",
-                    onSelect: () => setGroupBy("source"),
-                    value: "group by source integration",
-                },
-                {
-                    label: "Group by: Domain",
-                    onSelect: () => setGroupBy("domain"),
-                    value: "group by domain hostname",
-                },
-                {
-                    label: "Group by: Month",
-                    onSelect: () => setGroupBy("month"),
-                    value: "group by month scraped",
-                },
-            ];
+    const handlePaletteInputChange = useCallback((next: string) => {
+        setPaletteInput(next);
+        setCommandListOpen(true);
+    }, []);
 
+    const {
+        commandItemGroups,
+        filterPaletteItems,
+        groupPaletteItems,
+        modeNavItems,
+        searchItems,
+    } = useMemo(() => {
+        const draft = paletteInput.trim();
+
+        const nextSearchItems: CommandPaletteItem[] = [];
+        if (draft) {
+            nextSearchItems.push({
+                label: `Search for "${draft}"`,
+                onSelect: async () => {
+                    await setSearchQuery(draft || null);
+                    setPaletteInput("");
+                },
+                value: `search apply for ${draft} query`,
+            });
+        }
+        if (searchQuery) {
+            nextSearchItems.push({
+                label: "Clear search",
+                onSelect: async () => {
+                    await setSearchQuery(null);
+                },
+                value: "search clear url committed",
+            });
+        }
+
+        const nextFilterItems: CommandPaletteItem[] = [
+            {
+                label: "Filter by: All sources",
+                onSelect: () => setSourceFilter("all"),
+                value: "filter by all sources",
+            },
+            {
+                label: "Filter by: Instagram",
+                onSelect: () => setSourceFilter(LibraryItemSource.instagram),
+                value: "filter by instagram source",
+            },
+            {
+                label: "Filter by: TikTok",
+                onSelect: () => setSourceFilter(LibraryItemSource.tiktok),
+                value: "filter by tiktok source",
+            },
+            {
+                label: "Filter by: Other",
+                onSelect: () => setSourceFilter(LibraryItemSource.other),
+                value: "filter by other source",
+            },
+            {
+                label: "Filter by: Any preview",
+                onSelect: () => setThumbFilter("any"),
+                value: "filter preview any thumbnail",
+            },
+            {
+                label: "Filter by: With preview",
+                onSelect: () => setThumbFilter("with"),
+                value: "filter preview with thumbnail",
+            },
+            {
+                label: "Filter by: Without preview",
+                onSelect: () => setThumbFilter("without"),
+                value: "filter preview without thumbnail",
+            },
+        ];
+
+        const nextGroupItems: CommandPaletteItem[] = [
+            {
+                label: "Group by: None",
+                onSelect: () => setGroupBy("none"),
+                value: "group by none flat list",
+            },
+            {
+                label: "Group by: Source",
+                onSelect: () => setGroupBy("source"),
+                value: "group by source integration",
+            },
+            {
+                label: "Group by: Domain",
+                onSelect: () => setGroupBy("domain"),
+                value: "group by domain hostname",
+            },
+            {
+                label: "Group by: Month",
+                onSelect: () => setGroupBy("month"),
+                value: "group by month scraped",
+            },
+        ];
+
+        const backToSearchItem: CommandPaletteItem = {
+            label: "Back",
+            onSelect: () => {
+                setPaletteSection("search");
+                setPaletteInput("");
+            },
+            value: "back navigate return to search mode",
+        };
+
+        const nextModeNavItems: CommandPaletteItem[] = [
+            {
+                label: "Filter by…",
+                onSelect: () => {
+                    setPaletteSection("filter");
+                    setPaletteInput("");
+                },
+                value: "mode open filter options refine library",
+            },
+            {
+                label: "Group by…",
+                onSelect: () => {
+                    setPaletteSection("group");
+                    setPaletteInput("");
+                },
+                value: "mode open group options organize library",
+            },
+        ];
+
+        const filterPaletteItemsWithBack: CommandPaletteItem[] = [
+            backToSearchItem,
+            ...nextFilterItems,
+        ];
+        const groupPaletteItemsWithBack: CommandPaletteItem[] = [
+            backToSearchItem,
+            ...nextGroupItems,
+        ];
+
+        if (paletteSection === "search") {
+            const groups =
+                nextSearchItems.length > 0
+                    ? [{ items: nextSearchItems }, { items: nextModeNavItems }]
+                    : [{ items: nextModeNavItems }];
             return {
-                commandItemGroups: [
-                    { items: nextSearchItems },
-                    { items: nextFilterItems },
-                    { items: nextGroupItems },
-                ],
-                filterItems: nextFilterItems,
-                groupItems: nextGroupItems,
+                commandItemGroups: groups,
+                filterPaletteItems: filterPaletteItemsWithBack,
+                groupPaletteItems: groupPaletteItemsWithBack,
+                modeNavItems: nextModeNavItems,
                 searchItems: nextSearchItems,
             };
-        }, [paletteInput, searchQuery, setSearchQuery]);
+        }
+
+        if (paletteSection === "filter") {
+            return {
+                commandItemGroups: [{ items: filterPaletteItemsWithBack }],
+                filterPaletteItems: filterPaletteItemsWithBack,
+                groupPaletteItems: groupPaletteItemsWithBack,
+                modeNavItems: nextModeNavItems,
+                searchItems: nextSearchItems,
+            };
+        }
+
+        return {
+            commandItemGroups: [{ items: groupPaletteItemsWithBack }],
+            filterPaletteItems: filterPaletteItemsWithBack,
+            groupPaletteItems: groupPaletteItemsWithBack,
+            modeNavItems: nextModeNavItems,
+            searchItems: nextSearchItems,
+        };
+    }, [paletteInput, paletteSection, searchQuery, setSearchQuery]);
+
+    let inputPlaceholder = "Group…";
+    if (paletteSection === "search") {
+        inputPlaceholder = "Search library…";
+    } else if (paletteSection === "filter") {
+        inputPlaceholder = "Filter…";
+    }
 
     const filteredItems = useMemo(() => {
         let list = items;
@@ -237,62 +347,99 @@ export function LibraryBrowser({ items }: Props) {
 
     return (
         <div className="flex w-full flex-col gap-8">
-            <CommandPanel className="w-full max-w-xl">
-                <Command
-                    items={commandItemGroups}
-                    onValueChange={setPaletteInput}
-                    value={paletteInput}
-                >
-                    <CommandInput placeholder="Search or run a command…" />
-                    <CommandEmpty>No matching commands.</CommandEmpty>
-                    <CommandList>
-                        {searchItems.length > 0 ? (
-                            <CommandGroup items={searchItems}>
-                                <CommandGroupLabel>Search</CommandGroupLabel>
-                                <CommandCollection>
-                                    {(item: CommandPaletteItem) => (
-                                        <CommandItem
-                                            key={item.value}
-                                            onClick={item.onSelect}
-                                            value={item.value}
-                                        >
-                                            {item.label}
-                                        </CommandItem>
-                                    )}
-                                </CommandCollection>
-                            </CommandGroup>
-                        ) : null}
-                        <CommandGroup items={filterItems}>
-                            <CommandGroupLabel>Filter by…</CommandGroupLabel>
-                            <CommandCollection>
-                                {(item: CommandPaletteItem) => (
-                                    <CommandItem
-                                        key={item.value}
-                                        onClick={item.onSelect}
-                                        value={item.value}
-                                    >
-                                        {item.label}
-                                    </CommandItem>
-                                )}
-                            </CommandCollection>
-                        </CommandGroup>
-                        <CommandGroup items={groupItems}>
-                            <CommandGroupLabel>Group by…</CommandGroupLabel>
-                            <CommandCollection>
-                                {(item: CommandPaletteItem) => (
-                                    <CommandItem
-                                        key={item.value}
-                                        onClick={item.onSelect}
-                                        value={item.value}
-                                    >
-                                        {item.label}
-                                    </CommandItem>
-                                )}
-                            </CommandCollection>
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </CommandPanel>
+            <div className="w-full max-w-xl" ref={commandPanelContainerRef}>
+                <CommandPanel className="w-full">
+                    <Command
+                        items={commandItemGroups}
+                        onOpenChange={setCommandListOpen}
+                        onValueChange={handlePaletteInputChange}
+                        open={commandListOpen}
+                        value={paletteInput}
+                    >
+                        <CommandInput
+                            autoFocus={false}
+                            placeholder={inputPlaceholder}
+                        />
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandList>
+                            {paletteSection === "search" ? (
+                                <>
+                                    {searchItems.length > 0 ? (
+                                        <CommandGroup items={searchItems}>
+                                            <CommandGroupLabel>
+                                                Search
+                                            </CommandGroupLabel>
+                                            <CommandCollection>
+                                                {(item: CommandPaletteItem) => (
+                                                    <CommandItem
+                                                        key={item.value}
+                                                        onClick={item.onSelect}
+                                                        value={item.value}
+                                                    >
+                                                        {item.label}
+                                                    </CommandItem>
+                                                )}
+                                            </CommandCollection>
+                                        </CommandGroup>
+                                    ) : null}
+                                    <CommandGroup items={modeNavItems}>
+                                        <CommandGroupLabel>
+                                            Refine library
+                                        </CommandGroupLabel>
+                                        <CommandCollection>
+                                            {(item: CommandPaletteItem) => (
+                                                <CommandItem
+                                                    key={item.value}
+                                                    onClick={item.onSelect}
+                                                    value={item.value}
+                                                >
+                                                    {item.label}
+                                                </CommandItem>
+                                            )}
+                                        </CommandCollection>
+                                    </CommandGroup>
+                                </>
+                            ) : null}
+                            {paletteSection === "filter" ? (
+                                <CommandGroup items={filterPaletteItems}>
+                                    <CommandGroupLabel>
+                                        Filter by…
+                                    </CommandGroupLabel>
+                                    <CommandCollection>
+                                        {(item: CommandPaletteItem) => (
+                                            <CommandItem
+                                                key={item.value}
+                                                onClick={item.onSelect}
+                                                value={item.value}
+                                            >
+                                                {item.label}
+                                            </CommandItem>
+                                        )}
+                                    </CommandCollection>
+                                </CommandGroup>
+                            ) : null}
+                            {paletteSection === "group" ? (
+                                <CommandGroup items={groupPaletteItems}>
+                                    <CommandGroupLabel>
+                                        Group by…
+                                    </CommandGroupLabel>
+                                    <CommandCollection>
+                                        {(item: CommandPaletteItem) => (
+                                            <CommandItem
+                                                key={item.value}
+                                                onClick={item.onSelect}
+                                                value={item.value}
+                                            >
+                                                {item.label}
+                                            </CommandItem>
+                                        )}
+                                    </CommandCollection>
+                                </CommandGroup>
+                            ) : null}
+                        </CommandList>
+                    </Command>
+                </CommandPanel>
+            </div>
 
             <div className="flex w-full flex-col gap-10">
                 {sections.map((section) => (

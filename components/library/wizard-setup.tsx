@@ -5,6 +5,22 @@ import {
 } from "@/lib/integrations/supports";
 import type { LibraryItemSource } from "@/prisma/client/enums";
 
+/** Baseline fill so the ring reads as progress; attributes the first step to signing up. */
+const SIGNUP_BASELINE_PERCENT = 10;
+
+function integrationSetupProgressPercent(
+    connectedCount: number,
+    syncable: number
+): number {
+    if (syncable < 1) {
+        return 0;
+    }
+    const clamped = Math.min(connectedCount, syncable);
+    const integrationPortion =
+        (clamped / syncable) * (100 - SIGNUP_BASELINE_PERCENT);
+    return Math.round(SIGNUP_BASELINE_PERCENT + integrationPortion);
+}
+
 function syncableLibrarySourceTotal(): number {
     return LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS.length;
 }
@@ -75,13 +91,15 @@ export function IntegrationSetupHeading({
         missingLabels,
         syncable,
     });
-    const progressPercent =
-        syncable < 1 ? 0 : Math.round((connectedCount / syncable) * 100);
+    const progressPercent = integrationSetupProgressPercent(
+        connectedCount,
+        syncable
+    );
 
     return (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1">
             <span aria-hidden="true" className="shrink-0 leading-none">
-                <RadialChart size={40} value={progressPercent} />
+                <RadialChart size={36} value={progressPercent} />
             </span>
             <span className="font-medium text-sm">{text}</span>
         </div>

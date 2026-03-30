@@ -68,7 +68,7 @@ export default async function LibraryPage() {
                             </Link>
                             <div className="flex flex-col gap-2 text-balance md:gap-4">
                                 <IntegrationSetupHeading items={items} />
-                                <ul className="flex flex-col gap-2">
+                                <ul className="flex flex-col gap-1">
                                     {INTEGRATIONS.map(
                                         ({ id, label, description, Icon }) => (
                                             <li key={id}>
@@ -88,7 +88,7 @@ export default async function LibraryPage() {
                                                         <span className="font-medium text-sm">
                                                             {label}
                                                         </span>
-                                                        <span className="text-muted-foreground text-xs leading-snug">
+                                                        <span className="text-[11px] text-muted-foreground leading-snug">
                                                             {description}
                                                         </span>
                                                     </div>

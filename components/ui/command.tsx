@@ -110,6 +110,7 @@ export function Command({
 }
 
 export function CommandInput({
+    autoFocus = true,
     className,
     placeholder = undefined,
     ...props
@@ -117,7 +118,7 @@ export function CommandInput({
     return (
         <div className="px-2.5 py-1.5">
             <AutocompleteInput
-                autoFocus
+                autoFocus={autoFocus}
                 className={cn(
                     "border-transparent! bg-transparent! shadow-none before:hidden has-focus-visible:ring-0",
                     className

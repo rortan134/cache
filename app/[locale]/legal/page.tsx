@@ -98,7 +98,7 @@ export default async function LegalIndexPage({
                 {documents.map(({ description, href, icon: Icon, title }) => (
                     <li key={href}>
                         <Link
-                            className="group flex flex-col gap-3 rounded-2xl border border-stone-200/90 bg-white/80 p-5 shadow-[0_1px_0_0_rgb(255_255_255/0.6)_inset] backdrop-blur-[2px] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:flex-row sm:items-center sm:gap-5 sm:p-6"
+                            className="group flex flex-col gap-3 rounded-2xl border border-stone-200/90 bg-white/80 p-5 shadow-[0_1px_0_0_rgb(255_255_255/0.6)_inset] backdrop-blur-[2px] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:flex-row sm:items-center sm:gap-5 sm:p-6"
                             href={href}
                         >
                             <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700 shadow-inner transition-colors duration-200 group-hover:bg-stone-900 group-hover:text-white">
@@ -122,8 +122,7 @@ export default async function LegalIndexPage({
                     </li>
                 ))}
             </ul>
-
-            <p className="relative border-stone-200 border-t pt-6 text-[0.85rem] text-stone-500 leading-relaxed">
+            <p className="relative border-muted border-t pt-6 text-[0.85rem] text-stone-500 leading-relaxed">
                 <T>
                     These pages may be updated from time to time. The version on
                     this site is the one in effect when you visit.
