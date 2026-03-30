@@ -33,9 +33,9 @@ export default async function Home({
                                     Unify your bookmarks.
                                 </h1>
                                 <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                    One place to view, manage, and organize all
-                                    of your bookmarks across platforms at
-                                    volume.
+                                    Meet Cache – One place to view, manage, and
+                                    organize all of your bookmarks across
+                                    platforms at volume.
                                 </p>
                             </T>
                         </div>
@@ -142,8 +142,8 @@ export default async function Home({
                         ))}
                     </div>
                     <footer>
-                        <div className="relative mx-auto mt-auto grid h-auto w-full grid-cols-12 gap-x-[min(2.25vw,_32px)] pt-[120px] lg:top-0">
-                            <div className="!mb-0 !pb-4 md:!pb-6 lg:!pb-8 relative z-20 col-span-full mx-auto mb-[72px] flex grid w-full grid-cols-12 flex-col gap-6 gap-x-[min(2.25vw,_32px)] lg:mb-20 lg:py-8">
+                        <div className="relative mx-auto mt-auto grid h-auto w-full grid-cols-12 gap-x-[min(2.25vw,32px)] pt-[120px] lg:top-0">
+                            <div className="relative z-20 col-span-full mx-auto grid w-full grid-cols-12 flex-col gap-6 gap-x-[min(2.25vw,32px)] pb-4! md:pb-6! lg:mb-20 lg:py-8 lg:pb-8!">
                                 <div className="col-span-full flex flex-col gap-4">
                                     <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%]">
                                         <Link
