@@ -7,20 +7,22 @@ export const serverEnv = createEnv({
     experimental__runtimeEnv: process.env,
     extends: [vercel()],
     server: {
-        // Authentication
         BETTER_AUTH_SECRET: z.string(), // Secret key for Better Auth JWT signing
         BETTER_AUTH_URL: z.url(), // Base URL for Better Auth service
 
-        // Database
-        DATABASE_URL: z.string(), // Primary database connection string
+        DATABASE_URL: z.string().startsWith("postgres://"), // Primary database connection string
 
-        // Internationalization
+        GOOGLE_CLIENT_ID: z.string(),
+        GOOGLE_CLIENT_SECRET: z.string(),
+
         GT_API_KEY: z.string(),
         GT_PROJECT_ID: z.string(),
 
-        // Payment & Billing
-        STRIPE_PRICE_ID_MONTHLY: z.string(), // Stripe price ID for monthly subscription
-        STRIPE_PRICE_ID_YEARLY: z.string(), // Stripe price ID for yearly subscription
+        PINTEREST_CLIENT_ID: z.string().optional(),
+        PINTEREST_CLIENT_SECRET: z.string().optional(),
+
+        STRIPE_PRICE_ID_MONTHLY: z.string().startsWith("price_"), // Stripe price ID for monthly subscription
+        STRIPE_PRICE_ID_YEARLY: z.string().startsWith("price_"), // Stripe price ID for yearly subscription
         STRIPE_SECRET_KEY: z.string().startsWith("sk_"), // Stripe secret key for payment processing
         STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_"), // Webhook secret for Stripe events
     },

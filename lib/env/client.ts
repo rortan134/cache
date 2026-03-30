@@ -6,7 +6,6 @@ export const clientEnv = createEnv({
     client: {
         NEXT_PUBLIC_APP_URL: z.url(),
 
-        // Payment & Billing
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_"), // Stripe publishable key for client-side payment processing
     },
     emptyStringAsUndefined: true,
