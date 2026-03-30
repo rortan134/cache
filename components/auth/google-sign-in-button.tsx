@@ -54,14 +54,14 @@ export function GoogleSignInButton({
             });
             if (result.error) {
                 setErrorMessage(
-                    result.error.message ?? "Could not start Google sign-in."
+                    result.error.message ?? "Could not start Google sign-in.",
                 );
             }
         } catch (err) {
             setErrorMessage(
                 err instanceof Error
                     ? err.message
-                    : "Could not start Google sign-in."
+                    : "Could not start Google sign-in.",
             );
         } finally {
             setLoading(false);
@@ -73,7 +73,6 @@ export function GoogleSignInButton({
             <Button
                 aria-label="Continue with Google"
                 className="border border-[#747775] bg-white text-[#1f1f1f] shadow-xs hover:bg-[#f8f9fa] dark:border-input dark:bg-popover dark:text-foreground dark:hover:bg-accent/50"
-                disabled
                 loading={loading}
                 onClick={handleSignIn}
                 type="button"
