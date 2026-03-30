@@ -11,7 +11,8 @@
 
 export const LibraryItemSource = {
   instagram: 'instagram',
-  tiktok: 'tiktok'
+  tiktok: 'tiktok',
+  other: 'other'
 } as const
 
 export type LibraryItemSource = (typeof LibraryItemSource)[keyof typeof LibraryItemSource]

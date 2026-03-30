@@ -8,7 +8,12 @@ const nextConfig: NextConfig = {
     assetPrefix: process.env.NODE_ENV === "development" ? undefined : BASE_URL,
     cacheComponents: true,
     experimental: {
-        optimizePackageImports: ["@base-ui/react", "zod", "better-auth"],
+        optimizePackageImports: [
+            "@base-ui/react",
+            "zod",
+            "better-auth",
+            "recharts",
+        ],
         turbopackFileSystemCacheForBuild: true,
         turbopackFileSystemCacheForDev: true,
     },

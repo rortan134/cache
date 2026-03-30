@@ -1,4 +1,5 @@
-import { ExtensionLibraryGrids } from "@/components/library/extension-library-grids";
+import { LibraryBrowser } from "@/components/library/library-browser";
+import { IntegrationSetupHeading } from "@/components/library/wizard-setup";
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector } from "gt-next";
-import { Info } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,9 +29,6 @@ export async function generateMetadata({
     };
 }
 
-const EMPTY_SYNC_HINT =
-    "Sign in on the Cache site in this browser once (so the extension can link), then run a sync from the extension on Instagram Saved or TikTok Favorites. Items appear here after each successful sync.";
-
 export default async function LibraryPage() {
     const session = await getServerSession();
     const userId = session?.user?.id;
@@ -40,7 +37,7 @@ export default async function LibraryPage() {
         return null;
     }
 
-    const { instagram, tiktok } = await getLibraryItemsForUser(userId);
+    const { items } = await getLibraryItemsForUser(userId);
 
     return (
         <PageShell>
@@ -70,9 +67,7 @@ export default async function LibraryPage() {
                                 />
                             </Link>
                             <div className="flex flex-col gap-2 text-balance md:gap-4">
-                                <span className="font-medium text-sm">
-                                    Connected accounts
-                                </span>
+                                <IntegrationSetupHeading items={items} />
                                 <ul className="flex flex-col gap-2">
                                     {INTEGRATIONS.map(
                                         ({ id, label, description, Icon }) => (
@@ -102,25 +97,12 @@ export default async function LibraryPage() {
                                         )
                                     )}
                                 </ul>
-                                <div className="flex items-center gap-2">
-                                    <Info className="size-4 text-[#0A0B0D] opacity-50" />
-                                    <p className="font-medium text-[#0A0B0D] text-xs leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                        Cache is most effective when two or more
-                                        accounts are connected.
-                                    </p>
-                                </div>
                             </div>
                         </>
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                    <ExtensionLibraryGrids
-                        emptyHint={EMPTY_SYNC_HINT}
-                        instagram={instagram}
-                        tiktok={tiktok}
-                        titleInstagram="Instagram Saved"
-                        titleTiktok="TikTok Favorites"
-                    />
+                    <LibraryBrowser items={items} />
                 </div>
             </div>
         </PageShell>

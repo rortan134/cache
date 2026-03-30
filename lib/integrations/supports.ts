@@ -16,6 +16,15 @@ export type IntegrationId =
     // | "pinterest" // disabled until Pinterest API approval
     | "tiktok";
 
+/**
+ * Integrations that correspond to `LibraryItem.source` for extension bookmark sync.
+ * Extend when Prisma adds a matching `LibraryItemSource` value.
+ */
+export const LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS = [
+    "instagram",
+    "tiktok",
+] as const satisfies readonly IntegrationId[];
+
 export interface SupportedIntegration {
     readonly capabilities: {
         readonly bookmarks: boolean;

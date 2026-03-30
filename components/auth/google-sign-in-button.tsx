@@ -8,7 +8,7 @@ function GoogleMark() {
     return (
         <svg
             aria-label="Google"
-            className="size-[18px] shrink-0 sm:size-4"
+            className="size-5 shrink-0"
             role="img"
             viewBox="0 0 48 48"
             xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,7 @@ export function GoogleSignInButton({
                 className="border border-[#747775] bg-white text-[#1f1f1f] shadow-xs hover:bg-[#f8f9fa] dark:border-input dark:bg-popover dark:text-foreground dark:hover:bg-accent/50"
                 loading={loading}
                 onClick={handleSignIn}
-                size="lg"
+                size="xl"
                 type="button"
                 variant="outline"
             >

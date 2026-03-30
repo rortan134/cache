@@ -1,120 +1,120 @@
-
 datasource db {
-  provider = "postgresql"
+    provider = "postgresql"
 }
 
 generator client {
-  provider = "prisma-client"
-  output   = "./client"
+    provider = "prisma-client"
+    output   = "./client"
 }
 
 enum LibraryItemSource {
-  instagram
-  tiktok
+    instagram
+    tiktok
+    other
 }
 
 model User {
-  id                    String         @id
-  name                  String
-  email                 String
-  emailVerified         Boolean        @default(false)
-  image                 String?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  stripeCustomerId      String?
-  extensionIngestToken  String?        @unique
-  sessions              Session[]
-  accounts              Account[]
-  libraryItems          LibraryItem[]
+    id                   String        @id
+    name                 String
+    email                String
+    emailVerified        Boolean       @default(false)
+    image                String?
+    createdAt            DateTime      @default(now())
+    updatedAt            DateTime      @updatedAt
+    stripeCustomerId     String?
+    extensionIngestToken String?       @unique
+    sessions             Session[]
+    accounts             Account[]
+    libraryItems         LibraryItem[]
 
-  @@unique([email])
-  @@map("user")
+    @@unique([email])
+    @@map("user")
 }
 
 model LibraryItem {
-  id           String             @id @default(cuid())
-  userId       String
-  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  source       LibraryItemSource
-  externalId   String
-  url          String
-  caption      String?
-  thumbnailUrl String?
-  scrapedAt    DateTime?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+    id           String            @id @default(cuid())
+    userId       String
+    user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    source       LibraryItemSource
+    externalId   String
+    url          String
+    caption      String?
+    thumbnailUrl String?
+    scrapedAt    DateTime?
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @updatedAt
 
-  @@unique([userId, source, externalId])
-  @@index([userId])
-  @@map("library_item")
+    @@unique([userId, source, externalId])
+    @@index([userId])
+    @@map("library_item")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        String   @id
+    expiresAt DateTime
+    token     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    ipAddress String?
+    userAgent String?
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
-  @@index([userId])
-  @@map("session")
+    @@unique([token])
+    @@index([userId])
+    @@map("session")
 }
 
 model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
 
-  @@index([userId])
-  @@map("account")
+    @@index([userId])
+    @@map("account")
 }
 
 model Verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
-  @@index([identifier])
-  @@map("verification")
+    @@index([identifier])
+    @@map("verification")
 }
 
 model Subscription {
-  id                   String    @id
-  plan                 String
-  referenceId          String
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  status               String?   @default("incomplete")
-  periodStart          DateTime?
-  periodEnd            DateTime?
-  trialStart           DateTime?
-  trialEnd             DateTime?
-  cancelAtPeriodEnd    Boolean?  @default(false)
-  cancelAt             DateTime?
-  canceledAt           DateTime?
-  endedAt              DateTime?
-  seats                Int?
-  billingInterval      String?
-  stripeScheduleId     String?
+    id                   String    @id
+    plan                 String
+    referenceId          String
+    stripeCustomerId     String?
+    stripeSubscriptionId String?
+    status               String?   @default("incomplete")
+    periodStart          DateTime?
+    periodEnd            DateTime?
+    trialStart           DateTime?
+    trialEnd             DateTime?
+    cancelAtPeriodEnd    Boolean?  @default(false)
+    cancelAt             DateTime?
+    canceledAt           DateTime?
+    endedAt              DateTime?
+    seats                Int?
+    billingInterval      String?
+    stripeScheduleId     String?
 
-  @@map("subscription")
+    @@map("subscription")
 }
