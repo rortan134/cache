@@ -1,4 +1,4 @@
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import type * as React from "react";
 
 const PageShell = ({
@@ -10,7 +10,7 @@ const PageShell = ({
         {...props}
         className={cn(
             "relative isolate z-0 mx-auto flex size-full min-h-screen flex-col leading-snug tracking-tight outline-hidden [-webkit-user-drag:none] focus-visible:outline-hidden",
-            className,
+            className
         )}
         tabIndex={-1}
     />

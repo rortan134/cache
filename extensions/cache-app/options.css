@@ -1,0 +1,57 @@
+:root {
+    font-family: system-ui, sans-serif;
+    color-scheme: light dark;
+}
+
+body {
+    max-width: 560px;
+    padding: 24px;
+    margin: 0;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+.lead {
+    line-height: 1.45;
+    color: color-mix(in oklab, CanvasText 75%, transparent);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 16px 0;
+    font-size: 14px;
+}
+
+.field input {
+    padding: 8px 10px;
+    font: inherit;
+    border: 1px solid color-mix(in oklab, CanvasText 20%, Canvas);
+    border-radius: 8px;
+}
+
+.btn {
+    padding: 8px 14px;
+    font: inherit;
+    cursor: pointer;
+    background: Canvas;
+    border: 1px solid color-mix(in oklab, CanvasText 18%, Canvas);
+    border-radius: 8px;
+}
+
+.status {
+    min-height: 1.2em;
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.status.error {
+    color: #c62828;
+}
+
+.status.ok {
+    color: #2e7d32;
+}

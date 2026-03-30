@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Cache App</title>
+        <link rel="stylesheet" href="popup.css">
+    </head>
+    <body>
+        <main class="panel">
+            <h1 class="title">Cache App</h1>
+            <p class="hint">
+                Open <strong>Instagram → Saved</strong> or
+                <strong>TikTok → Favorites (videos)</strong> in this tab, then
+                sync.
+            </p>
+            <button type="button" id="sync" class="btn">Sync</button>
+            <button type="button" id="openCache" class="btn btn-secondary">
+                Open Cache
+            </button>
+            <p id="status" class="status" role="status"></p>
+            <section class="meta" aria-label="Sync status">
+                <p id="instagramMeta" class="meta-line"></p>
+                <p id="tiktokMeta" class="meta-line"></p>
+            </section>
+            <p class="footer"><a id="openOptions" href="#">Options</a></p>
+        </main>
+        <script src="popup.js"></script>
+    </body>
+</html>

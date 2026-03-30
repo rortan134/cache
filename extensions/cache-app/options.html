@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Cache App — Options</title>
+        <link rel="stylesheet" href="options.css">
+    </head>
+    <body>
+        <main class="wrap">
+            <h1>Cache App — Options</h1>
+            <p class="lead">
+                Optional: POST synced data to your Cache app. Sign in on the
+                site first; the extension checks for a session cookie on this
+                URL’s origin before Sync. Use the ingest URL from your signed-in
+                <strong>Library</strong> page and the <strong>extension token</strong>
+                (Bearer) you generate there. Chrome may ask to allow access to
+                that host.
+            </p>
+            <label class="field">
+                <span>Sync endpoint URL</span>
+                <input
+                    id="syncEndpoint"
+                    type="url"
+                    placeholder="https://your-app.com/api/integrations/instagram/saved"
+                    autocomplete="off"
+                >
+            </label>
+            <label class="field">
+                <span>Extension ingest token (Bearer)</span>
+                <input
+                    id="syncApiKey"
+                    type="password"
+                    placeholder="From Library → Generate token"
+                    autocomplete="off"
+                >
+            </label>
+            <p id="optionsStatus" class="status" role="status"></p>
+            <button type="button" id="save" class="btn">Save</button>
+        </main>
+        <script src="options.js"></script>
+    </body>
+</html>

@@ -1,0 +1,89 @@
+import {
+    extensionIngestCorsHeaders,
+    normalizeLibrarySource,
+    parseBearerToken,
+    resolveExtensionIngestUserId,
+    upsertLibraryItemsFromIngest,
+    type IngestItemInput,
+} from "@/lib/library/extension-ingest";
+import { z } from "zod";
+
+const itemSchema = z
+    .object({
+        caption: z.string().optional(),
+        id: z.string().optional(),
+        scrapedAt: z.string().optional(),
+        shortcode: z.string().optional(),
+        thumbnailUrl: z.string().optional(),
+        url: z.string(),
+    })
+    .refine((row) => Boolean(row.shortcode || row.id), {
+        message: "Each item needs shortcode (Instagram) or id (TikTok)",
+    });
+
+const bodySchema = z.object({
+    items: z.array(itemSchema),
+    source: z.string().optional(),
+    syncedAt: z.string().optional(),
+});
+
+/**
+ * Extension ingest: Bearer token must match `User.extensionIngestToken`, or (dev)
+ * `INSTAGRAM_SAVED_INGEST_TOKEN` + `EXTENSION_FALLBACK_USER_ID`.
+ */
+export function OPTIONS() {
+    return new Response(null, {
+        headers: extensionIngestCorsHeaders(),
+        status: 204,
+    });
+}
+
+export async function POST(request: Request) {
+    const cors = extensionIngestCorsHeaders();
+
+    const bearer = parseBearerToken(request);
+    if (!bearer) {
+        return Response.json(
+            { error: "Missing Authorization: Bearer <extension ingest token>" },
+            { headers: cors, status: 401 }
+        );
+    }
+
+    const userId = await resolveExtensionIngestUserId(bearer);
+    if (!userId) {
+        return Response.json(
+            { error: "Unauthorized" },
+            { headers: cors, status: 401 }
+        );
+    }
+
+    let json: unknown;
+    try {
+        json = await request.json();
+    } catch {
+        return Response.json(
+            { error: "Invalid JSON" },
+            { headers: cors, status: 400 }
+        );
+    }
+
+    const parsed = bodySchema.safeParse(json);
+    if (!parsed.success) {
+        return Response.json(
+            { error: parsed.error.flatten() },
+            { headers: cors, status: 400 }
+        );
+    }
+
+    const source = normalizeLibrarySource(parsed.data.source);
+    const written = await upsertLibraryItemsFromIngest(
+        userId,
+        source,
+        parsed.data.items as IngestItemInput[]
+    );
+
+    return Response.json(
+        { ok: true, received: parsed.data.items.length, upserted: written },
+        { headers: cors }
+    );
+}

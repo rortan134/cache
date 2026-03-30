@@ -2,7 +2,7 @@
     "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
     "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
     "files": {
-        "includes": ["!**/public", "!**/prisma/client"]
+        "includes": ["!**/extensions", "!**/public", "!**/prisma/client"]
     },
     "formatter": {
         "indentWidth": 4

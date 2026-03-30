@@ -1,0 +1,49 @@
+{
+    "version": 2,
+    "branchId": "",
+    "entries": [
+        {
+            "fileId": "879f3a5f954ee8b75bf1e91f4ea9916b41c933e5beba7eb6362647a637c9c66d",
+            "versionId": "34b887df7c2b6c3e9d99da47c237ecbb4d7173fef6cf0133d89c0db8d429c812",
+            "translations": {
+                "de-DE": {
+                    "updatedAt": "2026-03-30T00:56:16.134Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/de-DE.json",
+                    "postProcessHash": "9e94b868a5a0ecbd3bb202d94c48457b4682c2757aa46023ef73b5f01eb61725"
+                },
+                "es-419": {
+                    "updatedAt": "2026-03-30T00:56:16.135Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/es-419.json",
+                    "postProcessHash": "d408d19ae229d31282adc9d98267aff793c6edc25a92427fb04e38857cd56eab"
+                },
+                "fr-FR": {
+                    "updatedAt": "2026-03-30T00:56:16.135Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/fr-FR.json",
+                    "postProcessHash": "a369e3ec7abaede01c83041604df1dbb653b2940f687d8fff27c71046f2a03c8"
+                },
+                "nl-NL": {
+                    "updatedAt": "2026-03-30T00:56:16.136Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/nl-NL.json",
+                    "postProcessHash": "1dc6eecc982995036d7b8111a93025882ba0cd69e17f09dad26063a601e8eb33"
+                },
+                "pt-BR": {
+                    "updatedAt": "2026-03-30T00:56:16.136Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/pt-BR.json",
+                    "postProcessHash": "f47e2eecb4a41c516441a9fae937dc4ee41135e36590c878861037232c35e9dc"
+                },
+                "zh-CN": {
+                    "updatedAt": "2026-03-30T00:56:16.136Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/zh-CN.json",
+                    "postProcessHash": "c32db481d9510e021414ae4834a516c1a7136a66d5165411b61c8406f8ab72c3"
+                },
+                "zh-TW": {
+                    "updatedAt": "2026-03-30T00:56:16.137Z",
+                    "fileName": "/Users/gilbert/Documents/proyectos/Cache/public/_gt/zh-TW.json",
+                    "postProcessHash": "d1a4708dce7f5e881c2f1620452db909d96596f4987f0413ad12ecca2cb6637c"
+                }
+            },
+            "fileName": "__INTERNAL_GT_TEMPLATE_NAME__",
+            "staged": false
+        }
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    "manifest_version": 3,
+    "name": "Cache App",
+    "version": "0.2.0",
+    "description": "Sync Instagram Saved and TikTok Favorites into local storage for Cache. Runs on instagram.com and tiktok.com only; data stays on device unless you add an optional server URL in options.",
+    "icons": {
+        "16": "icons/icon.png",
+        "48": "icons/icon.png",
+        "128": "icons/icon.png"
+    },
+    "action": {
+        "default_title": "Cache App",
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon.png",
+            "48": "icons/icon.png",
+            "128": "icons/icon.png"
+        }
+    },
+    "background": {
+        "service_worker": "service-worker.js"
+    },
+    "permissions": ["cookies", "storage", "tabs"],
+    "host_permissions": [
+        "https://www.instagram.com/*",
+        "https://www.tiktok.com/*"
+    ],
+    "optional_host_permissions": ["http://*/*", "https://*/*"],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.instagram.com/*",
+                "https://www.tiktok.com/*"
+            ],
+            "js": ["content.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "options_page": "options.html"
+}

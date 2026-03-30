@@ -49,4 +49,5 @@ const nextConfig: NextConfig = {
 
 export default withGTConfig(nextConfig, {
     experimentalLocaleResolution: true,
+    loadTranslationsPath: "./load-translations.ts",
 });

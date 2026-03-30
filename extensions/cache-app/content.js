@@ -1,0 +1,959 @@
+/** Enough rounds for large virtualized grids. */
+const MAX_SCROLL_ROUNDS = 200;
+const SCROLL_SETTLE_MS = 1000;
+const STABLE_ROUNDS_NO_NEW_HARD_STOP = 3;
+const STABLE_ROUNDS_NO_NEW_AT_BOTTOM = 1;
+const STAGNANT_SCROLL_ROUNDS_STOP = 2;
+const SCROLL_BOTTOM_SLACK_PX = 56;
+const MAX_ITEMS = 2000;
+const INNER_SCROLL_STEPS = 28;
+const INNER_SCROLL_STEP_PAUSE_MS = 72;
+
+/**
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+/**
+ * @param {HTMLElement | null} inner
+ * @returns {boolean}
+ */
+function isInnerScrolledToBottom(inner) {
+    if (!inner) {
+        return false;
+    }
+    const { clientHeight, scrollHeight, scrollTop } = inner;
+    if (scrollHeight <= clientHeight + 12) {
+        return true;
+    }
+    return (
+        scrollTop + clientHeight >= scrollHeight - SCROLL_BOTTOM_SLACK_PX
+    );
+}
+
+/**
+ * @param {Element | null} start
+ * @returns {HTMLElement | null}
+ */
+function findBestScrollContainer(start) {
+    let best = /** @type {HTMLElement | null} */ (null);
+    let bestRoom = 0;
+    let el = start;
+    while (el && el !== document.documentElement && el !== document.body) {
+        if (el instanceof HTMLElement) {
+            const room = el.scrollHeight - el.clientHeight;
+            if (room > bestRoom && room > 16) {
+                bestRoom = room;
+                best = el;
+            }
+        }
+        el = el.parentElement;
+    }
+    return best;
+}
+
+/**
+ * @param {Element | null} anchor
+ * @param {() => HTMLElement | null} findAnchor
+ * @returns {HTMLElement | null}
+ */
+function findFeedScrollTarget(anchor, findAnchor) {
+    const sample =
+        anchor instanceof HTMLElement ? anchor : findAnchor();
+    return findBestScrollContainer(sample);
+}
+
+/**
+ * @param {Element | null} anchor
+ * @param {() => HTMLElement | null} findAnchor
+ * @returns {boolean}
+ */
+function isFeedScrolledToEnd(anchor, findAnchor) {
+    const scroller = findFeedScrollTarget(anchor, findAnchor);
+    if (scroller && scroller.scrollHeight > scroller.clientHeight + 16) {
+        return isInnerScrolledToBottom(scroller);
+    }
+    const root = document.scrollingElement ?? document.documentElement;
+    return (
+        root.scrollTop + root.clientHeight >=
+        root.scrollHeight - SCROLL_BOTTOM_SLACK_PX
+    );
+}
+
+/**
+ * @param {Element | null} anchor
+ * @param {() => HTMLElement | null} findAnchor
+ * @returns {{ scrollTop: number, scrollHeight: number, clientHeight: number }}
+ */
+function getFeedScrollMetrics(anchor, findAnchor) {
+    const scroller = findFeedScrollTarget(anchor, findAnchor);
+    if (scroller && scroller.scrollHeight > scroller.clientHeight + 16) {
+        return {
+            clientHeight: scroller.clientHeight,
+            scrollHeight: scroller.scrollHeight,
+            scrollTop: scroller.scrollTop,
+        };
+    }
+    const root = document.scrollingElement ?? document.documentElement;
+    return {
+        clientHeight: root.clientHeight,
+        scrollHeight: root.scrollHeight,
+        scrollTop: root.scrollTop,
+    };
+}
+
+/**
+ * @param {{ scrollTop: number, scrollHeight: number, clientHeight: number }} a
+ * @param {{ scrollTop: number, scrollHeight: number, clientHeight: number }} b
+ * @returns {boolean}
+ */
+function feedScrollMetricsNearlyEqual(a, b) {
+    const eps = 12;
+    return (
+        Math.abs(a.scrollTop - b.scrollTop) < eps &&
+        Math.abs(a.scrollHeight - b.scrollHeight) < eps &&
+        Math.abs(a.clientHeight - b.clientHeight) < eps
+    );
+}
+
+/**
+ * @param {Element | null} start
+ */
+function scrollAllAncestorsToBottom(start) {
+    const seen = new WeakSet();
+    let el = start;
+    while (el) {
+        if (el instanceof HTMLElement) {
+            const { clientHeight, scrollHeight } = el;
+            if (scrollHeight > clientHeight + 24 && !seen.has(el)) {
+                seen.add(el);
+                el.scrollTop = scrollHeight;
+            }
+        }
+        el = el.parentElement;
+    }
+}
+
+function scrollWindowToBottom() {
+    const root = document.scrollingElement ?? document.documentElement;
+    const body = document.body;
+    root.scrollTop = root.scrollHeight;
+    if (body) {
+        body.scrollTop = body.scrollHeight;
+    }
+    window.scrollTo(0, root.scrollHeight);
+}
+
+/**
+ * @param {HTMLElement | null} innerScroller
+ */
+async function stepScrollInnerToBottom(innerScroller) {
+    if (!innerScroller) {
+        return;
+    }
+    const maxTop = innerScroller.scrollHeight - innerScroller.clientHeight;
+    if (maxTop <= 0) {
+        return;
+    }
+    const step = Math.max(
+        120,
+        Math.floor(innerScroller.clientHeight * 0.72)
+    );
+    for (let i = 0; i < INNER_SCROLL_STEPS; i += 1) {
+        if (innerScroller.scrollTop >= maxTop - 2) {
+            break;
+        }
+        innerScroller.scrollTop = Math.min(
+            innerScroller.scrollTop + step,
+            maxTop
+        );
+        await sleep(INNER_SCROLL_STEP_PAUSE_MS);
+    }
+    innerScroller.scrollTop = innerScroller.scrollHeight;
+}
+
+/**
+ * @param {Element | null} anchor
+ * @param {HTMLElement | null} feedScroller
+ * @param {{ fullInnerSteps?: boolean }} [opts]
+ */
+async function scrollFeedTowardBottom(anchor, feedScroller, opts = {}) {
+    const fullInner = opts.fullInnerSteps !== false;
+    scrollWindowToBottom();
+    scrollAllAncestorsToBottom(anchor);
+    if (feedScroller) {
+        if (fullInner) {
+            await stepScrollInnerToBottom(feedScroller);
+        }
+        feedScroller.scrollTop = feedScroller.scrollHeight;
+    }
+    window.scrollBy(0, 9e6);
+    scrollWindowToBottom();
+}
+
+/**
+ * @param {Map<string, unknown>} accumulated
+ * @param {"instagram" | "tiktok"} source
+ */
+function flushChunkToExtension(accumulated, source) {
+    if (accumulated.size === 0) {
+        return;
+    }
+    const items = [...accumulated.values()];
+    void chrome.runtime
+        .sendMessage({
+            items,
+            source,
+            type: "BOOKMARKS_CHUNK",
+        })
+        .catch(() => {
+            /* service worker may be restarting */
+        });
+}
+
+/**
+ * @param {HTMLImageElement} img
+ * @param {string} origin
+ * @returns {string}
+ */
+function bestImageUrl(img, origin) {
+    const src = img.getAttribute("src");
+    if (src && !src.startsWith("data:")) {
+        return src;
+    }
+    const srcset = img.getAttribute("srcset");
+    if (srcset) {
+        const parts = srcset.split(",").map((s) => s.trim().split(/\s+/));
+        let best = "";
+        let bestW = 0;
+        for (const [url, w] of parts) {
+            if (!url || url.startsWith("data:")) {
+                continue;
+            }
+            const num = Number.parseInt(w?.replace("w", "") ?? "0", 10) || 0;
+            if (num >= bestW) {
+                bestW = num;
+                best = url;
+            }
+        }
+        if (best) {
+            try {
+                return new URL(best, origin).href;
+            } catch {
+                return best;
+            }
+        }
+    }
+    return src ?? "";
+}
+
+// --- Instagram ---
+
+const IG_SAVED_PATH_RE = /^\/[^/]+\/saved(\/.*)?$/;
+const IG_POST_PATH_RE = /\/(p|reel)\/([^/?#]+)/;
+
+function isInstagramSavedPageByUrl() {
+    return IG_SAVED_PATH_RE.test(window.location.pathname);
+}
+
+function isInstagramSavedPageByDomFallback() {
+    const selectors = [
+        '[aria-label*="Saved" i]',
+        '[aria-label*="saved" i]',
+        "h1",
+        "h2",
+    ];
+    for (const sel of selectors) {
+        for (const el of document.querySelectorAll(sel)) {
+            const label = el.getAttribute("aria-label") ?? "";
+            const text = (el.textContent ?? "").trim();
+            const combined = `${label} ${text}`.trim();
+            if (
+                (/^saved$/i.test(text) ||
+                    /^saved$/i.test(label) ||
+                    /\bsaved\b/i.test(combined)) &&
+                combined.length < 80
+            ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function isInstagramSavedPage() {
+    if (isInstagramSavedPageByUrl()) {
+        return true;
+    }
+    if (window.location.pathname.includes("/saved")) {
+        return true;
+    }
+    return isInstagramSavedPageByDomFallback();
+}
+
+function getInstagramPostLinkRoot() {
+    const main = document.querySelector("main");
+    return main instanceof HTMLElement ? main : document.documentElement;
+}
+
+function findInstagramScrollAnchorElement() {
+    const sel = 'a[href*="/p/"], a[href*="/reel/"]';
+    const main = document.querySelector("main");
+    if (main instanceof HTMLElement) {
+        const inMain = main.querySelector(sel);
+        if (inMain instanceof HTMLElement) {
+            return inMain;
+        }
+    }
+    const any = document.querySelector(sel);
+    return any instanceof HTMLElement ? any : null;
+}
+
+/**
+ * @param {string} href
+ * @returns {{ shortcode: string, pathname: string } | null}
+ */
+function parseInstagramPostHref(href) {
+    try {
+        const u = new URL(href, "https://www.instagram.com");
+        if (u.hostname.replace(/^www\./, "") !== "instagram.com") {
+            return null;
+        }
+        const match = u.pathname.match(IG_POST_PATH_RE);
+        if (!match) {
+            return null;
+        }
+        return { pathname: u.pathname, shortcode: match[2] };
+    } catch {
+        return null;
+    }
+}
+
+/** @typedef {{ shortcode: string, url: string, thumbnailUrl: string, caption: string, scrapedAt: string }} InstagramRow */
+
+/**
+ * @param {Map<string, InstagramRow>} accumulated
+ */
+function mergeInstagramDomIntoAccumulated(accumulated) {
+    const root = getInstagramPostLinkRoot();
+    const anchors = root.querySelectorAll(
+        'a[href*="/p/"], a[href*="/reel/"]'
+    );
+
+    for (const a of anchors) {
+        if (accumulated.size >= MAX_ITEMS) {
+            break;
+        }
+        const href = a.getAttribute("href");
+        if (!href) {
+            continue;
+        }
+        const parsed = parseInstagramPostHref(href);
+        if (!parsed) {
+            continue;
+        }
+
+        const scope =
+            a.closest("article") ??
+            a.closest('[role="button"]')?.parentElement ??
+            a.parentElement ??
+            a;
+        const img = scope.querySelector("img");
+        const thumbnailUrl =
+            img instanceof HTMLImageElement
+                ? bestImageUrl(img, "https://www.instagram.com")
+                : "";
+        const caption = (img?.getAttribute("alt") ?? "").trim();
+        const row = {
+            caption,
+            scrapedAt: new Date().toISOString(),
+            shortcode: parsed.shortcode,
+            thumbnailUrl,
+            url: `https://www.instagram.com${parsed.pathname}`,
+        };
+
+        if (!accumulated.has(parsed.shortcode)) {
+            accumulated.set(parsed.shortcode, row);
+        } else {
+            const prev = accumulated.get(parsed.shortcode);
+            if (prev && !prev.thumbnailUrl && thumbnailUrl) {
+                accumulated.set(parsed.shortcode, { ...prev, thumbnailUrl });
+            }
+        }
+    }
+}
+
+/**
+ * @returns {Promise<Map<string, InstagramRow>>}
+ */
+async function scrollInstagramToLoadMore() {
+    const findAnchor = findInstagramScrollAnchorElement;
+
+    /** @type {Map<string, InstagramRow>} */
+    const accumulated = new Map();
+    mergeInstagramDomIntoAccumulated(accumulated);
+    flushChunkToExtension(accumulated, "instagram");
+
+    let roundsWithoutNewAccumulated = 0;
+    let stagnantScrollRounds = 0;
+
+    for (let round = 0; round < MAX_SCROLL_ROUNDS; round += 1) {
+        const sizeBeforeRound = accumulated.size;
+
+        const anchor = findAnchor();
+        const feedScroller = findFeedScrollTarget(anchor, findAnchor);
+        const metricsBefore = getFeedScrollMetrics(anchor, findAnchor);
+
+        const fullInnerSteps = roundsWithoutNewAccumulated < 2;
+        await scrollFeedTowardBottom(anchor, feedScroller, { fullInnerSteps });
+        await sleep(SCROLL_SETTLE_MS);
+
+        mergeInstagramDomIntoAccumulated(accumulated);
+        flushChunkToExtension(accumulated, "instagram");
+
+        const grew = accumulated.size > sizeBeforeRound;
+        if (grew) {
+            roundsWithoutNewAccumulated = 0;
+            stagnantScrollRounds = 0;
+        } else {
+            roundsWithoutNewAccumulated += 1;
+            const metricsAfter = getFeedScrollMetrics(findAnchor(), findAnchor);
+            if (feedScrollMetricsNearlyEqual(metricsBefore, metricsAfter)) {
+                stagnantScrollRounds += 1;
+            } else {
+                stagnantScrollRounds = 0;
+            }
+
+            const atEnd = isFeedScrolledToEnd(findAnchor(), findAnchor);
+            if (
+                atEnd &&
+                roundsWithoutNewAccumulated >= STABLE_ROUNDS_NO_NEW_AT_BOTTOM
+            ) {
+                break;
+            }
+            if (stagnantScrollRounds >= STAGNANT_SCROLL_ROUNDS_STOP) {
+                break;
+            }
+            if (roundsWithoutNewAccumulated >= STABLE_ROUNDS_NO_NEW_HARD_STOP) {
+                break;
+            }
+        }
+
+        if (accumulated.size >= MAX_ITEMS) {
+            break;
+        }
+    }
+
+    mergeInstagramDomIntoAccumulated(accumulated);
+    return accumulated;
+}
+
+async function runInstagramSync() {
+    if (!isInstagramSavedPage()) {
+        await chrome.runtime.sendMessage({
+            code: "NOT_SAVED_PAGE",
+            message: "Open Instagram → your profile → Saved, then try again.",
+            source: "instagram",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    const accumulated = await scrollInstagramToLoadMore();
+    const items = [...accumulated.values()];
+
+    if (items.length === 0) {
+        await chrome.runtime.sendMessage({
+            code: "NO_ITEMS",
+            message:
+                "No posts found. Scroll the Saved grid manually once, then sync again.",
+            source: "instagram",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    await chrome.runtime.sendMessage({
+        items,
+        source: "instagram",
+        type: "BOOKMARKS_COMPLETE",
+    });
+}
+
+// --- TikTok ---
+
+/**
+ * TikTok Web often mounts tabs and grids inside **closed** or open shadow roots.
+ * Light-DOM `querySelector` misses them, so page detection and scraping both fail.
+ * @param {string} sel
+ * @returns {Element[]}
+ */
+function querySelectorAllDeep(sel) {
+    /** @type {Element[]} */
+    const out = [];
+    /**
+     * @param {Document | ShadowRoot | Element} root
+     */
+    function walk(root) {
+        if (!root || typeof root.querySelectorAll !== "function") {
+            return;
+        }
+        for (const el of root.querySelectorAll(sel)) {
+            out.push(el);
+        }
+        for (const el of root.querySelectorAll("*")) {
+            if (el.shadowRoot) {
+                walk(el.shadowRoot);
+            }
+        }
+    }
+    walk(document.documentElement);
+    return out;
+}
+
+/**
+ * Strip `/en/`, `/zh-Hans/`, etc. only when the remainder looks like a real TikTok route
+ * (avoids mangling paths such as `/establishment`).
+ * @param {string} pathname
+ * @returns {string}
+ */
+function tiktokPathWithoutOptionalLocale(pathname) {
+    const m = pathname.match(/^\/([a-z]{2}(?:-[a-zA-Z0-9]{2,10})?)\/(.+)$/i);
+    if (!m) {
+        return pathname;
+    }
+    const rest = `/${m[2]}`;
+    if (
+        rest.startsWith("/@") ||
+        rest.startsWith("/discover") ||
+        rest.startsWith("/following") ||
+        rest.startsWith("/foryou")
+    ) {
+        return rest;
+    }
+    return pathname;
+}
+
+/**
+ * @returns {string}
+ */
+function tiktokNormalizedPath() {
+    return tiktokPathWithoutOptionalLocale(window.location.pathname);
+}
+
+/**
+ * Legacy or alternate routes that still put `/favorites` in the path.
+ * @returns {boolean}
+ */
+function isTikTokFavoritesByUrl() {
+    const p = tiktokNormalizedPath();
+    if (/^\/@[^/]+\/favorites?(?:\/|$)/i.test(p)) {
+        return true;
+    }
+    if (/\/favorites?(?:\/|$)/i.test(p) && /@/i.test(window.location.pathname)) {
+        return true;
+    }
+    const sp = new URLSearchParams(window.location.search);
+    const tab = (sp.get("tab") ?? sp.get("from_tab") ?? "").toLowerCase();
+    if (
+        (tab === "favorites" || tab === "favorite") &&
+        /^\/@[^/]+\/?$/i.test(p)
+    ) {
+        return true;
+    }
+    const hash = window.location.hash.toLowerCase();
+    if (
+        (hash.includes("favorite") || hash.includes("favorites")) &&
+        /^\/@[^/]+\/?$/i.test(p)
+    ) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Profile area under a handle — not single-video/photo viewer chrome.
+ * Favorites is a client tab, so the path often stays `/@handle` or a sibling segment.
+ * @returns {boolean}
+ */
+function isTikTokProfileSurfacePath() {
+    const p = tiktokNormalizedPath();
+    if (/^\/profile\b/i.test(p)) {
+        return true;
+    }
+    if (!/^\/@[^/]+/i.test(p)) {
+        return false;
+    }
+    if (/^\/@[^/]+\/(?:video|photo)\/\d+/i.test(p)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @param {string} text
+ * @returns {boolean}
+ */
+function textSuggestsTikTokFavorites(text) {
+    const t = text.toLowerCase();
+    return (
+        /\bfavorites?\b/.test(t) ||
+        /\bfavourites?\b/.test(t) ||
+        /\bfavoritos?\b/.test(t) ||
+        /\bfavoris\b/.test(t) ||
+        /\bfavoriten\b/.test(t) ||
+        /\b收藏\b/.test(text) ||
+        /\bお気に入り\b/.test(text)
+    );
+}
+
+/**
+ * @param {Element} el
+ * @returns {boolean}
+ */
+function tiktokTabLooksSelected(el) {
+    if (el.getAttribute("aria-selected") === "true") {
+        return true;
+    }
+    if (el.getAttribute("aria-pressed") === "true") {
+        return true;
+    }
+    if (el.getAttribute("aria-current") === "true") {
+        return true;
+    }
+    const cls = el.className;
+    const s = typeof cls === "string" ? cls : String(cls);
+    return /\bactive\b/i.test(s) || /\bselected\b/i.test(s);
+}
+
+/**
+ * @param {Element} el
+ * @returns {boolean}
+ */
+function tiktokElementLooksVisible(el) {
+    const r = el.getBoundingClientRect();
+    return r.width > 4 && r.height > 4 && r.bottom > 0 && r.top < window.innerHeight;
+}
+
+/**
+ * Favorites tab selected, favorites list mount, or visible “Favorites” chip near the top.
+ * Uses shadow-aware queries (TikTok puts most UI in shadow roots).
+ * @returns {boolean}
+ */
+function isTikTokFavoritesTabActive() {
+    const tabLists = querySelectorAllDeep(
+        '[role="tablist"], [data-e2e*="tab-list" i], [data-e2e*="tablist" i]'
+    );
+    const scopes =
+        tabLists.length > 0
+            ? tabLists
+            : /** @type {Element[]} */ ([document.body].filter(Boolean));
+
+    for (const scope of scopes) {
+        const tabCandidates = scope.querySelectorAll(
+            '[role="tab"], [role="tablist"] button, [data-e2e*="tab" i], a[href*="favorite" i]'
+        );
+        for (const el of tabCandidates) {
+            if (!tiktokTabLooksSelected(el)) {
+                continue;
+            }
+            const label = el.getAttribute("aria-label") ?? "";
+            const text = (el.textContent ?? "").trim();
+            const href = el.getAttribute("href") ?? "";
+            if (
+                textSuggestsTikTokFavorites(`${label} ${text}`) ||
+                /\/favorites/i.test(href)
+            ) {
+                return true;
+            }
+        }
+    }
+
+    const favMarkers = querySelectorAllDeep(
+        '[data-e2e*="user-favorite" i], [data-e2e*="user-fav" i], [data-e2e*="favorite-list" i], [data-e2e*="fav-list" i], [data-e2e*="favorite" i]'
+    );
+    for (const el of favMarkers) {
+        if (tiktokElementLooksVisible(el)) {
+            return true;
+        }
+    }
+
+    for (const el of querySelectorAllDeep(
+        '[role="tab"], button, a[href], div[tabindex="0"], [role="menuitem"]'
+    )) {
+        if (!tiktokElementLooksVisible(el)) {
+            continue;
+        }
+        const r = el.getBoundingClientRect();
+        if (r.top > 420 || r.top < 0) {
+            continue;
+        }
+        const label = el.getAttribute("aria-label") ?? "";
+        const text = (el.textContent ?? "").trim();
+        if (text.length > 80) {
+            continue;
+        }
+        if (textSuggestsTikTokFavorites(`${label} ${text}`)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * TikTok keeps `/@username` in the URL; Favorites is a client-side tab (no `/favorites` path).
+ * We cannot see **closed** shadow roots; if the URL matches profile and deep scan finds video
+ * links, allow sync (user must be on Favorites — Posts tab can also match).
+ * @returns {boolean}
+ */
+function isTikTokFavoritesVideosView() {
+    if (isTikTokFavoritesByUrl()) {
+        return true;
+    }
+    if (!isTikTokProfileSurfacePath()) {
+        return false;
+    }
+    const videoAnchors = querySelectorAllDeep('a[href*="/video/"]');
+    if (videoAnchors.length === 0) {
+        return false;
+    }
+    if (isTikTokFavoritesTabActive()) {
+        return true;
+    }
+    return videoAnchors.length >= 1;
+}
+
+function findTikTokVideoScrollAnchor() {
+    for (const el of querySelectorAllDeep('a[href*="/video/"]')) {
+        if (
+            el instanceof HTMLElement &&
+            tiktokElementLooksVisible(el)
+        ) {
+            return el;
+        }
+    }
+    const first = querySelectorAllDeep('a[href*="/video/"]')[0];
+    return first instanceof HTMLElement ? first : null;
+}
+
+const TIKTOK_VIDEO_ID_RE = /\/video\/(\d+)/;
+
+/**
+ * @param {string} href
+ * @returns {{ id: string, url: string } | null}
+ */
+function parseTikTokVideoHref(href) {
+    try {
+        const u = new URL(href, "https://www.tiktok.com");
+        if (u.hostname.replace(/^www\./, "") !== "tiktok.com") {
+            return null;
+        }
+        const match = u.pathname.match(TIKTOK_VIDEO_ID_RE);
+        if (!match) {
+            return null;
+        }
+        return { id: match[1], url: u.href.split("#")[0] };
+    } catch {
+        return null;
+    }
+}
+
+/** @typedef {{ id: string, url: string, thumbnailUrl: string, caption: string, scrapedAt: string }} TikTokRow */
+
+/**
+ * @param {Map<string, TikTokRow>} accumulated
+ */
+function mergeTikTokDomIntoAccumulated(accumulated) {
+    const anchors = querySelectorAllDeep('a[href*="/video/"]');
+
+    for (const a of anchors) {
+        if (accumulated.size >= MAX_ITEMS) {
+            break;
+        }
+        if (!(a instanceof HTMLAnchorElement)) {
+            continue;
+        }
+        const href = a.getAttribute("href");
+        if (!href) {
+            continue;
+        }
+        const parsed = parseTikTokVideoHref(href);
+        if (!parsed) {
+            continue;
+        }
+
+        const scope =
+            a.closest("[data-e2e='user-post-item']") ??
+            a.closest("article") ??
+            a.parentElement ??
+            a;
+        const img =
+            a.querySelector("img") ??
+            (scope instanceof Element ? scope.querySelector("img") : null);
+        const thumbnailUrl =
+            img instanceof HTMLImageElement
+                ? bestImageUrl(img, "https://www.tiktok.com")
+                : "";
+        const caption = (
+            img?.getAttribute("alt") ??
+            a.getAttribute("aria-label") ??
+            ""
+        ).trim();
+        const row = {
+            caption,
+            id: parsed.id,
+            scrapedAt: new Date().toISOString(),
+            thumbnailUrl,
+            url: parsed.url,
+        };
+
+        if (!accumulated.has(parsed.id)) {
+            accumulated.set(parsed.id, row);
+        } else {
+            const prev = accumulated.get(parsed.id);
+            if (prev && !prev.thumbnailUrl && thumbnailUrl) {
+                accumulated.set(parsed.id, { ...prev, thumbnailUrl });
+            }
+        }
+    }
+}
+
+/**
+ * @returns {Promise<Map<string, TikTokRow>>}
+ */
+async function scrollTikTokToLoadMore() {
+    const findAnchor = findTikTokVideoScrollAnchor;
+
+    /** @type {Map<string, TikTokRow>} */
+    const accumulated = new Map();
+    mergeTikTokDomIntoAccumulated(accumulated);
+    flushChunkToExtension(accumulated, "tiktok");
+
+    let roundsWithoutNewAccumulated = 0;
+    let stagnantScrollRounds = 0;
+
+    for (let round = 0; round < MAX_SCROLL_ROUNDS; round += 1) {
+        const sizeBeforeRound = accumulated.size;
+
+        const anchor = findAnchor();
+        const feedScroller = findFeedScrollTarget(anchor, findAnchor);
+        const metricsBefore = getFeedScrollMetrics(anchor, findAnchor);
+
+        const fullInnerSteps = roundsWithoutNewAccumulated < 2;
+        await scrollFeedTowardBottom(anchor, feedScroller, { fullInnerSteps });
+        await sleep(SCROLL_SETTLE_MS);
+
+        mergeTikTokDomIntoAccumulated(accumulated);
+        flushChunkToExtension(accumulated, "tiktok");
+
+        const grew = accumulated.size > sizeBeforeRound;
+        if (grew) {
+            roundsWithoutNewAccumulated = 0;
+            stagnantScrollRounds = 0;
+        } else {
+            roundsWithoutNewAccumulated += 1;
+            const metricsAfter = getFeedScrollMetrics(findAnchor(), findAnchor);
+            if (feedScrollMetricsNearlyEqual(metricsBefore, metricsAfter)) {
+                stagnantScrollRounds += 1;
+            } else {
+                stagnantScrollRounds = 0;
+            }
+
+            const atEnd = isFeedScrolledToEnd(findAnchor(), findAnchor);
+            if (
+                atEnd &&
+                roundsWithoutNewAccumulated >= STABLE_ROUNDS_NO_NEW_AT_BOTTOM
+            ) {
+                break;
+            }
+            if (stagnantScrollRounds >= STAGNANT_SCROLL_ROUNDS_STOP) {
+                break;
+            }
+            if (roundsWithoutNewAccumulated >= STABLE_ROUNDS_NO_NEW_HARD_STOP) {
+                break;
+            }
+        }
+
+        if (accumulated.size >= MAX_ITEMS) {
+            break;
+        }
+    }
+
+    mergeTikTokDomIntoAccumulated(accumulated);
+    return accumulated;
+}
+
+async function runTikTokSync() {
+    if (!isTikTokFavoritesVideosView()) {
+        await chrome.runtime.sendMessage({
+            code: "NOT_TIKTOK_FAVORITES",
+            message:
+                "Use your profile URL (/@username or /profile), open the Favorites tab, wait for videos to load, then sync. If this persists, TikTok may be using a view the extension cannot read.",
+            source: "tiktok",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    const accumulated = await scrollTikTokToLoadMore();
+    const items = [...accumulated.values()];
+
+    if (items.length === 0) {
+        await chrome.runtime.sendMessage({
+            code: "NO_ITEMS",
+            message:
+                "No videos found. Scroll the Favorites grid once, then sync again.",
+            source: "tiktok",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    await chrome.runtime.sendMessage({
+        items,
+        source: "tiktok",
+        type: "BOOKMARKS_COMPLETE",
+    });
+}
+
+// --- Router ---
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type !== "START_SYNC") {
+        return undefined;
+    }
+
+    sendResponse({ ok: true, started: true });
+
+    (async () => {
+        try {
+            const host = window.location.hostname.replace(/^www\./, "");
+            if (host === "instagram.com") {
+                await runInstagramSync();
+            } else if (host === "tiktok.com") {
+                await runTikTokSync();
+            } else {
+                await chrome.runtime.sendMessage({
+                    code: "UNSUPPORTED_PAGE",
+                    message:
+                        "Open instagram.com or tiktok.com in this tab, on Saved or Favorites.",
+                    type: "SYNC_ERROR",
+                });
+            }
+        } catch (err) {
+            await chrome.runtime.sendMessage({
+                code: "SCRAPE_FAILED",
+                message: err instanceof Error ? err.message : String(err),
+                type: "SYNC_ERROR",
+            });
+        }
+    })();
+
+    return true;
+});

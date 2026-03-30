@@ -1,10 +1,8 @@
 import "@/lib/dayjs/locales";
 
-import { BASE_URL, SITE_APP_NAME, SITE_DEFAULT_TITLE } from "@/lib/constants";
-import { GTProvider } from "gt-next";
-import { getGT, getLocale } from "gt-next/server";
-import type { Metadata } from "next";
+import { BASE_URL } from "@/lib/constants";
 import { Inter } from "next/font/google";
+import type * as React from "react";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,37 +10,23 @@ const inter = Inter({
     variable: "--font-inter",
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-    const gt = await getGT();
+const ROOT_HTML_LANG = "en-US";
 
-    return {
-        description: gt(SITE_APP_NAME),
-        title: {
-            default: gt(SITE_DEFAULT_TITLE),
-            template: `%s | ${SITE_APP_NAME}`,
-        },
-    };
-}
-
-export default async function RootLayout({
+export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const locale = await getLocale();
-
     return (
         <html
             className={`${inter.variable} h-full antialiased`}
-            lang={locale}
+            lang={ROOT_HTML_LANG}
             suppressHydrationWarning
         >
             <head>
                 <NextChatSDKBootstrap baseUrl={BASE_URL} />
             </head>
-            <body className="flex min-h-full flex-col">
-                <GTProvider>{children}</GTProvider>
-            </body>
+            <body className="flex min-h-full flex-col">{children}</body>
         </html>
     );
 }
@@ -112,7 +96,7 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
                                 }
                                 const url = new URL(
                                     a.href,
-                                    window.location.href,
+                                    window.location.href
                                 );
                                 if (
                                     url.origin !== window.location.origin &&
@@ -127,12 +111,12 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
                                         }
                                     } catch {
                                         console.warn(
-                                            "openExternal failed, likely not in OpenAI client",
+                                            "openExternal failed, likely not in OpenAI client"
                                         );
                                     }
                                 }
                             },
-                            true,
+                            true
                         );
 
                         if (
@@ -143,7 +127,7 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
 
                             function resolveFetchUrl(
                                 input: URL | RequestInfo,
-                                baseHref: string,
+                                baseHref: string
                             ): URL {
                                 if (
                                     typeof input === "string" ||
@@ -156,7 +140,7 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
 
                             function inputForResolvedUrl(
                                 input: URL | RequestInfo,
-                                url: URL,
+                                url: URL
                             ): URL | RequestInfo {
                                 if (
                                     typeof input === "string" ||
@@ -169,18 +153,18 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
 
                             window.fetch = (
                                 input: URL | RequestInfo,
-                                init?: RequestInit,
+                                init?: RequestInit
                             ) => {
                                 const url = resolveFetchUrl(
                                     input,
-                                    window.location.href,
+                                    window.location.href
                                 );
 
                                 if (url.origin === appOrigin) {
                                     return originalFetch.call(
                                         window,
                                         inputForResolvedUrl(input, url),
-                                        { ...init, mode: "cors" },
+                                        { ...init, mode: "cors" }
                                     );
                                 }
 
@@ -192,7 +176,7 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
                                     return originalFetch.call(
                                         window,
                                         inputForResolvedUrl(input, rewritten),
-                                        { ...init, mode: "cors" },
+                                        { ...init, mode: "cors" }
                                     );
                                 }
 

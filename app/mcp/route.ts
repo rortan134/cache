@@ -66,7 +66,7 @@ const handler = createMcpHandler(async (server) => {
                     uri: uri.href,
                 },
             ],
-        }),
+        })
     );
 
     server.registerTool(
@@ -79,7 +79,7 @@ const handler = createMcpHandler(async (server) => {
                 name: z
                     .string()
                     .describe(
-                        "The name of the user to display on the homepage",
+                        "The name of the user to display on the homepage"
                     ),
             },
             title: contentWidget.title,
@@ -98,7 +98,7 @@ const handler = createMcpHandler(async (server) => {
                     timestamp: new Date().toISOString(),
                 },
             });
-        },
+        }
     );
 });
 
