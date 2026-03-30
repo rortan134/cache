@@ -6,7 +6,7 @@ import {
     upsertLibraryItemsFromIngest,
     type IngestItemInput,
 } from "@/lib/library/extension-ingest";
-import { z } from "zod";
+import * as z from "zod";
 
 const itemSchema = z
     .object({
