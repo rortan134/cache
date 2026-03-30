@@ -81,31 +81,14 @@ body {
     @apply max-w-[calc(1080px*0.25*3)];
 }
 
-@utility animate-shine {
-    @apply pointer-events-none absolute inset-0 transform-gpu overflow-hidden transition-opacity group-active:opacity-0;
-
-    &::before {
-        transform: translateX(calc(150% * -1)) skewX(-15deg);
-        animation: ShimmerWave 3s infinite;
-        @apply absolute top-0 left-0 h-full w-14 transform-gpu bg-white/50 blur-[30px] duration-700 content-[""] motion-safe:block;
-    }
-
-    &::after {
-        transform: translateX(calc(150% * -1)) skewX(-15deg);
-        animation: ShimmerWave 3s infinite;
-        @apply absolute top-0 left-0 h-full w-7 transform-gpu bg-white/30 blur-[5px] duration-700 motion-safe:block;
-    }
-}
-
-@keyframes ShimmerWave {
-    0% {
-        transform: translateX(-200px) skewX(-15deg);
-    }
-
-    20%,
-    100% {
-        transform: translateX(500px) skewX(-15deg);
-    }
+@utility overflow-fade-bottom {
+    mask-image: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0) 50%,
+        rgba(0, 0, 0, 0.5) 65%,
+        #000 140%
+    );
+    @apply overflow-hidden;
 }
 
 @view-transition {

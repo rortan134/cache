@@ -172,7 +172,8 @@ export default async function Home({
                                 </p>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Streamline the way you consume and reengage
-                                    with your saved content from a single view.
+                                    with your saved content from a single clean
+                                    view.
                                 </p>
                             </T>
                         </div>
@@ -256,9 +257,17 @@ export default async function Home({
                                                 <p>Cookie Policy</p>
                                             </T>
                                         </Link>
+                                        <Link
+                                            className="underline"
+                                            href="https://x.com/gsmmtt"
+                                            rel="noreferrer noopener"
+                                            target="_blank"
+                                        >
+                                            <p>X</p>
+                                        </Link>
                                     </div>
                                 </div>
-                                <div className="col-span-full flex flex-col items-start justify-between font-sans text-xs leading-[1.22] tracking-[-3%]">
+                                <div className="relative col-span-full flex flex-col items-start justify-between font-sans text-xs leading-[1.22] tracking-[-3%]">
                                     <span>
                                         <T context="Disclaimer">
                                             *Third-party platforms you connect
@@ -284,6 +293,51 @@ export default async function Home({
                                             detail may be found
                                         </T>
                                     </span>
+                                    <div className="absolute inset-x-0 h-[200px] w-full overflow-clip">
+                                        <svg
+                                            aria-hidden
+                                            aria-label="Branding"
+                                            className="overflow-fade-bottom mx-auto flex h-auto w-full justify-center overflow-hidden"
+                                            fill="none"
+                                            height="200"
+                                            role="presentation"
+                                            viewBox="0 0 426 200"
+                                            width="426"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <rect
+                                                fill="black"
+                                                height="100"
+                                                rx="30"
+                                                width="100"
+                                                y="50"
+                                            />
+                                            <rect
+                                                fill="black"
+                                                height="100"
+                                                rx="48"
+                                                width="100"
+                                                x="108.667"
+                                                y="50"
+                                            />
+                                            <rect
+                                                fill="black"
+                                                height="100"
+                                                rx="28"
+                                                width="100"
+                                                x="217.333"
+                                                y="50"
+                                            />
+                                            <rect
+                                                fill="black"
+                                                height="100"
+                                                rx="38"
+                                                width="100"
+                                                x="326"
+                                                y="50"
+                                            />
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
