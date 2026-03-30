@@ -1,7 +1,7 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { PageShell } from "@/components/layouts";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
-import LogoIconImage from "@/public/images/cache-app-icon.png";
+import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector, T } from "gt-next";
 import Image from "next/image";
 import Link from "next/link";
@@ -148,7 +148,7 @@ export default async function Home({
                                     <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%]">
                                         <Link
                                             className="underline"
-                                            href="/terms-of-service"
+                                            href="/legal/terms-of-service"
                                             target="_blank"
                                         >
                                             <T>
@@ -157,7 +157,7 @@ export default async function Home({
                                         </Link>
                                         <Link
                                             className="underline"
-                                            href="/privacy-policy"
+                                            href="/legal/privacy-policy"
                                             target="_blank"
                                         >
                                             <T>
@@ -166,7 +166,7 @@ export default async function Home({
                                         </Link>
                                         <Link
                                             className="underline"
-                                            href="/cookie-policy"
+                                            href="/legal/cookie-policy"
                                             target="_blank"
                                         >
                                             <T>

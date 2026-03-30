@@ -44,6 +44,25 @@ const nextConfig: NextConfig = {
         minimumCacheTTL: 2_678_400, // 31 days
     },
     reactCompiler: true,
+    async redirects() {
+        return [
+            {
+                destination: "/legal/cookie-policy",
+                permanent: true,
+                source: "/cookie-policy",
+            },
+            {
+                destination: "/legal/privacy-policy",
+                permanent: true,
+                source: "/privacy-policy",
+            },
+            {
+                destination: "/legal/terms-of-service",
+                permanent: true,
+                source: "/terms-of-service",
+            },
+        ];
+    },
     typedRoutes: true,
 };
 
