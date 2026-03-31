@@ -91,14 +91,24 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
                         history.replaceState = (state, unused, url) => {
                             const u = new URL(url ?? "", window.location.href);
                             const href = u.pathname + u.search + u.hash;
-                            originalReplaceState.call(history, state, unused, href);
+                            originalReplaceState.call(
+                                history,
+                                state,
+                                unused,
+                                href
+                            );
                         };
 
                         const originalPushState = history.pushState;
                         history.pushState = (state, unused, url) => {
                             const u = new URL(url ?? "", window.location.href);
                             const href = u.pathname + u.search + u.hash;
-                            originalPushState.call(history, state, unused, href);
+                            originalPushState.call(
+                                history,
+                                state,
+                                unused,
+                                href
+                            );
                         };
 
                         const appOrigin = new URL(baseUrl).origin;
