@@ -1,3 +1,9 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
+-- CreateEnum
+CREATE TYPE "LibraryItemSource" AS ENUM ('google_photos', 'instagram', 'other', 'pinterest', 'tiktok');
+
 -- CreateTable
 CREATE TABLE "user" (
     "id" TEXT NOT NULL,
@@ -8,8 +14,36 @@ CREATE TABLE "user" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "stripeCustomerId" TEXT,
+    "extensionIngestToken" TEXT,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "library_item" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "source" "LibraryItemSource" NOT NULL,
+    "externalId" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "caption" TEXT,
+    "thumbnailUrl" TEXT,
+    "scrapedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "library_item_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "feedback" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "pagePath" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "feedback_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -81,7 +115,22 @@ CREATE TABLE "subscription" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "user_extensionIngestToken_key" ON "user"("extensionIngestToken");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+
+-- CreateIndex
+CREATE INDEX "library_item_userId_idx" ON "library_item"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "library_item_userId_source_externalId_key" ON "library_item"("userId", "source", "externalId");
+
+-- CreateIndex
+CREATE INDEX "feedback_pagePath_idx" ON "feedback"("pagePath");
+
+-- CreateIndex
+CREATE INDEX "feedback_userId_idx" ON "feedback"("userId");
 
 -- CreateIndex
 CREATE INDEX "session_userId_idx" ON "session"("userId");
@@ -94,6 +143,12 @@ CREATE INDEX "account_userId_idx" ON "account"("userId");
 
 -- CreateIndex
 CREATE INDEX "verification_identifier_idx" ON "verification"("identifier");
+
+-- AddForeignKey
+ALTER TABLE "library_item" ADD CONSTRAINT "library_item_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "feedback" ADD CONSTRAINT "feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
