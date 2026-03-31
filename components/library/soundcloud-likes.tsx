@@ -1,13 +1,13 @@
 "use client";
 
-import { SoundCloud } from "@/components/shared/integration-icons";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/auth/client";
 import type {
     LatestSoundcloudLikesResult,
     SoundcloudLikeTrack,
 } from "@/app/[locale]/library/actions";
+import { SoundCloud } from "@/components/shared/integration-icons";
+import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth/client";
+import { cn } from "@/lib/utils";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import type * as React from "react";
 import { useCallback, useState } from "react";
@@ -47,7 +47,7 @@ export function SoundcloudConnectButton({
 
     let buttonLabel = "Connect";
     if (parked) {
-        buttonLabel = "Pending approval";
+        buttonLabel = "Pending";
     } else if (connected) {
         buttonLabel = "Reconnect";
     }

@@ -265,6 +265,7 @@ export default async function Home({
                                         >
                                             <p>X</p>
                                         </Link>
+                                        <p>&copy; Cache. All rights reserved</p>
                                     </div>
                                 </div>
                                 <div className="relative col-span-full flex flex-col items-start justify-between font-sans text-xs leading-[1.22] tracking-[-3%]">
@@ -293,7 +294,7 @@ export default async function Home({
                                             detail may be found
                                         </T>
                                     </span>
-                                    <div className="absolute inset-x-0 h-[200px] w-full overflow-clip">
+                                    <div className="absolute inset-x-0 mt-8 h-[200px] w-full overflow-clip md:mt-4 lg:mt-0">
                                         <svg
                                             aria-hidden
                                             aria-label="Branding"
