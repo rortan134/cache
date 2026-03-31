@@ -128,8 +128,10 @@ export const auth = betterAuth({
     secret: requiredEnv("BETTER_AUTH_SECRET"),
     socialProviders: {
         google: {
+            accessType: "offline",
             clientId: requiredEnv("GOOGLE_CLIENT_ID"),
             clientSecret: requiredEnv("GOOGLE_CLIENT_SECRET"),
+            prompt: "select_account consent",
             scope: [
                 "openid",
                 "email",

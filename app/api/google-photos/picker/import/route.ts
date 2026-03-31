@@ -137,10 +137,11 @@ export async function POST(request: Request) {
         });
     } catch (error) {
         if (error instanceof GooglePhotosPickerApiError) {
-            return Response.json(
-                { error: error.message },
-                { status: error.status }
-            );
+            const message =
+                error.status === 401
+                    ? "Your Google account needs Photos permission. Please sign out and sign back in to reconnect."
+                    : error.message;
+            return Response.json({ error: message }, { status: error.status });
         }
         throw error;
     }
