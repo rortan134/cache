@@ -41,6 +41,9 @@ export default async function LibraryPage({
     params: Promise<{ locale: string }>;
 }) {
     const { locale } = await params;
+    const soundcloudParked = !(
+        process.env.SOUNDCLOUD_CLIENT_ID && process.env.SOUNDCLOUD_CLIENT_SECRET
+    );
     const session = await getServerSession();
     const userId = session?.user?.id;
 
@@ -59,7 +62,7 @@ export default async function LibraryPage({
                 userId,
             },
         }),
-        getLatestSoundcloudLikes(),
+        soundcloudParked ? Promise.resolve(null) : getLatestSoundcloudLikes(),
     ]);
 
     const linkedProviderIds = new Set(
@@ -68,7 +71,8 @@ export default async function LibraryPage({
     const pinterestImportedCount = items.filter(
         (item) => item.source === LibraryItemSource.pinterest
     ).length;
-    const soundcloudConnected = soundcloudLikes.status !== "NOT_CONNECTED";
+    const soundcloudConnected =
+        !soundcloudParked && soundcloudLikes?.status !== "NOT_CONNECTED";
 
     const isIntegrationConnected = (
         id: (typeof INTEGRATIONS)[number]["id"]
@@ -145,6 +149,9 @@ export default async function LibraryPage({
                                                         pinterestImportedCount={
                                                             pinterestImportedCount
                                                         }
+                                                        soundcloudParked={
+                                                            soundcloudParked
+                                                        }
                                                     />
                                                 </div>
                                             </li>
@@ -156,7 +163,11 @@ export default async function LibraryPage({
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                    <SoundcloudLikes locale={locale} result={soundcloudLikes} />
+                    <SoundcloudLikes
+                        locale={locale}
+                        parked={soundcloudParked}
+                        result={soundcloudLikes}
+                    />
                     <LibraryBrowser items={items} />
                 </div>
             </div>

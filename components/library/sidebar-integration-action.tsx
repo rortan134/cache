@@ -16,6 +16,7 @@ type SidebarIntegrationActionProps = Readonly<{
     id: IntegrationId;
     locale: string;
     pinterestImportedCount?: number;
+    soundcloudParked?: boolean;
 }>;
 
 type ExtensionIntegrationId = Extract<IntegrationId, "instagram" | "tiktok">;
@@ -103,6 +104,7 @@ export function SidebarIntegrationAction({
     id,
     locale,
     pinterestImportedCount = 0,
+    soundcloudParked = false,
 }: SidebarIntegrationActionProps) {
     const router = useRouter();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -283,11 +285,13 @@ export function SidebarIntegrationAction({
     }
 
     const connectLabel = connected ? "Reconnect" : "Connect";
+    const isParkedSoundcloud = id === "soundcloud" && soundcloudParked;
 
     return (
         <div className="ml-auto flex flex-col items-start gap-1">
             <div className="flex flex-wrap items-center gap-2">
                 <Button
+                    disabled={isParkedSoundcloud}
                     loading={isConnecting}
                     onClick={
                         id === "google-photos"
@@ -298,7 +302,7 @@ export function SidebarIntegrationAction({
                     type="button"
                     variant="ghost"
                 >
-                    {connectLabel}
+                    {isParkedSoundcloud ? "Pending approval" : connectLabel}
                 </Button>
                 {id === "pinterest" && connected ? (
                     <Button
@@ -313,6 +317,12 @@ export function SidebarIntegrationAction({
                     </Button>
                 ) : null}
             </div>
+            {isParkedSoundcloud ? (
+                <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
+                    Waiting for SoundCloud app approval before we can enable the
+                    connect flow.
+                </p>
+            ) : null}
             {id === "pinterest" && connected ? (
                 <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
                     {pinterestImportedCount > 0

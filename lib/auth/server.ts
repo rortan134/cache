@@ -5,6 +5,7 @@ import type { OAuth2Tokens } from "@better-auth/core/oauth2";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import type { GenericOAuthConfig } from "better-auth/plugins";
 import { genericOAuth } from "better-auth/plugins";
 import { headers } from "next/headers";
 
@@ -100,6 +101,11 @@ function requiredEnv(name: string): string {
     return value;
 }
 
+function optionalEnv(name: string): string | null {
+    const value = process.env[name];
+    return value === undefined || value === "" ? null : value;
+}
+
 const baseURL =
     process.env.BETTER_AUTH_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -112,12 +118,52 @@ const trustedOrigins = [
         .filter(Boolean) ?? []),
 ];
 
+const soundcloudClientId = optionalEnv("SOUNDCLOUD_CLIENT_ID");
+const soundcloudClientSecret = optionalEnv("SOUNDCLOUD_CLIENT_SECRET");
+const soundcloudOAuthEnabled = Boolean(
+    soundcloudClientId && soundcloudClientSecret
+);
+
+const genericOAuthConfig: GenericOAuthConfig[] = [
+    {
+        authentication: "basic",
+        authorizationUrl: "https://www.pinterest.com/oauth/",
+        clientId: requiredEnv("PINTEREST_CLIENT_ID"),
+        clientSecret: requiredEnv("PINTEREST_CLIENT_SECRET"),
+        disableSignUp: true,
+        getUserInfo: pinterestUserFromTokens,
+        pkce: true,
+        providerId: "pinterest",
+        scopes: ["user_accounts:read", "boards:read", "pins:read"],
+        tokenUrl: "https://api.pinterest.com/v5/oauth/token",
+    },
+];
+
+if (soundcloudClientId && soundcloudClientSecret) {
+    genericOAuthConfig.push({
+        authorizationUrl: "https://secure.soundcloud.com/authorize",
+        clientId: soundcloudClientId,
+        clientSecret: soundcloudClientSecret,
+        disableSignUp: true,
+        getUserInfo: soundcloudUserFromTokens,
+        providerId: "soundcloud",
+        scopes: ["non-expiring"],
+        tokenUrl: "https://secure.soundcloud.com/oauth/token",
+    });
+}
+
+const trustedProviders = [
+    "google",
+    "pinterest",
+    ...(soundcloudOAuthEnabled ? ["soundcloud"] : []),
+];
+
 export const auth = betterAuth({
     account: {
         accountLinking: {
             allowDifferentEmails: true,
             enabled: true,
-            trustedProviders: ["google", "pinterest", "soundcloud"],
+            trustedProviders,
         },
     },
     appName: "Cache",
@@ -131,30 +177,7 @@ export const auth = betterAuth({
     plugins: [
         nextCookies(),
         genericOAuth({
-            config: [
-                {
-                    authentication: "basic",
-                    authorizationUrl: "https://www.pinterest.com/oauth/",
-                    clientId: requiredEnv("PINTEREST_CLIENT_ID"),
-                    clientSecret: requiredEnv("PINTEREST_CLIENT_SECRET"),
-                    disableSignUp: true,
-                    getUserInfo: pinterestUserFromTokens,
-                    pkce: true,
-                    providerId: "pinterest",
-                    scopes: ["user_accounts:read", "boards:read", "pins:read"],
-                    tokenUrl: "https://api.pinterest.com/v5/oauth/token",
-                },
-                {
-                    authorizationUrl: "https://secure.soundcloud.com/authorize",
-                    clientId: requiredEnv("SOUNDCLOUD_CLIENT_ID"),
-                    clientSecret: requiredEnv("SOUNDCLOUD_CLIENT_SECRET"),
-                    disableSignUp: true,
-                    getUserInfo: soundcloudUserFromTokens,
-                    providerId: "soundcloud",
-                    scopes: ["non-expiring"],
-                    tokenUrl: "https://secure.soundcloud.com/oauth/token",
-                },
-            ],
+            config: genericOAuthConfig,
         }),
         stripe({
             createCustomerOnSignUp: true,

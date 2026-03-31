@@ -16,6 +16,7 @@ interface SoundcloudConnectButtonProps {
     className?: string;
     connected?: boolean;
     locale: string;
+    parked?: boolean;
     size?: React.ComponentProps<typeof Button>["size"];
     variant?: React.ComponentProps<typeof Button>["variant"];
 }
@@ -37,11 +38,19 @@ export function SoundcloudConnectButton({
     className,
     connected = false,
     locale,
+    parked = false,
     size = "sm",
     variant = "ghost",
 }: Readonly<SoundcloudConnectButtonProps>) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    let buttonLabel = "Connect";
+    if (parked) {
+        buttonLabel = "Pending approval";
+    } else if (connected) {
+        buttonLabel = "Reconnect";
+    }
 
     const handleConnect = useCallback(async () => {
         setErrorMessage(null);
@@ -82,12 +91,13 @@ export function SoundcloudConnectButton({
         <div className="flex flex-col items-start gap-1">
             <Button
                 className={className}
+                disabled={parked}
                 loading={loading}
                 onClick={handleConnect}
                 size={size}
                 variant={variant}
             >
-                {connected ? "Reconnect" : "Connect"}
+                {buttonLabel}
             </Button>
             {errorMessage ? (
                 <p
@@ -140,13 +150,15 @@ function TrackCard({ track }: Readonly<{ track: SoundcloudLikeTrack }>) {
 
 export function SoundcloudLikes({
     locale,
+    parked = false,
     result,
 }: Readonly<{
     locale: string;
-    result: LatestSoundcloudLikesResult;
+    parked?: boolean;
+    result: LatestSoundcloudLikesResult | null;
 }>) {
-    const isConnected = result.status !== "NOT_CONNECTED";
-    const isReconnectState = result.status === "RECONNECT_REQUIRED";
+    const isConnected = parked ? false : result?.status !== "NOT_CONNECTED";
+    const isReconnectState = result?.status === "RECONNECT_REQUIRED";
 
     return (
         <section className="flex w-full flex-col gap-4 rounded-[28px] border border-border/40 bg-card/35 p-5 ring-1 ring-border/20 sm:p-6">
@@ -168,26 +180,39 @@ export function SoundcloudLikes({
                 <SoundcloudConnectButton
                     connected={isConnected}
                     locale={locale}
+                    parked={parked}
                     size="sm"
                     variant={isReconnectState ? "outline" : "ghost"}
                 />
             </div>
 
-            {result.status === "NOT_CONNECTED" ? (
+            {parked ? (
+                <div className="rounded-2xl border border-border/60 border-dashed bg-background/50 px-4 py-6 text-muted-foreground text-sm">
+                    SoundCloud is parked while the app credentials are under
+                    review. The module stays visible, but connection is disabled
+                    until the client ID and secret are approved.
+                </div>
+            ) : null}
+
+            {!parked && result?.status === "NOT_CONNECTED" ? (
                 <div className="rounded-2xl border border-border/60 border-dashed bg-background/50 px-4 py-6 text-muted-foreground text-sm">
                     Connect SoundCloud to surface your six latest liked tracks
                     here.
                 </div>
             ) : null}
 
-            {result.status === "CONNECTED" && result.tracks.length === 0 ? (
+            {!parked &&
+            result?.status === "CONNECTED" &&
+            result.tracks.length === 0 ? (
                 <div className="rounded-2xl border border-border/60 border-dashed bg-background/50 px-4 py-6 text-muted-foreground text-sm">
                     Your SoundCloud account is connected, but there are no
                     recent liked tracks to show yet.
                 </div>
             ) : null}
 
-            {result.status === "CONNECTED" && result.tracks.length > 0 ? (
+            {!parked &&
+            result?.status === "CONNECTED" &&
+            result.tracks.length > 0 ? (
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {result.tracks.map((track) => (
                         <TrackCard key={track.id} track={track} />
@@ -195,8 +220,9 @@ export function SoundcloudLikes({
                 </div>
             ) : null}
 
-            {result.status === "ERROR" ||
-            result.status === "RECONNECT_REQUIRED" ? (
+            {!parked &&
+            (result?.status === "ERROR" ||
+                result?.status === "RECONNECT_REQUIRED") ? (
                 <div
                     className={cn(
                         "flex items-start gap-3 rounded-2xl border px-4 py-4 text-sm",
