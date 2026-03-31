@@ -20,11 +20,13 @@
     "background": {
         "service_worker": "service-worker.js"
     },
-    "permissions": ["cookies", "storage", "tabs"],
+    "permissions": ["storage", "tabs"],
     "host_permissions": [
         "https://www.instagram.com/*",
         "https://www.tiktok.com/*",
-        "http://localhost:3000/*"
+        "http://localhost:3000/*",
+        "https://cachd.app/*",
+        "https://*.cachd.app/*"
     ],
     "content_scripts": [
         {
@@ -36,7 +38,11 @@
             "run_at": "document_idle"
         },
         {
-            "matches": ["http://localhost:3000/*"],
+            "matches": [
+                "http://localhost:3000/*",
+                "https://cachd.app/*",
+                "https://*.cachd.app/*"
+            ],
             "js": ["cache-site-bootstrap.js"],
             "run_at": "document_idle"
         }

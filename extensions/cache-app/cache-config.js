@@ -4,6 +4,6 @@
  * (`host_permissions` + `content_scripts` matches for `cache-site-bootstrap.js`).
  */
 (function initCacheExtensionConfig(global) {
-    global.CACHE_APP_ORIGIN = "http://localhost:3000";
+    global.CACHE_APP_ORIGIN = "https://cachd.app";
     global.CACHE_INGEST_PATH = "/api/integrations/instagram/saved";
 })(globalThis);

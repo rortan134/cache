@@ -194,39 +194,6 @@ async function readSyncMetaForUi() {
 }
 
 /**
- * @param {string} endpointUrl
- * @returns {Promise<boolean>}
- */
-function originHasBetterAuthSessionCookie(endpointUrl) {
-    return new Promise((resolve) => {
-        let origin;
-        try {
-            origin = new URL(endpointUrl.trim()).origin;
-        } catch {
-            resolve(false);
-            return;
-        }
-        const url = origin.endsWith("/") ? origin : `${origin}/`;
-        chrome.cookies.getAll({ url }, (cookies) => {
-            if (chrome.runtime.lastError) {
-                resolve(false);
-                return;
-            }
-            const ok = cookies.some((c) => {
-                const n = c.name.toLowerCase();
-                return (
-                    n.includes("better-auth") &&
-                    n.includes("session") &&
-                    c.value &&
-                    c.value.length > 8
-                );
-            });
-            resolve(ok);
-        });
-    });
-}
-
-/**
  * @param {string | undefined} endpoint
  * @param {string | undefined} apiKey
  * @param {InstagramSavedItem[] | TikTokFavoriteItem[]} items
@@ -239,13 +206,6 @@ async function postToOptionalBackend(endpoint, apiKey, items, source) {
     if (!apiKey?.trim()) {
         console.warn(
             "[Cache App] Skipping server sync: no ingest token. Open any Cache page while signed in once.",
-        );
-        return;
-    }
-    const sessionOk = await originHasBetterAuthSessionCookie(endpoint);
-    if (!sessionOk) {
-        console.warn(
-            "[Cache App] Skipping server sync: no Cache session cookie for sync URL origin. Sign in on the site first."
         );
         return;
     }

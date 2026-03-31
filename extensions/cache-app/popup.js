@@ -1,36 +1,82 @@
 const statusEl = document.getElementById("status");
 const syncBtn = document.getElementById("sync");
-const openCacheBtn = document.getElementById("openCache");
 const instagramMetaEl = document.getElementById("instagramMeta");
 const tiktokMetaEl = document.getElementById("tiktokMeta");
+const openCacheBtnEl = document.getElementById("openCache");
 
 /** Default locale path segment for opening the web app (matches Next `[locale]` routes). */
 const CACHE_APP_DEFAULT_LOCALE = "en-US";
 
 /**
- * @param {string} origin
+ * @param {string} raw
+ * @returns {string | null}
+ */
+function deriveOriginFromEndpoint(raw) {
+    const s = (raw ?? "").trim();
+    if (!s) {
+        return null;
+    }
+    try {
+        return new URL(s).origin;
+    } catch {
+        return null;
+    }
+}
+
+function setOpenCacheVisible(visible) {
+    if (!openCacheBtnEl) {
+        return;
+    }
+    openCacheBtnEl.style.display = visible ? "" : "none";
+}
+
+/**
+ * Attempts to re-link by asking an open Cache tab to bridge token immediately.
  * @returns {Promise<boolean>}
  */
-function originHasBetterAuthSessionCookie(origin) {
-    return new Promise((resolve) => {
-        const url = origin.endsWith("/") ? origin : `${origin}/`;
-        chrome.cookies.getAll({ url }, (cookies) => {
-            if (chrome.runtime.lastError) {
-                resolve(false);
-                return;
-            }
-            const ok = cookies.some((c) => {
-                const n = c.name.toLowerCase();
-                return (
-                    n.includes("better-auth") &&
-                    n.includes("session") &&
-                    c.value &&
-                    c.value.length > 8
-                );
+async function requestBridgeFromOpenCacheTab() {
+    const appOrigin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(
+        /\/$/,
+        "",
+    );
+    if (!appOrigin) {
+        return false;
+    }
+    let tabs = [];
+    let urlPatterns = [`${appOrigin}/*`];
+    try {
+        const u = new URL(appOrigin);
+        if (
+            u.protocol === "https:" &&
+            u.hostname.split(".").length === 2 &&
+            !u.hostname.startsWith("www.")
+        ) {
+            urlPatterns = [...urlPatterns, `https://www.${u.hostname}/*`];
+        }
+    } catch {
+        // leave default pattern only
+    }
+    try {
+        tabs = await chrome.tabs.query({ url: urlPatterns });
+    } catch {
+        return false;
+    }
+    for (const tab of tabs) {
+        if (!tab.id) {
+            continue;
+        }
+        try {
+            const res = await chrome.tabs.sendMessage(tab.id, {
+                type: "CACHE_SITE_BRIDGE_REQUEST",
             });
-            resolve(ok);
-        });
-    });
+            if (res && typeof res === "object" && res.ok === true) {
+                return true;
+            }
+        } catch {
+            // ignore and continue trying other tabs
+        }
+    }
+    return false;
 }
 
 /**
@@ -122,6 +168,7 @@ async function applyCacheSessionGate() {
     );
     if (!appOrigin) {
         syncBtn.disabled = true;
+        setOpenCacheVisible(true);
         setStatus(
             "Extension is missing CACHE_APP_ORIGIN in cache-config.js.",
             "error",
@@ -129,29 +176,30 @@ async function applyCacheSessionGate() {
         return;
     }
 
-    const signedIn = await originHasBetterAuthSessionCookie(appOrigin);
-    if (!signedIn) {
-        syncBtn.disabled = true;
-        setStatus(
-            "Sign in to Cache in this browser, then open any Cache page once to link the extension.",
-            "error",
-        );
-        return;
-    }
-
     const keyData = await chrome.storage.local.get(["syncApiKey"]);
-    const token =
+    let token =
         typeof keyData.syncApiKey === "string" ? keyData.syncApiKey.trim() : "";
     if (!token) {
+        await requestBridgeFromOpenCacheTab();
+        const afterBridge = await chrome.storage.local.get(["syncApiKey"]);
+        token =
+            typeof afterBridge.syncApiKey === "string"
+                ? afterBridge.syncApiKey.trim()
+                : "";
+    }
+    if (!token) {
         syncBtn.disabled = true;
+        setOpenCacheVisible(true);
         setStatus(
-            "Open any Cache page while signed in once so the extension receives your sync token.",
+            "Sign in to Cache and keep a cachd.app tab open, then reopen this popup.",
             "error",
         );
         return;
     }
 
     syncBtn.disabled = false;
+    // User is already linked; hiding avoids the misleading localhost button.
+    setOpenCacheVisible(false);
     if (statusEl && !statusEl.classList.contains("error")) {
         statusEl.textContent = "";
     }
@@ -261,16 +309,24 @@ syncBtn?.addEventListener("click", async () => {
     }
 });
 
-openCacheBtn?.addEventListener("click", async () => {
+openCacheBtnEl?.addEventListener("click", async () => {
     const appOrigin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(
         /\/$/,
         "",
     );
-    if (appOrigin) {
-        await chrome.tabs.create({
-            url: `${appOrigin}/${CACHE_APP_DEFAULT_LOCALE}`,
-        });
+    const keyData = await chrome.storage.local.get(["syncEndpoint"]);
+    const endpoint =
+        typeof keyData.syncEndpoint === "string" ? keyData.syncEndpoint : "";
+    const derivedOrigin = deriveOriginFromEndpoint(endpoint);
+    const originToOpen = derivedOrigin || appOrigin;
+
+    if (!originToOpen) {
+        return;
     }
+
+    await chrome.tabs.create({
+        url: `${originToOpen}/${CACHE_APP_DEFAULT_LOCALE}`,
+    });
 });
 
 window.addEventListener("focus", () => {
