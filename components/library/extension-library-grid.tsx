@@ -168,7 +168,7 @@ export function ExtensionLibraryGrid({
                 return (
                     <MasonryItem asChild key={item.id}>
                         <a
-                            className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-border hover:shadow-lg/5 focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                            className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] duration-150 hover:border-border hover:shadow-lg/5 focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                             href={href}
                             rel="noopener noreferrer"
                             target="_blank"
@@ -209,20 +209,9 @@ export function ExtensionLibraryGrid({
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="flex min-h-20 flex-col gap-2 p-3">
-                                <p className="line-clamp-2 text-foreground text-sm leading-snug">
-                                    {item.caption?.trim() || item.url}
-                                </p>
-                                <div className="flex items-center justify-between gap-2 text-muted-foreground text-xs">
-                                    <span className="min-w-0 truncate">
-                                        {domain}
-                                    </span>
-                                    <span className="shrink-0 tabular-nums">
-                                        {dateLabel}
-                                    </span>
-                                </div>
-                            </div>
+                            <p className="line-clamp-2 p-3 text-foreground text-sm leading-snug">
+                                {item.caption?.trim() || item.url}
+                            </p>
                         </a>
                     </MasonryItem>
                 );

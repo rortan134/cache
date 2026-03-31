@@ -1,9 +1,9 @@
 import { getLatestSoundcloudLikes } from "./actions";
 import { LibraryBrowser } from "@/components/library/library-browser";
-import { LogoutConfirmButton } from "@/components/library/logout-confirm-button";
 import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
 import { SoundcloudLikes } from "@/components/library/soundcloud-likes";
 import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
+import { UserMenu } from "@/components/library/user-menu";
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getServerSession } from "@/lib/auth/server";
@@ -51,19 +51,34 @@ export default async function LibraryPage({
         return redirect("/");
     }
 
-    const [{ items }, linkedAccounts, soundcloudLikes] = await Promise.all([
-        getLibraryItemsForUser(userId),
-        prisma.account.findMany({
-            select: { providerId: true },
-            where: {
-                providerId: {
-                    in: ["google", "pinterest", "soundcloud"],
+    const [{ items }, linkedAccounts, soundcloudLikes, subscriptions] =
+        await Promise.all([
+            getLibraryItemsForUser(userId),
+            prisma.account.findMany({
+                select: { providerId: true },
+                where: {
+                    providerId: {
+                        in: ["google", "pinterest", "soundcloud"],
+                    },
+                    userId,
                 },
-                userId,
-            },
-        }),
-        soundcloudParked ? Promise.resolve(null) : getLatestSoundcloudLikes(),
-    ]);
+            }),
+            soundcloudParked
+                ? Promise.resolve(null)
+                : getLatestSoundcloudLikes(),
+            prisma.subscription.findMany({
+                select: {
+                    billingInterval: true,
+                    cancelAtPeriodEnd: true,
+                    periodEnd: true,
+                    plan: true,
+                    status: true,
+                },
+                where: {
+                    referenceId: userId,
+                },
+            }),
+        ]);
 
     const linkedProviderIds = new Set(
         linkedAccounts.map((account) => account.providerId)
@@ -73,6 +88,14 @@ export default async function LibraryPage({
     ).length;
     const soundcloudConnected =
         !soundcloudParked && soundcloudLikes?.status !== "NOT_CONNECTED";
+    const prioritizedSubscription =
+        subscriptions.find(
+            (subscription) =>
+                subscription.status === "active" ||
+                subscription.status === "trialing"
+        ) ??
+        subscriptions[0] ??
+        null;
 
     const isIntegrationConnected = (
         id: (typeof INTEGRATIONS)[number]["id"]
@@ -95,7 +118,30 @@ export default async function LibraryPage({
                 <PageSidebarShell
                     bottom={
                         <>
-                            <LogoutConfirmButton />
+                            <UserMenu
+                                locale={locale}
+                                subscription={
+                                    prioritizedSubscription
+                                        ? {
+                                              billingInterval:
+                                                  prioritizedSubscription.billingInterval,
+                                              cancelAtPeriodEnd:
+                                                  prioritizedSubscription.cancelAtPeriodEnd ??
+                                                  false,
+                                              periodEnd:
+                                                  prioritizedSubscription.periodEnd?.toISOString() ??
+                                                  null,
+                                              plan: prioritizedSubscription.plan,
+                                              status: prioritizedSubscription.status,
+                                          }
+                                        : null
+                                }
+                                user={{
+                                    email: session.user.email,
+                                    image: session.user.image ?? null,
+                                    name: session.user.name ?? null,
+                                }}
+                            />
                             <LocaleSelector />
                         </>
                     }

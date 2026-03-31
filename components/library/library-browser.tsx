@@ -22,7 +22,7 @@ import { useSearchQuery } from "@/hooks/use-search-query";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
-import { XIcon } from "lucide-react";
+import { SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import {
     useCallback,
@@ -1423,167 +1423,165 @@ export function LibraryBrowser({ items }: Props) {
 
     return (
         <div className="flex w-full flex-col gap-6">
-            <div className="flex w-full flex-col gap-3">
-                <div
-                    className="sticky top-3 z-20 w-full max-w-md"
-                    onPointerDownCapture={handlePaletteShellPointerDownCapture}
-                    ref={commandPanelContainerRef}
-                >
-                    <CommandPanel className="w-full" unstyled>
-                        <Command
-                            items={paletteGroups.map((group) => ({
-                                items: group.items,
-                            }))}
-                            onOpenChange={handleCommandOpenChange}
-                            onValueChange={handlePaletteInputChange}
-                            open={commandListOpen}
-                            value={paletteInput}
+            <div
+                className="sticky top-3 z-20 w-full max-w-md"
+                onPointerDownCapture={handlePaletteShellPointerDownCapture}
+                ref={commandPanelContainerRef}
+            >
+                <CommandPanel className="w-full" unstyled>
+                    <Command
+                        items={paletteGroups.map((group) => ({
+                            items: group.items,
+                        }))}
+                        onOpenChange={handleCommandOpenChange}
+                        onValueChange={handlePaletteInputChange}
+                        open={commandListOpen}
+                        value={paletteInput}
+                    >
+                        <CommandInput
+                            autoFocus={false}
+                            className="rounded-none border-0 bg-transparent! shadow-none outline-none ring-0 before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0"
+                            onKeyDown={handlePaletteInputKeyDown}
+                            placeholder={inputPlaceholder}
+                            ref={paletteInputRef}
+                            startAddon={
+                                isPaletteFocused ? (
+                                    <SparklesIcon className="opacity-70" />
+                                ) : (
+                                    <SearchIcon className="opacity-50" />
+                                )
+                            }
+                            trailing={
+                                <LibraryPaletteTrailing
+                                    captionFilter={captionFilter}
+                                    clearLibraryPalette={clearLibraryPalette}
+                                    columnCountMode={columnCountMode}
+                                    domainFilter={domainFilter}
+                                    groupBy={groupBy}
+                                    isPaletteFocused={isPaletteFocused}
+                                    paletteInput={paletteInput}
+                                    searchQuery={searchQuery}
+                                    setCaptionFilter={setCaptionFilter}
+                                    setColumnCountMode={setColumnCountMode}
+                                    setDomainFilter={setDomainFilter}
+                                    setGroupBy={setGroupBy}
+                                    setSearchQuery={setSearchQuery}
+                                    setSortMode={setSortMode}
+                                    setSourceFilter={setSourceFilter}
+                                    setThumbFilter={setThumbFilter}
+                                    sortMode={sortMode}
+                                    sourceFilter={sourceFilter}
+                                    thumbFilter={thumbFilter}
+                                />
+                            }
+                            wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
+                        />
+                        <p className="sr-only">
+                            Press {getSearchHotkeyHint()} or slash to focus
+                            search. Use arrow keys to navigate results and
+                            Escape to clear, go back, or close the command list.
+                        </p>
+                        <div
+                            className={cn(
+                                !commandListOpen && "hidden",
+                                "absolute top-full left-0 z-50 mt-2 max-h-[min(26rem,70vh)] w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-md"
+                            )}
                         >
-                            <CommandInput
-                                autoFocus={false}
-                                className="rounded-none border-0 bg-transparent! shadow-none outline-none ring-0 before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0"
-                                onKeyDown={handlePaletteInputKeyDown}
-                                placeholder={inputPlaceholder}
-                                ref={paletteInputRef}
-                                trailing={
-                                    <LibraryPaletteTrailing
-                                        captionFilter={captionFilter}
-                                        clearLibraryPalette={
-                                            clearLibraryPalette
-                                        }
-                                        columnCountMode={columnCountMode}
-                                        domainFilter={domainFilter}
-                                        groupBy={groupBy}
-                                        isPaletteFocused={isPaletteFocused}
-                                        paletteInput={paletteInput}
-                                        searchQuery={searchQuery}
-                                        setCaptionFilter={setCaptionFilter}
-                                        setColumnCountMode={setColumnCountMode}
-                                        setDomainFilter={setDomainFilter}
-                                        setGroupBy={setGroupBy}
-                                        setSearchQuery={setSearchQuery}
-                                        setSortMode={setSortMode}
-                                        setSourceFilter={setSourceFilter}
-                                        setThumbFilter={setThumbFilter}
-                                        sortMode={sortMode}
-                                        sourceFilter={sourceFilter}
-                                        thumbFilter={thumbFilter}
-                                    />
-                                }
-                                wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
-                            />
-                            <p className="sr-only">
-                                Press {getSearchHotkeyHint()} or slash to focus
-                                search. Use arrow keys to navigate results and
-                                Escape to clear, go back, or close the command
-                                list.
-                            </p>
-                            <div
-                                className={cn(
-                                    !commandListOpen && "hidden",
-                                    "absolute top-full left-0 z-50 mt-2 max-h-[min(26rem,70vh)] w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-md"
-                                )}
-                            >
-                                <CommandEmpty>
-                                    No matching commands found.
-                                </CommandEmpty>
-                                <CommandList>
-                                    {paletteGroups.map((group) => (
-                                        <CommandGroup
-                                            items={group.items}
-                                            key={group.label}
-                                        >
-                                            <CommandGroupLabel>
-                                                {group.label}
-                                            </CommandGroupLabel>
-                                            <CommandCollection>
-                                                {(item: CommandPaletteItem) => (
-                                                    <CommandItem
-                                                        key={item.value}
-                                                        onClick={item.onSelect}
-                                                        value={item.value}
-                                                    >
-                                                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                                                            <div className="min-w-0 flex-1">
-                                                                <div className="truncate">
-                                                                    {item.label}
-                                                                </div>
-                                                                {item.description ? (
-                                                                    <p className="truncate text-muted-foreground text-xs">
-                                                                        {
-                                                                            item.description
-                                                                        }
-                                                                    </p>
-                                                                ) : null}
+                            <CommandEmpty>
+                                No matching commands found.
+                            </CommandEmpty>
+                            <CommandList>
+                                {paletteGroups.map((group) => (
+                                    <CommandGroup
+                                        items={group.items}
+                                        key={group.label}
+                                    >
+                                        <CommandGroupLabel>
+                                            {group.label}
+                                        </CommandGroupLabel>
+                                        <CommandCollection>
+                                            {(item: CommandPaletteItem) => (
+                                                <CommandItem
+                                                    key={item.value}
+                                                    onClick={item.onSelect}
+                                                    value={item.value}
+                                                >
+                                                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="truncate">
+                                                                {item.label}
                                                             </div>
-                                                            {item.active ? (
-                                                                <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 font-medium text-[11px] text-accent-foreground">
-                                                                    Active
-                                                                </span>
-                                                            ) : null}
-                                                            {item.shortcut ? (
-                                                                <CommandShortcut>
+                                                            {item.description ? (
+                                                                <p className="truncate text-muted-foreground text-xs">
                                                                     {
-                                                                        item.shortcut
+                                                                        item.description
                                                                     }
-                                                                </CommandShortcut>
+                                                                </p>
                                                             ) : null}
                                                         </div>
-                                                    </CommandItem>
-                                                )}
-                                            </CommandCollection>
-                                        </CommandGroup>
-                                    ))}
-                                </CommandList>
-                            </div>
-                        </Command>
-                    </CommandPanel>
-                </div>
+                                                        {item.active ? (
+                                                            <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 font-medium text-[11px] text-accent-foreground">
+                                                                Active
+                                                            </span>
+                                                        ) : null}
+                                                        {item.shortcut ? (
+                                                            <CommandShortcut>
+                                                                {item.shortcut}
+                                                            </CommandShortcut>
+                                                        ) : null}
+                                                    </div>
+                                                </CommandItem>
+                                            )}
+                                        </CommandCollection>
+                                    </CommandGroup>
+                                ))}
+                            </CommandList>
+                        </div>
+                    </Command>
+                </CommandPanel>
+            </div>
 
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs tabular-nums">
-                            {resultsSummary}
+            <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs tabular-nums">
+                        {resultsSummary}
+                    </span>
+                    {groupBy === "none" ? null : (
+                        <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs">
+                            {sections.length} group
+                            {sections.length === 1 ? "" : "s"}
                         </span>
-                        {groupBy === "none" ? null : (
-                            <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs">
-                                {sections.length} group
-                                {sections.length === 1 ? "" : "s"}
-                            </span>
-                        )}
-                        {(hasActiveFilters || hasNonDefaultView) &&
-                        !showEmptyLibraryPeek ? (
+                    )}
+                    {(hasActiveFilters || hasNonDefaultView) &&
+                    !showEmptyLibraryPeek ? (
+                        <Button
+                            onClick={() => {
+                                clearLibraryPalette().catch(() => undefined);
+                            }}
+                            size="xs"
+                            variant="ghost"
+                        >
+                            Reset browser
+                        </Button>
+                    ) : null}
+                    {enableSectionCollapse ? (
+                        <>
                             <Button
-                                onClick={() => {
-                                    clearLibraryPalette().catch(
-                                        () => undefined
-                                    );
-                                }}
+                                onClick={expandAllSections}
                                 size="xs"
                                 variant="ghost"
                             >
-                                Reset browser
+                                Expand all
                             </Button>
-                        ) : null}
-                        {enableSectionCollapse ? (
-                            <>
-                                <Button
-                                    onClick={expandAllSections}
-                                    size="xs"
-                                    variant="ghost"
-                                >
-                                    Expand all
-                                </Button>
-                                <Button
-                                    onClick={collapseAllSections}
-                                    size="xs"
-                                    variant="ghost"
-                                >
-                                    Collapse all
-                                </Button>
-                            </>
-                        ) : null}
-                    </div>
+                            <Button
+                                onClick={collapseAllSections}
+                                size="xs"
+                                variant="ghost"
+                            >
+                                Collapse all
+                            </Button>
+                        </>
+                    ) : null}
                 </div>
             </div>
             <div className="relative z-0 flex w-full flex-col gap-10">

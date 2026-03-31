@@ -113,12 +113,15 @@ export function CommandInput({
     autoFocus = true,
     className,
     placeholder = undefined,
+    startAddon,
     trailing,
     wrapperClassName,
     ...props
 }: React.ComponentProps<typeof AutocompleteInput> & {
     /** Padding around the field; default matches dialog command palettes. */
     readonly wrapperClassName?: string;
+    /** Optional leading icon/addon. Defaults to the command search icon. */
+    readonly startAddon?: React.ReactNode;
     /** Renders after the field (e.g. chips + clear). Enables a horizontal flex layout. */
     readonly trailing?: React.ReactNode;
 }): React.ReactElement {
@@ -131,7 +134,7 @@ export function CommandInput({
             )}
             placeholder={placeholder}
             size="lg"
-            startAddon={<SearchIcon className="opacity-50" />}
+            startAddon={startAddon ?? <SearchIcon className="opacity-50" />}
             {...props}
         />
     );
