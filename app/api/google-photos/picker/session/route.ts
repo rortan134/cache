@@ -5,7 +5,7 @@ import {
     GooglePhotosPickerApiError,
     pickerPollIntervalMs,
     withPickerAutoclose,
-} from "@/lib/google-photos/picker-api";
+} from "@/lib/integrations/google-photos/picker-api";
 import { headers } from "next/headers";
 
 async function resolveGoogleAccessToken(): Promise<string | null> {

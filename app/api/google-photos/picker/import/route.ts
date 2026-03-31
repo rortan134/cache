@@ -1,13 +1,13 @@
-import { LibraryItemSource } from "@/prisma/client/enums";
 import { auth } from "@/lib/auth/server";
+import type { GooglePhotosPickedMediaItem } from "@/lib/integrations/google-photos/picker-api";
 import {
     deletePickerSession,
     getPickerSession,
     GooglePhotosPickerApiError,
     listPickedMediaItems,
-} from "@/lib/google-photos/picker-api";
-import type { GooglePhotosPickedMediaItem } from "@/lib/google-photos/picker-api";
+} from "@/lib/integrations/google-photos/picker-api";
 import { prisma } from "@/prisma";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import { headers } from "next/headers";
 import * as z from "zod";
 

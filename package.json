@@ -68,7 +68,7 @@
         "prisma": "^7.6.0",
         "tailwindcss": "^4",
         "typescript": "^6",
-        "ultracite": "^7.4.0"
+        "ultracite": "^7.4.2"
     },
     "engines": {
         "node": "24.x"
