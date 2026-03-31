@@ -26,6 +26,7 @@ const WWW_PREFIX_RE = /^www\./;
 interface GridProps {
     readonly columnCount?: number;
     readonly items: LibraryItem[];
+    readonly layoutToken?: number;
 }
 
 interface SectionProps extends GridProps {
@@ -130,6 +131,7 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
 export function ExtensionLibraryGrid({
     columnCount,
     items,
+    layoutToken,
 }: GridProps): ReactElement | null {
     if (items.length === 0) {
         return null;
@@ -153,6 +155,7 @@ export function ExtensionLibraryGrid({
                 </div>
             }
             gap={8}
+            key={layoutToken}
             linear
         >
             {items.map((item) => {
@@ -234,6 +237,7 @@ export function ExtensionLibrarySection({
     columnCount,
     emptyHint,
     items,
+    layoutToken,
     onToggle,
     summaryLabel,
     title,
@@ -247,7 +251,13 @@ export function ExtensionLibrarySection({
     } else if (items.length === 0) {
         body = <p className="text-muted-foreground text-sm">{emptyHint}</p>;
     } else {
-        body = <ExtensionLibraryGrid columnCount={columnCount} items={items} />;
+        body = (
+            <ExtensionLibraryGrid
+                columnCount={columnCount}
+                items={items}
+                layoutToken={layoutToken}
+            />
+        );
     }
 
     return (

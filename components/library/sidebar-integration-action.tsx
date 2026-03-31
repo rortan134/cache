@@ -285,7 +285,7 @@ export function SidebarIntegrationAction({
                     type="button"
                     variant="ghost"
                 >
-                    {isParkedSoundcloud ? "Pending approval" : connectLabel}
+                    {isParkedSoundcloud ? "Pending" : connectLabel}
                 </Button>
                 {id === "google-photos" && connected ? (
                     <GooglePhotosImportButton
@@ -309,16 +309,10 @@ export function SidebarIntegrationAction({
                     </Button>
                 ) : null}
             </div>
-            {isParkedSoundcloud ? (
-                <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
-                    Waiting for SoundCloud app approval before we can enable the
-                    connect flow.
-                </p>
-            ) : null}
             {id === "pinterest" && connected ? (
                 <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
                     {pinterestImportedCount > 0
-                        ? `${pinterestImportedCount} Pinterest pin${pinterestImportedCount === 1 ? "" : "s"} already in your library.`
+                        ? `${pinterestImportedCount} pin${pinterestImportedCount === 1 ? "" : "s"} already in your library.`
                         : "Connect Pinterest, then import your saved Pins into the library."}
                 </p>
             ) : null}

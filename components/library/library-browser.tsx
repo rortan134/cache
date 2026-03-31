@@ -18,12 +18,6 @@ import {
     CommandPanel,
     CommandShortcut,
 } from "@/components/ui/command";
-import {
-    Select,
-    SelectItem,
-    SelectPopup,
-    SelectTrigger,
-} from "@/components/ui/select";
 import { useSearchQuery } from "@/hooks/use-search-query";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
@@ -35,9 +29,9 @@ import {
     useEffect,
     useLayoutEffect,
     useMemo,
-    type PointerEvent as ReactPointerEvent,
     useRef,
     useState,
+    type PointerEvent as ReactPointerEvent,
 } from "react";
 
 /** Base UI combobox close reason when an item is activated (inline mode still emits this). */
@@ -67,11 +61,6 @@ type PaletteSection = "search" | "filter" | "group" | "sort" | "layout";
 const DEFAULT_SORT_MODE: SortMode = "newest";
 const DEFAULT_COLUMN_COUNT_MODE: ColumnCountMode = "auto";
 
-interface BrowserSelectOption {
-    readonly label: string;
-    readonly value: string;
-}
-
 interface CommandPaletteItem {
     readonly active?: boolean;
     readonly description?: string;
@@ -97,6 +86,7 @@ interface SectionCollapseState {
     readonly collapsedSectionKeys: string[];
     readonly enableSectionCollapse: boolean;
     readonly expandAllSections: () => void;
+    readonly layoutRefreshToken: number;
     readonly toggleSection: (key: string) => void;
 }
 
@@ -315,63 +305,12 @@ function PaletteChip({
     );
 }
 
-function BrowserSelect({
-    className,
-    label,
-    onValueChange,
-    options,
-    value,
-}: {
-    readonly className?: string;
-    readonly label: string;
-    readonly onValueChange: (value: string) => void;
-    readonly options: readonly BrowserSelectOption[];
-    readonly value: string;
-}) {
-    const selectedOption =
-        options.find((option) => option.value === value) ?? options[0];
-
-    return (
-        <Select
-            onValueChange={(nextValue) => {
-                if (nextValue !== null) {
-                    onValueChange(nextValue);
-                }
-            }}
-            value={value}
-        >
-            <SelectTrigger
-                className={cn(
-                    "min-w-[10.5rem] rounded-full bg-background/90 shadow-none",
-                    className
-                )}
-                size="sm"
-            >
-                <span className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                    <span className="shrink-0 text-muted-foreground text-xs">
-                        {label}
-                    </span>
-                    <span className="truncate text-sm">
-                        {selectedOption?.label}
-                    </span>
-                </span>
-            </SelectTrigger>
-            <SelectPopup>
-                {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                ))}
-            </SelectPopup>
-        </Select>
-    );
-}
-
 function renderLibraryGridBody({
     collapsedSectionKeys,
     clearLibraryPalette,
     columnCount,
     enableSectionCollapse,
+    layoutRefreshToken,
     onToggleSection,
     sections,
     showEmptyLibraryPeek,
@@ -381,6 +320,7 @@ function renderLibraryGridBody({
     readonly clearLibraryPalette: () => Promise<void>;
     readonly columnCount?: number;
     readonly enableSectionCollapse: boolean;
+    readonly layoutRefreshToken: number;
     readonly onToggleSection: (key: string) => void;
     readonly sections: readonly LibraryBrowserSection[];
     readonly showEmptyLibraryPeek: boolean;
@@ -416,6 +356,7 @@ function renderLibraryGridBody({
                 emptyHint="No saved items in this section."
                 items={section.items}
                 key={section.key}
+                layoutToken={layoutRefreshToken}
                 onToggle={() => onToggleSection(section.key)}
                 summaryLabel={section.title ? undefined : "Filtered view"}
                 title={section.title ?? "Results"}
@@ -436,6 +377,7 @@ function renderLibraryGridBody({
                 <ExtensionLibraryGrid
                     columnCount={columnCount}
                     items={section.items}
+                    layoutToken={layoutRefreshToken}
                 />
             </section>
         )
@@ -458,6 +400,7 @@ function useSectionCollapseState({
     const [collapsedSectionKeys, setCollapsedSectionKeys] = useState<string[]>(
         []
     );
+    const [layoutRefreshToken, setLayoutRefreshToken] = useState(0);
 
     const enableSectionCollapse =
         !(showEmptyLibraryPeek || showNoFilteredResults) &&
@@ -485,14 +428,17 @@ function useSectionCollapseState({
                 ? current.filter((entry) => entry !== key)
                 : [...current, key]
         );
+        setLayoutRefreshToken((current) => current + 1);
     }, []);
 
     const collapseAllSections = useCallback(() => {
         setCollapsedSectionKeys(sections.map((section) => section.key));
+        setLayoutRefreshToken((current) => current + 1);
     }, [sections]);
 
     const expandAllSections = useCallback(() => {
         setCollapsedSectionKeys([]);
+        setLayoutRefreshToken((current) => current + 1);
     }, []);
 
     return {
@@ -500,6 +446,7 @@ function useSectionCollapseState({
         collapsedSectionKeys,
         enableSectionCollapse,
         expandAllSections,
+        layoutRefreshToken,
         toggleSection,
     };
 }
@@ -675,7 +622,7 @@ export function LibraryBrowser({ items }: Props) {
     /** Skips one combobox-driven close right after entering a drill-down section. */
     const suppressNextCommandCloseRef = useRef(false);
 
-    const sourceOptions = useMemo<BrowserSelectOption[]>(
+    const sourceOptions = useMemo(
         () => [
             { label: "All sources", value: "all" },
             {
@@ -699,7 +646,7 @@ export function LibraryBrowser({ items }: Props) {
         []
     );
 
-    const thumbnailOptions = useMemo<BrowserSelectOption[]>(
+    const thumbnailOptions = useMemo(
         () => [
             { label: "Any preview", value: "any" },
             { label: "With preview", value: "with" },
@@ -708,7 +655,7 @@ export function LibraryBrowser({ items }: Props) {
         []
     );
 
-    const captionOptions = useMemo<BrowserSelectOption[]>(
+    const captionOptions = useMemo(
         () => [
             { label: "Any caption", value: "any" },
             { label: "With caption", value: "with" },
@@ -717,7 +664,7 @@ export function LibraryBrowser({ items }: Props) {
         []
     );
 
-    const sortOptions = useMemo<BrowserSelectOption[]>(
+    const sortOptions = useMemo(
         () => [
             { label: "Newest first", value: "newest" },
             { label: "Oldest first", value: "oldest" },
@@ -729,7 +676,7 @@ export function LibraryBrowser({ items }: Props) {
         []
     );
 
-    const groupOptions = useMemo<BrowserSelectOption[]>(
+    const groupOptions = useMemo(
         () => [
             { label: "No grouping", value: "none" },
             { label: "Source", value: "source" },
@@ -739,7 +686,7 @@ export function LibraryBrowser({ items }: Props) {
         []
     );
 
-    const columnOptions = useMemo<BrowserSelectOption[]>(
+    const columnOptions = useMemo(
         () => [
             { label: "Auto columns", value: "auto" },
             { label: "2 columns", value: "2" },
@@ -751,7 +698,7 @@ export function LibraryBrowser({ items }: Props) {
         []
     );
 
-    const domainOptions = useMemo<BrowserSelectOption[]>(() => {
+    const domainOptions = useMemo(() => {
         const counts = new Map<string, number>();
         for (const item of items) {
             const domain = itemDomain(item.url);
@@ -1266,7 +1213,7 @@ export function LibraryBrowser({ items }: Props) {
 
     let inputPlaceholder = "Change the layout…";
     if (paletteSection === "search") {
-        inputPlaceholder = "Search your library or jump to a command…";
+        inputPlaceholder = "Search or jump to a command…";
     } else if (paletteSection === "filter") {
         inputPlaceholder = "Filter the library…";
     } else if (paletteSection === "group") {
@@ -1384,6 +1331,7 @@ export function LibraryBrowser({ items }: Props) {
         collapsedSectionKeys,
         enableSectionCollapse,
         expandAllSections,
+        layoutRefreshToken,
         toggleSection,
     } = useSectionCollapseState({
         groupBy,
@@ -1406,6 +1354,7 @@ export function LibraryBrowser({ items }: Props) {
         collapsedSectionKeys: new Set(collapsedSectionKeys),
         columnCount: resolvedColumnCount,
         enableSectionCollapse,
+        layoutRefreshToken,
         onToggleSection: toggleSection,
         sections,
         showEmptyLibraryPeek,
@@ -1573,67 +1522,8 @@ export function LibraryBrowser({ items }: Props) {
                             </>
                         ) : null}
                     </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        <BrowserSelect
-                            label="Source"
-                            onValueChange={(value) =>
-                                setSourceFilter(value as SourceFilter)
-                            }
-                            options={sourceOptions}
-                            value={sourceFilter}
-                        />
-                        <BrowserSelect
-                            label="Preview"
-                            onValueChange={(value) =>
-                                setThumbFilter(value as ThumbnailFilter)
-                            }
-                            options={thumbnailOptions}
-                            value={thumbFilter}
-                        />
-                        <BrowserSelect
-                            label="Caption"
-                            onValueChange={(value) =>
-                                setCaptionFilter(value as CaptionFilter)
-                            }
-                            options={captionOptions}
-                            value={captionFilter}
-                        />
-                        <BrowserSelect
-                            className="min-w-[12rem]"
-                            label="Domain"
-                            onValueChange={setDomainFilter}
-                            options={domainOptions}
-                            value={domainFilter}
-                        />
-                        <BrowserSelect
-                            label="Sort"
-                            onValueChange={(value) =>
-                                setSortMode(value as SortMode)
-                            }
-                            options={sortOptions}
-                            value={sortMode}
-                        />
-                        <BrowserSelect
-                            label="Group"
-                            onValueChange={(value) =>
-                                setGroupBy(value as GroupByMode)
-                            }
-                            options={groupOptions}
-                            value={groupBy}
-                        />
-                        <BrowserSelect
-                            label="Columns"
-                            onValueChange={(value) =>
-                                setColumnCountMode(value as ColumnCountMode)
-                            }
-                            options={columnOptions}
-                            value={columnCountMode}
-                        />
-                    </div>
                 </div>
             </div>
-
             <div className="relative z-0 flex w-full flex-col gap-10">
                 {libraryGridBody}
             </div>
