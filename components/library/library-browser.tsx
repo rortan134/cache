@@ -43,6 +43,18 @@ const TEXT_COLLATOR = new Intl.Collator(undefined, {
     sensitivity: "base",
 });
 const WWW_PREFIX_RE = /^www\./;
+const IS_MAC =
+    typeof window !== "undefined" && navigator.userAgent.includes("Mac");
+const SEARCH_HOTKEYS = [
+    "cmd+k",
+    "ctrl+k",
+    "Meta+k",
+    "/",
+    "cmd+f",
+    "ctrl+f",
+    "Meta+f",
+] as const;
+const SEARCH_CANCEL_KEYS = ["esc", "tab"] as const;
 
 type GroupByMode = "none" | "source" | "domain" | "month";
 type SortMode =
@@ -60,6 +72,8 @@ type PaletteSection = "search" | "filter" | "group" | "sort" | "layout";
 
 const DEFAULT_SORT_MODE: SortMode = "newest";
 const DEFAULT_COLUMN_COUNT_MODE: ColumnCountMode = "auto";
+
+const getSystemControlKey = () => (IS_MAC ? "⌘" : "Ctrl");
 
 interface CommandPaletteItem {
     readonly active?: boolean;
@@ -217,6 +231,40 @@ function compareSectionKeys(
 
 function truncateLabel(label: string, max = 22): string {
     return label.length > max ? `${label.slice(0, max)}…` : label;
+}
+
+function getSearchHotkeyHint(): string {
+    return `${getSystemControlKey()}K`;
+}
+
+function isSearchHotkey(event: KeyboardEvent): boolean {
+    const key = event.key.toLowerCase();
+    const hasMeta = event.metaKey;
+    const hasCtrl = event.ctrlKey;
+    const hasAlt = event.altKey;
+    const eventHotkeys = new Set<string>();
+
+    if (!(hasAlt || hasMeta || hasCtrl)) {
+        eventHotkeys.add(key);
+    }
+    if (!hasAlt && hasMeta) {
+        eventHotkeys.add(`cmd+${key}`);
+        eventHotkeys.add(`Meta+${key}`);
+    }
+    if (!hasAlt && hasCtrl) {
+        eventHotkeys.add(`ctrl+${key}`);
+    }
+
+    return SEARCH_HOTKEYS.some((hotkey) => eventHotkeys.has(hotkey));
+}
+
+function isSearchCancelKey(
+    event: ReactKeyboardEvent<HTMLInputElement>
+): boolean {
+    const key = event.key.toLowerCase();
+    return SEARCH_CANCEL_KEYS.includes(
+        key as (typeof SEARCH_CANCEL_KEYS)[number]
+    );
 }
 
 function sortModeLabel(mode: SortMode): string {
@@ -457,6 +505,7 @@ function LibraryPaletteTrailing({
     columnCountMode,
     domainFilter,
     groupBy,
+    isPaletteFocused,
     paletteInput,
     searchQuery,
     setCaptionFilter,
@@ -476,6 +525,7 @@ function LibraryPaletteTrailing({
     readonly columnCountMode: ColumnCountMode;
     readonly domainFilter: string;
     readonly groupBy: GroupByMode;
+    readonly isPaletteFocused: boolean;
     readonly paletteInput: string;
     readonly searchQuery: string;
     readonly setCaptionFilter: (value: CaptionFilter) => void;
@@ -580,6 +630,11 @@ function LibraryPaletteTrailing({
     return (
         <>
             {chips}
+            {isPaletteFocused ? null : (
+                <kbd className="hidden shrink-0 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 font-medium text-[11px] text-muted-foreground tracking-wide sm:inline-flex">
+                    {getSearchHotkeyHint()}
+                </kbd>
+            )}
             {canReset ? (
                 <Button
                     aria-label="Clear search, filters, grouping, sorting, layout, and command input"
@@ -617,6 +672,7 @@ export function LibraryBrowser({ items }: Props) {
     const [paletteSection, setPaletteSection] =
         useState<PaletteSection>("search");
     const [commandListOpen, setCommandListOpen] = useState(false);
+    const [isPaletteFocused, setIsPaletteFocused] = useState(false);
     const commandPanelContainerRef = useRef<HTMLDivElement>(null);
     const paletteInputRef = useRef<HTMLInputElement>(null);
     /** Skips one combobox-driven close right after entering a drill-down section. */
@@ -819,6 +875,7 @@ export function LibraryBrowser({ items }: Props) {
         }
 
         const handleFocusIn = (event: globalThis.FocusEvent) => {
+            setIsPaletteFocused(true);
             if (event.target instanceof HTMLInputElement) {
                 setCommandListOpen(true);
             }
@@ -831,6 +888,7 @@ export function LibraryBrowser({ items }: Props) {
             }
             const closeIfLeft = () => {
                 if (!el.contains(document.activeElement)) {
+                    setIsPaletteFocused(false);
                     setCommandListOpen(false);
                 }
             };
@@ -858,10 +916,7 @@ export function LibraryBrowser({ items }: Props) {
                         )
                     ));
 
-            if (
-                (event.metaKey || event.ctrlKey) &&
-                event.key.toLowerCase() === "k"
-            ) {
+            if (isSearchHotkey(event)) {
                 event.preventDefault();
                 focusPaletteInput(true);
                 return;
@@ -921,6 +976,11 @@ export function LibraryBrowser({ items }: Props) {
                 }
                 setCommandListOpen(false);
                 event.currentTarget.blur();
+                return;
+            }
+
+            if (isSearchCancelKey(event)) {
+                setCommandListOpen(false);
                 return;
             }
 
@@ -1365,7 +1425,7 @@ export function LibraryBrowser({ items }: Props) {
         <div className="flex w-full flex-col gap-6">
             <div className="flex w-full flex-col gap-3">
                 <div
-                    className="sticky top-3 z-20 w-full max-w-3xl"
+                    className="sticky top-3 z-20 w-full max-w-md"
                     onPointerDownCapture={handlePaletteShellPointerDownCapture}
                     ref={commandPanelContainerRef}
                 >
@@ -1394,6 +1454,7 @@ export function LibraryBrowser({ items }: Props) {
                                         columnCountMode={columnCountMode}
                                         domainFilter={domainFilter}
                                         groupBy={groupBy}
+                                        isPaletteFocused={isPaletteFocused}
                                         paletteInput={paletteInput}
                                         searchQuery={searchQuery}
                                         setCaptionFilter={setCaptionFilter}
@@ -1409,12 +1470,13 @@ export function LibraryBrowser({ items }: Props) {
                                         thumbFilter={thumbFilter}
                                     />
                                 }
-                                wrapperClassName="min-h-11 w-full rounded-full bg-muted/94 px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
+                                wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
                             />
                             <p className="sr-only">
-                                Press Command K or Control K to focus search.
-                                Use arrow keys to navigate results and Escape to
-                                clear, go back, or close the command list.
+                                Press {getSearchHotkeyHint()} or slash to focus
+                                search. Use arrow keys to navigate results and
+                                Escape to clear, go back, or close the command
+                                list.
                             </p>
                             <div
                                 className={cn(

@@ -1404,13 +1404,15 @@ function Masonry(props: MasonryProps) {
             return;
         }
 
-        let offset = 0;
-        let container = containerRef.current;
-
-        do {
-            offset += container.offsetTop ?? 0;
-            container = container.offsetParent as RootElement;
-        } while (container);
+        let scrollOffset = 0;
+        if (typeof globalThis.window !== "undefined") {
+            scrollOffset =
+                globalThis.window.scrollY ??
+                document.documentElement.scrollTop ??
+                0;
+        }
+        const offset =
+            containerRef.current.getBoundingClientRect().top + scrollOffset;
 
         if (
             offset !== containerPosition.offset ||
@@ -1421,7 +1423,7 @@ function Masonry(props: MasonryProps) {
                 width: containerRef.current.offsetWidth,
             });
         }
-    }, [containerPosition, size]);
+    });
 
     const positioner = usePositioner({
         columnCount,

@@ -217,16 +217,28 @@ function flushChunkToExtension(accumulated, source) {
 }
 
 /**
- * @param {HTMLImageElement} img
+ * @param {string | null | undefined} value
  * @param {string} origin
  * @returns {string}
  */
-function bestImageUrl(img, origin) {
-    const src = img.getAttribute("src");
-    if (src && !src.startsWith("data:")) {
-        return src;
+function normalizeImageCandidate(value, origin) {
+    const candidate = (value ?? "").trim();
+    if (!candidate || candidate.startsWith("data:")) {
+        return "";
     }
-    const srcset = img.getAttribute("srcset");
+    try {
+        return new URL(candidate, origin).href;
+    } catch {
+        return candidate;
+    }
+}
+
+/**
+ * @param {string | null | undefined} srcset
+ * @param {string} origin
+ * @returns {string}
+ */
+function bestImageUrlFromSrcset(srcset, origin) {
     if (srcset) {
         const parts = srcset.split(",").map((s) => s.trim().split(/\s+/));
         let best = "";
@@ -242,14 +254,55 @@ function bestImageUrl(img, origin) {
             }
         }
         if (best) {
-            try {
-                return new URL(best, origin).href;
-            } catch {
-                return best;
-            }
+            return normalizeImageCandidate(best, origin);
         }
     }
-    return src ?? "";
+    return "";
+}
+
+/**
+ * @param {HTMLImageElement} img
+ * @param {string} origin
+ * @returns {string}
+ */
+function bestImageUrl(img, origin) {
+    const directCandidates = [
+        img.currentSrc,
+        img.getAttribute("src"),
+        img.getAttribute("data-src"),
+        img.getAttribute("data-lazy-src"),
+        img.getAttribute("data-lazy-img"),
+        img.getAttribute("data-delayed-url"),
+        img.getAttribute("data-expand"),
+    ];
+    for (const candidate of directCandidates) {
+        const resolved = normalizeImageCandidate(candidate, origin);
+        if (resolved) {
+            return resolved;
+        }
+    }
+
+    const srcsetCandidates = [
+        img.getAttribute("srcset"),
+        img.getAttribute("data-srcset"),
+        img.getAttribute("data-lazy-srcset"),
+    ];
+    for (const candidate of srcsetCandidates) {
+        const resolved = bestImageUrlFromSrcset(candidate, origin);
+        if (resolved) {
+            return resolved;
+        }
+    }
+
+    return "";
+}
+
+/**
+ * @param {string | null | undefined} url
+ * @returns {boolean}
+ */
+function hasUsableImageUrl(url) {
+    return Boolean(url && !url.startsWith("data:"));
 }
 
 // --- Instagram ---
@@ -301,6 +354,35 @@ function getInstagramPostLinkRoot() {
     return main instanceof HTMLElement ? main : document.documentElement;
 }
 
+/**
+ * @param {HTMLAnchorElement} anchor
+ * @returns {HTMLImageElement | null}
+ */
+function findInstagramImageForAnchor(anchor) {
+    const anchorImage = anchor.querySelector("img");
+    if (anchorImage instanceof HTMLImageElement) {
+        return anchorImage;
+    }
+
+    let current = anchor.parentElement;
+    while (current && current !== document.body) {
+        const postLinksInCurrent = current.querySelectorAll(
+            'a[href*="/p/"], a[href*="/reel/"]'
+        ).length;
+        if (postLinksInCurrent > 1) {
+            break;
+        }
+
+        const image = current.querySelector("img");
+        if (image instanceof HTMLImageElement) {
+            return image;
+        }
+        current = current.parentElement;
+    }
+
+    return null;
+}
+
 function findInstagramScrollAnchorElement() {
     const sel = 'a[href*="/p/"], a[href*="/reel/"]';
     const main = document.querySelector("main");
@@ -349,6 +431,9 @@ function mergeInstagramDomIntoAccumulated(accumulated) {
         if (accumulated.size >= MAX_ITEMS) {
             break;
         }
+        if (!(a instanceof HTMLAnchorElement)) {
+            continue;
+        }
         const href = a.getAttribute("href");
         if (!href) {
             continue;
@@ -358,17 +443,16 @@ function mergeInstagramDomIntoAccumulated(accumulated) {
             continue;
         }
 
-        const scope =
-            a.closest("article") ??
-            a.closest('[role="button"]')?.parentElement ??
-            a.parentElement ??
-            a;
-        const img = scope.querySelector("img");
+        const img = findInstagramImageForAnchor(a);
         const thumbnailUrl =
             img instanceof HTMLImageElement
                 ? bestImageUrl(img, "https://www.instagram.com")
                 : "";
-        const caption = (img?.getAttribute("alt") ?? "").trim();
+        const caption = (
+            img?.getAttribute("alt") ??
+            a.getAttribute("aria-label") ??
+            ""
+        ).trim();
         const row = {
             caption,
             scrapedAt: new Date().toISOString(),
@@ -381,8 +465,18 @@ function mergeInstagramDomIntoAccumulated(accumulated) {
             accumulated.set(parsed.shortcode, row);
         } else {
             const prev = accumulated.get(parsed.shortcode);
-            if (prev && !prev.thumbnailUrl && thumbnailUrl) {
-                accumulated.set(parsed.shortcode, { ...prev, thumbnailUrl });
+            const shouldFillThumbnail =
+                prev &&
+                !hasUsableImageUrl(prev.thumbnailUrl) &&
+                hasUsableImageUrl(thumbnailUrl);
+            const shouldFillCaption =
+                prev && !prev.caption && Boolean(caption);
+            if (shouldFillThumbnail || shouldFillCaption) {
+                accumulated.set(parsed.shortcode, {
+                    ...prev,
+                    caption: prev.caption || caption,
+                    thumbnailUrl: prev.thumbnailUrl || thumbnailUrl,
+                });
             }
         }
     }
@@ -817,7 +911,11 @@ function mergeTikTokDomIntoAccumulated(accumulated) {
             accumulated.set(parsed.id, row);
         } else {
             const prev = accumulated.get(parsed.id);
-            if (prev && !prev.thumbnailUrl && thumbnailUrl) {
+            const shouldFillThumbnail =
+                prev &&
+                !hasUsableImageUrl(prev.thumbnailUrl) &&
+                hasUsableImageUrl(thumbnailUrl);
+            if (shouldFillThumbnail) {
                 accumulated.set(parsed.id, { ...prev, thumbnailUrl });
             }
         }
