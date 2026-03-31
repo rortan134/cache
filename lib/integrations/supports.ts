@@ -43,7 +43,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: true },
         category: "social",
-        description: "Posts you save to Favorites.",
+        description: "Posts you save to Favorites",
         Icon: Instagram,
         id: "instagram",
         label: "Instagram",
@@ -51,7 +51,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: true },
         category: "social",
-        description: "Videos in your Favorites.",
+        description: "Videos in your Favorites",
         Icon: TikTok,
         id: "tiktok",
         label: "TikTok",
@@ -59,7 +59,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: true },
         category: "media",
-        description: "Photos and albums you have starred.",
+        description: "Photos and albums you have starred",
         Icon: Photos,
         id: "google-photos",
         label: "Google Photos",
@@ -67,7 +67,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: false },
         category: "media",
-        description: "Your latest liked tracks, refreshed from SoundCloud.",
+        description: "Your latest liked tracks",
         Icon: SoundCloud,
         id: "soundcloud",
         label: "SoundCloud",
@@ -75,7 +75,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: true },
         category: "social",
-        description: "Pins you save to boards.",
+        description: "Pins you save to boards",
         Icon: Pinterest,
         id: "pinterest",
         label: "Pinterest",

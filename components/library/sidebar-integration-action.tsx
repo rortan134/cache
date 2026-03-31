@@ -289,10 +289,7 @@ export function SidebarIntegrationAction({
                 </Button>
                 {id === "google-photos" && connected ? (
                     <GooglePhotosImportButton
-                        buttonLabel="Open Picker"
-                        className=""
                         locale={locale}
-                        size="sm"
                         variant="outline"
                     />
                 ) : null}

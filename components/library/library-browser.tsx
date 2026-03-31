@@ -18,7 +18,6 @@ import {
     CommandPanel,
     CommandShortcut,
 } from "@/components/ui/command";
-import { useSearchQuery } from "@/hooks/use-search-query";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
@@ -64,9 +63,9 @@ type SortMode =
     | "caption-desc"
     | "source"
     | "domain";
-type SourceFilter = "all" | LibraryItemSource;
-type ThumbnailFilter = "any" | "with" | "without";
-type CaptionFilter = "any" | "with" | "without";
+type SourceFilterValue = LibraryItemSource;
+type ThumbnailFilterValue = "with" | "without";
+type CaptionFilterValue = "with" | "without";
 type ColumnCountMode = "auto" | "2" | "3" | "4" | "5" | "6";
 type PaletteSection = "search" | "filter" | "group" | "sort" | "layout";
 
@@ -237,6 +236,31 @@ function getSearchHotkeyHint(): string {
     return `${getSystemControlKey()}K`;
 }
 
+function appendUniqueSearchTerm(
+    values: readonly string[],
+    next: string
+): string[] {
+    const normalized = next.trim();
+    if (!normalized) {
+        return [...values];
+    }
+    return values.some(
+        (value) => value.toLowerCase() === normalized.toLowerCase()
+    )
+        ? [...values]
+        : [...values, normalized];
+}
+
+function removeValue<T>(values: readonly T[], value: T): T[] {
+    return values.filter((entry) => entry !== value);
+}
+
+function toggleValue<T>(values: readonly T[], next: T): T[] {
+    return values.includes(next)
+        ? values.filter((entry) => entry !== next)
+        : [...values, next];
+}
+
 function isSearchHotkey(event: KeyboardEvent): boolean {
     const key = event.key.toLowerCase();
     const hasMeta = event.metaKey;
@@ -299,28 +323,18 @@ function groupByLabel(mode: GroupByMode): string {
     return "None";
 }
 
-function sourceFilterLabel(source: SourceFilter): string {
-    return source === "all" ? "All sources" : sourceLabel(source);
-}
-
-function thumbnailFilterLabel(filter: ThumbnailFilter): string {
+function thumbnailFilterLabel(filter: ThumbnailFilterValue): string {
     if (filter === "with") {
         return "With preview";
     }
-    if (filter === "without") {
-        return "Without preview";
-    }
-    return "Any preview";
+    return "Without preview";
 }
 
-function captionFilterLabel(filter: CaptionFilter): string {
+function captionFilterLabel(filter: CaptionFilterValue): string {
     if (filter === "with") {
         return "With caption";
     }
-    if (filter === "without") {
-        return "Without caption";
-    }
-    return "Any caption";
+    return "Without caption";
 }
 
 function columnCountLabel(mode: ColumnCountMode): string {
@@ -365,7 +379,7 @@ function renderLibraryGridBody({
     showNoFilteredResults,
 }: {
     readonly collapsedSectionKeys: ReadonlySet<string>;
-    readonly clearLibraryPalette: () => Promise<void>;
+    readonly clearLibraryPalette: () => void;
     readonly columnCount?: number;
     readonly enableSectionCollapse: boolean;
     readonly layoutRefreshToken: number;
@@ -385,7 +399,7 @@ function renderLibraryGridBody({
                     No saved items match the current search and filters.
                 </p>
                 <Button
-                    onClick={() => clearLibraryPalette().catch(() => undefined)}
+                    onClick={clearLibraryPalette}
                     size="sm"
                     variant="outline"
                 >
@@ -430,6 +444,104 @@ function renderLibraryGridBody({
             </section>
         )
     );
+}
+
+function buildSearchPaletteGroups({
+    clearLibraryPalette,
+    draft,
+    hasAnyRefinements,
+    navigationItems,
+    searchTerms,
+    setCommandListOpen,
+    setPaletteInput,
+    setSearchTerms,
+}: {
+    readonly clearLibraryPalette: () => void;
+    readonly draft: string;
+    readonly hasAnyRefinements: boolean;
+    readonly navigationItems: CommandPaletteItem[];
+    readonly searchTerms: string[];
+    readonly setCommandListOpen: (value: boolean) => void;
+    readonly setPaletteInput: (value: string) => void;
+    readonly setSearchTerms: (
+        value: string[] | ((value: string[]) => string[])
+    ) => void;
+}): CommandPaletteGroup[] {
+    const groups: CommandPaletteGroup[] = [];
+    const draftAlreadyIncluded = searchTerms.some(
+        (term) => term.toLowerCase() === draft.toLowerCase()
+    );
+
+    if (draft) {
+        groups.push({
+            items: [
+                {
+                    active: draftAlreadyIncluded,
+                    description: draftAlreadyIncluded
+                        ? "Already included in the stacked search"
+                        : "Add this search term to the current stack",
+                    label: `Add search "${draft}"`,
+                    onSelect: () => {
+                        setSearchTerms((current) =>
+                            appendUniqueSearchTerm(current, draft)
+                        );
+                        setPaletteInput("");
+                        setCommandListOpen(true);
+                    },
+                    shortcut: "Enter",
+                    value: `add search ${draft}`,
+                },
+            ],
+            label: "Search",
+        });
+    }
+
+    if (searchTerms.length > 0) {
+        groups.push({
+            items: [
+                ...searchTerms.map((term) => ({
+                    active: true,
+                    description: "Active stacked search term",
+                    label: `Search: ${truncateLabel(term, 28)}`,
+                    onSelect: () =>
+                        setSearchTerms((current) => removeValue(current, term)),
+                    value: `remove search ${term}`,
+                })),
+                {
+                    description: "Remove every committed search term",
+                    label: "Clear all searches",
+                    onSelect: () => {
+                        setSearchTerms([]);
+                        setCommandListOpen(true);
+                    },
+                    value: "clear all searches",
+                },
+            ],
+            label: "Current search",
+        });
+    }
+
+    groups.push({
+        items: navigationItems,
+        label: "Refine library",
+    });
+
+    if (hasAnyRefinements) {
+        groups.push({
+            items: [
+                {
+                    description:
+                        "Reset search, filters, grouping, sort, and layout",
+                    label: "Reset browser",
+                    onSelect: clearLibraryPalette,
+                    value: "reset browser state",
+                },
+            ],
+            label: "Quick actions",
+        });
+    }
+
+    return groups;
 }
 
 function useSectionCollapseState({
@@ -500,97 +612,125 @@ function useSectionCollapseState({
 }
 
 function LibraryPaletteTrailing({
-    captionFilter,
+    captionFilters,
     clearLibraryPalette,
     columnCountMode,
-    domainFilter,
+    domainFilters,
     groupBy,
     isPaletteFocused,
     paletteInput,
-    searchQuery,
-    setCaptionFilter,
+    searchTerms,
+    setCaptionFilters,
     setColumnCountMode,
-    setDomainFilter,
+    setDomainFilters,
     setGroupBy,
-    setSearchQuery,
+    setSearchTerms,
     setSortMode,
-    setSourceFilter,
-    setThumbFilter,
+    setSourceFilters,
+    setThumbFilters,
     sortMode,
-    sourceFilter,
-    thumbFilter,
+    sourceFilters,
+    thumbFilters,
 }: {
-    readonly captionFilter: CaptionFilter;
-    readonly clearLibraryPalette: () => Promise<void>;
+    readonly captionFilters: CaptionFilterValue[];
+    readonly clearLibraryPalette: () => void;
     readonly columnCountMode: ColumnCountMode;
-    readonly domainFilter: string;
+    readonly domainFilters: string[];
     readonly groupBy: GroupByMode;
     readonly isPaletteFocused: boolean;
     readonly paletteInput: string;
-    readonly searchQuery: string;
-    readonly setCaptionFilter: (value: CaptionFilter) => void;
+    readonly searchTerms: string[];
+    readonly setCaptionFilters: (
+        value:
+            | CaptionFilterValue[]
+            | ((value: CaptionFilterValue[]) => CaptionFilterValue[])
+    ) => void;
     readonly setColumnCountMode: (value: ColumnCountMode) => void;
-    readonly setDomainFilter: (value: string) => void;
+    readonly setDomainFilters: (
+        value: string[] | ((value: string[]) => string[])
+    ) => void;
     readonly setGroupBy: (value: GroupByMode) => void;
-    readonly setSearchQuery: (value: null) => Promise<unknown>;
+    readonly setSearchTerms: (
+        value: string[] | ((value: string[]) => string[])
+    ) => void;
     readonly setSortMode: (value: SortMode) => void;
-    readonly setSourceFilter: (value: SourceFilter) => void;
-    readonly setThumbFilter: (value: ThumbnailFilter) => void;
+    readonly setSourceFilters: (
+        value:
+            | SourceFilterValue[]
+            | ((value: SourceFilterValue[]) => SourceFilterValue[])
+    ) => void;
+    readonly setThumbFilters: (
+        value:
+            | ThumbnailFilterValue[]
+            | ((value: ThumbnailFilterValue[]) => ThumbnailFilterValue[])
+    ) => void;
     readonly sortMode: SortMode;
-    readonly sourceFilter: SourceFilter;
-    readonly thumbFilter: ThumbnailFilter;
+    readonly sourceFilters: SourceFilterValue[];
+    readonly thumbFilters: ThumbnailFilterValue[];
 }) {
     const chips: ReactNode[] = [];
-    const q = searchQuery.trim();
-
-    if (q) {
+    for (const term of searchTerms) {
         chips.push(
             <PaletteChip
-                key="search"
-                label={`Search: ${truncateLabel(q)}`}
-                onRemove={() => {
-                    setSearchQuery(null).catch(() => undefined);
-                }}
+                key={`search-${term}`}
+                label={`Search: ${truncateLabel(term)}`}
+                onRemove={() =>
+                    setSearchTerms((current) => removeValue(current, term))
+                }
             />
         );
     }
 
-    if (sourceFilter !== "all") {
+    for (const source of sourceFilters) {
         chips.push(
             <PaletteChip
-                key="source"
-                label={`Source: ${sourceFilterLabel(sourceFilter)}`}
-                onRemove={() => setSourceFilter("all")}
+                key={`source-${source}`}
+                label={`Source: ${sourceLabel(source)}`}
+                onRemove={() =>
+                    setSourceFilters((current) => removeValue(current, source))
+                }
             />
         );
     }
 
-    if (thumbFilter !== "any") {
+    for (const thumbFilter of thumbFilters) {
         chips.push(
             <PaletteChip
-                key="thumb"
+                key={`thumb-${thumbFilter}`}
                 label={thumbnailFilterLabel(thumbFilter)}
-                onRemove={() => setThumbFilter("any")}
+                onRemove={() =>
+                    setThumbFilters((current) =>
+                        removeValue(current, thumbFilter)
+                    )
+                }
             />
         );
     }
 
-    if (captionFilter !== "any") {
+    for (const captionFilter of captionFilters) {
         chips.push(
             <PaletteChip
-                key="caption"
+                key={`caption-${captionFilter}`}
                 label={captionFilterLabel(captionFilter)}
-                onRemove={() => setCaptionFilter("any")}
+                onRemove={() =>
+                    setCaptionFilters((current) =>
+                        removeValue(current, captionFilter)
+                    )
+                }
             />
         );
     }
 
-    if (domainFilter !== ALL_DOMAIN_FILTER) {
+    for (const domainFilter of domainFilters) {
         chips.push(
             <PaletteChip
-                key="domain"
+                key={`domain-${domainFilter}`}
                 label={`Domain: ${truncateLabel(domainFilter)}`}
-                onRemove={() => setDomainFilter(ALL_DOMAIN_FILTER)}
+                onRemove={() =>
+                    setDomainFilters((current) =>
+                        removeValue(current, domainFilter)
+                    )
+                }
             />
         );
     }
@@ -639,9 +779,7 @@ function LibraryPaletteTrailing({
                 <Button
                     aria-label="Clear search, filters, grouping, sorting, layout, and command input"
                     className="size-8 shrink-0 rounded-full text-muted-foreground sm:size-7"
-                    onClick={() => {
-                        clearLibraryPalette().catch(() => undefined);
-                    }}
+                    onClick={clearLibraryPalette}
                     size="icon-sm"
                     type="button"
                     variant="ghost"
@@ -658,12 +796,16 @@ interface Props {
 }
 
 export function LibraryBrowser({ items }: Props) {
-    const [searchQuery, setSearchQuery] = useSearchQuery();
+    const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const [paletteInput, setPaletteInput] = useState("");
-    const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
-    const [thumbFilter, setThumbFilter] = useState<ThumbnailFilter>("any");
-    const [captionFilter, setCaptionFilter] = useState<CaptionFilter>("any");
-    const [domainFilter, setDomainFilter] = useState<string>(ALL_DOMAIN_FILTER);
+    const [sourceFilters, setSourceFilters] = useState<SourceFilterValue[]>([]);
+    const [thumbFilters, setThumbFilters] = useState<ThumbnailFilterValue[]>(
+        []
+    );
+    const [captionFilters, setCaptionFilters] = useState<CaptionFilterValue[]>(
+        []
+    );
+    const [domainFilters, setDomainFilters] = useState<string[]>([]);
     const [groupBy, setGroupBy] = useState<GroupByMode>("none");
     const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
     const [columnCountMode, setColumnCountMode] = useState<ColumnCountMode>(
@@ -1001,19 +1143,19 @@ export function LibraryBrowser({ items }: Props) {
         [commandListOpen, paletteInput, paletteSection, returnToSearchSection]
     );
 
-    const clearLibraryPalette = useCallback(async () => {
+    const clearLibraryPalette = useCallback(() => {
         setPaletteInput("");
-        setSourceFilter("all");
-        setThumbFilter("any");
-        setCaptionFilter("any");
-        setDomainFilter(ALL_DOMAIN_FILTER);
+        setSearchTerms([]);
+        setSourceFilters([]);
+        setThumbFilters([]);
+        setCaptionFilters([]);
+        setDomainFilters([]);
         setGroupBy("none");
         setSortMode(DEFAULT_SORT_MODE);
         setColumnCountMode(DEFAULT_COLUMN_COUNT_MODE);
         setPaletteSection("search");
-        await setSearchQuery(null);
         setCommandListOpen(false);
-    }, [setSearchQuery]);
+    }, []);
 
     const paletteGroups = useMemo<CommandPaletteGroup[]>(() => {
         const draft = paletteInput.trim();
@@ -1022,6 +1164,11 @@ export function LibraryBrowser({ items }: Props) {
         const applyAndReturn = (fn: () => void | Promise<void>) => async () => {
             await fn();
             returnToSearchSection();
+        };
+        const applyAndStay = (fn: () => void) => () => {
+            fn();
+            setPaletteInput("");
+            setCommandListOpen(true);
         };
 
         const navigationItems: CommandPaletteItem[] = [
@@ -1058,74 +1205,27 @@ export function LibraryBrowser({ items }: Props) {
             shortcut: "Esc",
             value: "navigate back",
         };
+        const hasAnyRefinements =
+            searchTerms.length > 0 ||
+            sourceFilters.length > 0 ||
+            thumbFilters.length > 0 ||
+            captionFilters.length > 0 ||
+            domainFilters.length > 0 ||
+            groupBy !== "none" ||
+            sortMode !== DEFAULT_SORT_MODE ||
+            columnCountMode !== DEFAULT_COLUMN_COUNT_MODE;
 
         if (paletteSection === "search") {
-            if (draft) {
-                groups.push({
-                    items: [
-                        {
-                            description: "Match captions and URLs",
-                            label: `Search for "${draft}"`,
-                            onSelect: async () => {
-                                await setSearchQuery(draft || null);
-                                setPaletteInput("");
-                                setCommandListOpen(true);
-                            },
-                            shortcut: "Enter",
-                            value: `apply search ${draft}`,
-                        },
-                    ],
-                    label: "Search",
-                });
-            }
-
-            if (searchQuery.trim()) {
-                groups.push({
-                    items: [
-                        {
-                            description: `Current: ${truncateLabel(searchQuery.trim(), 28)}`,
-                            label: "Clear current search",
-                            onSelect: async () => {
-                                await setSearchQuery(null);
-                                setCommandListOpen(true);
-                            },
-                            value: "clear search",
-                        },
-                    ],
-                    label: "Current search",
-                });
-            }
-
-            groups.push({
-                items: navigationItems,
-                label: "Refine library",
+            return buildSearchPaletteGroups({
+                clearLibraryPalette,
+                draft,
+                hasAnyRefinements,
+                navigationItems,
+                searchTerms,
+                setCommandListOpen,
+                setPaletteInput,
+                setSearchTerms,
             });
-
-            if (
-                searchQuery.trim() ||
-                sourceFilter !== "all" ||
-                thumbFilter !== "any" ||
-                captionFilter !== "any" ||
-                domainFilter !== ALL_DOMAIN_FILTER ||
-                groupBy !== "none" ||
-                sortMode !== DEFAULT_SORT_MODE ||
-                columnCountMode !== DEFAULT_COLUMN_COUNT_MODE
-            ) {
-                groups.push({
-                    items: [
-                        {
-                            description:
-                                "Reset search, filters, grouping, sort, and layout",
-                            label: "Reset browser",
-                            onSelect: clearLibraryPalette,
-                            value: "reset browser state",
-                        },
-                    ],
-                    label: "Quick actions",
-                });
-            }
-
-            return groups;
         }
 
         if (paletteSection === "filter") {
@@ -1136,54 +1236,103 @@ export function LibraryBrowser({ items }: Props) {
             groups.push({
                 items: [
                     {
-                        active: sourceFilter === "all",
+                        active: sourceFilters.length === 0,
                         description: "Show every source",
                         label: "Source: All sources",
-                        onSelect: applyAndReturn(() => setSourceFilter("all")),
+                        onSelect: applyAndStay(() => setSourceFilters([])),
                         value: "filter source all",
                     },
                     ...sourceOptions
                         .filter((option) => option.value !== "all")
                         .map((option) => ({
-                            active: sourceFilter === option.value,
-                            description: "Limit the grid to one source",
+                            active: sourceFilters.includes(
+                                option.value as SourceFilterValue
+                            ),
+                            description:
+                                "Toggle this source in the filter stack",
                             label: `Source: ${option.label}`,
-                            onSelect: applyAndReturn(() =>
-                                setSourceFilter(option.value as SourceFilter)
+                            onSelect: applyAndStay(() =>
+                                setSourceFilters((current) =>
+                                    toggleValue(
+                                        current,
+                                        option.value as SourceFilterValue
+                                    )
+                                )
                             ),
                             value: `filter source ${option.value}`,
                         })),
-                    ...thumbnailOptions.map((option) => ({
-                        active: thumbFilter === option.value,
-                        description: "Filter items by preview availability",
-                        label: `Preview: ${option.label}`,
-                        onSelect: applyAndReturn(() =>
-                            setThumbFilter(option.value as ThumbnailFilter)
-                        ),
-                        value: `filter preview ${option.value}`,
-                    })),
-                    ...captionOptions.map((option) => ({
-                        active: captionFilter === option.value,
-                        description: "Filter items by caption presence",
-                        label: `Caption: ${option.label}`,
-                        onSelect: applyAndReturn(() =>
-                            setCaptionFilter(option.value as CaptionFilter)
-                        ),
-                        value: `filter caption ${option.value}`,
-                    })),
+                    {
+                        active: thumbFilters.length === 0,
+                        description: "Allow items with or without previews",
+                        label: "Preview: Any preview",
+                        onSelect: applyAndStay(() => setThumbFilters([])),
+                        value: "filter preview any",
+                    },
+                    ...thumbnailOptions
+                        .filter((option) => option.value !== "any")
+                        .map((option) => ({
+                            active: thumbFilters.includes(
+                                option.value as ThumbnailFilterValue
+                            ),
+                            description:
+                                "Toggle this preview condition in the stack",
+                            label: `Preview: ${option.label}`,
+                            onSelect: applyAndStay(() =>
+                                setThumbFilters((current) =>
+                                    toggleValue(
+                                        current,
+                                        option.value as ThumbnailFilterValue
+                                    )
+                                )
+                            ),
+                            value: `filter preview ${option.value}`,
+                        })),
+                    {
+                        active: captionFilters.length === 0,
+                        description: "Allow items with or without captions",
+                        label: "Caption: Any caption",
+                        onSelect: applyAndStay(() => setCaptionFilters([])),
+                        value: "filter caption any",
+                    },
+                    ...captionOptions
+                        .filter((option) => option.value !== "any")
+                        .map((option) => ({
+                            active: captionFilters.includes(
+                                option.value as CaptionFilterValue
+                            ),
+                            description:
+                                "Toggle this caption condition in the stack",
+                            label: `Caption: ${option.label}`,
+                            onSelect: applyAndStay(() =>
+                                setCaptionFilters((current) =>
+                                    toggleValue(
+                                        current,
+                                        option.value as CaptionFilterValue
+                                    )
+                                )
+                            ),
+                            value: `filter caption ${option.value}`,
+                        })),
                 ],
                 label: "Conditions",
             });
             groups.push({
                 items: domainOptions.map((option) => ({
-                    active: domainFilter === option.value,
+                    active:
+                        option.value === ALL_DOMAIN_FILTER
+                            ? domainFilters.length === 0
+                            : domainFilters.includes(option.value),
                     description:
                         option.value === ALL_DOMAIN_FILTER
                             ? "Show items from every domain"
-                            : "Limit the grid to one hostname",
+                            : "Toggle this domain in the filter stack",
                     label: `Domain: ${option.label}`,
-                    onSelect: applyAndReturn(() =>
-                        setDomainFilter(option.value)
+                    onSelect: applyAndStay(() =>
+                        option.value === ALL_DOMAIN_FILTER
+                            ? setDomainFilters([])
+                            : setDomainFilters((current) =>
+                                  toggleValue(current, option.value)
+                              )
                     ),
                     value: `filter domain ${option.value}`,
                 })),
@@ -1248,11 +1397,10 @@ export function LibraryBrowser({ items }: Props) {
             },
         ];
     }, [
-        captionFilter,
         clearLibraryPalette,
         columnCountMode,
         columnOptions,
-        domainFilter,
+        domainFilters,
         domainOptions,
         groupBy,
         groupOptions,
@@ -1260,14 +1408,14 @@ export function LibraryBrowser({ items }: Props) {
         paletteInput,
         paletteSection,
         returnToSearchSection,
-        searchQuery,
-        setSearchQuery,
+        searchTerms,
         sortMode,
         sortOptions,
-        sourceFilter,
+        sourceFilters,
         sourceOptions,
-        thumbFilter,
+        thumbFilters,
         thumbnailOptions,
+        captionFilters,
         captionOptions,
     ]);
 
@@ -1284,44 +1432,54 @@ export function LibraryBrowser({ items }: Props) {
 
     const filteredItems = useMemo(() => {
         let list = items;
-        const q = searchQuery.trim().toLowerCase();
+        const normalizedSearchTerms = searchTerms.map((term) =>
+            term.trim().toLowerCase()
+        );
 
-        if (q) {
+        if (normalizedSearchTerms.length > 0) {
             list = list.filter((item) => {
                 const cap = item.caption?.toLowerCase() ?? "";
                 const url = item.url.toLowerCase();
-                return cap.includes(q) || url.includes(q);
+                return normalizedSearchTerms.some(
+                    (term) => cap.includes(term) || url.includes(term)
+                );
             });
         }
 
-        if (sourceFilter !== "all") {
-            list = list.filter((item) => item.source === sourceFilter);
+        if (sourceFilters.length > 0) {
+            list = list.filter((item) => sourceFilters.includes(item.source));
         }
 
-        if (thumbFilter === "with") {
-            list = list.filter((item) => Boolean(item.thumbnailUrl));
-        } else if (thumbFilter === "without") {
-            list = list.filter((item) => !item.thumbnailUrl);
+        if (thumbFilters.length === 1) {
+            list = list.filter((item) =>
+                thumbFilters[0] === "with"
+                    ? Boolean(item.thumbnailUrl)
+                    : !item.thumbnailUrl
+            );
         }
 
-        if (captionFilter === "with") {
-            list = list.filter((item) => Boolean(item.caption?.trim()));
-        } else if (captionFilter === "without") {
-            list = list.filter((item) => !item.caption?.trim());
+        if (captionFilters.length === 1) {
+            list = list.filter((item) =>
+                captionFilters[0] === "with"
+                    ? Boolean(item.caption?.trim())
+                    : !item.caption?.trim()
+            );
         }
 
-        if (domainFilter !== ALL_DOMAIN_FILTER) {
-            list = list.filter((item) => itemDomain(item.url) === domainFilter);
+        if (domainFilters.length > 0) {
+            list = list.filter((item) =>
+                domainFilters.includes(itemDomain(item.url))
+            );
         }
 
         return list;
     }, [
-        captionFilter,
-        domainFilter,
+        captionFilters,
+        domainFilters,
         items,
-        searchQuery,
-        sourceFilter,
-        thumbFilter,
+        searchTerms,
+        sourceFilters,
+        thumbFilters,
     ]);
 
     const sortedItems = useMemo(
@@ -1367,12 +1525,18 @@ export function LibraryBrowser({ items }: Props) {
 
     const hasActiveFilters = useMemo(
         () =>
-            searchQuery.trim() !== "" ||
-            sourceFilter !== "all" ||
-            thumbFilter !== "any" ||
-            captionFilter !== "any" ||
-            domainFilter !== ALL_DOMAIN_FILTER,
-        [captionFilter, domainFilter, searchQuery, sourceFilter, thumbFilter]
+            searchTerms.length > 0 ||
+            sourceFilters.length > 0 ||
+            thumbFilters.length > 0 ||
+            captionFilters.length > 0 ||
+            domainFilters.length > 0,
+        [
+            captionFilters,
+            domainFilters,
+            searchTerms,
+            sourceFilters,
+            thumbFilters,
+        ]
     );
 
     const hasNonDefaultView =
@@ -1453,28 +1617,28 @@ export function LibraryBrowser({ items }: Props) {
                             }
                             trailing={
                                 <LibraryPaletteTrailing
-                                    captionFilter={captionFilter}
+                                    captionFilters={captionFilters}
                                     clearLibraryPalette={clearLibraryPalette}
                                     columnCountMode={columnCountMode}
-                                    domainFilter={domainFilter}
+                                    domainFilters={domainFilters}
                                     groupBy={groupBy}
                                     isPaletteFocused={isPaletteFocused}
                                     paletteInput={paletteInput}
-                                    searchQuery={searchQuery}
-                                    setCaptionFilter={setCaptionFilter}
+                                    searchTerms={searchTerms}
+                                    setCaptionFilters={setCaptionFilters}
                                     setColumnCountMode={setColumnCountMode}
-                                    setDomainFilter={setDomainFilter}
+                                    setDomainFilters={setDomainFilters}
                                     setGroupBy={setGroupBy}
-                                    setSearchQuery={setSearchQuery}
+                                    setSearchTerms={setSearchTerms}
                                     setSortMode={setSortMode}
-                                    setSourceFilter={setSourceFilter}
-                                    setThumbFilter={setThumbFilter}
+                                    setSourceFilters={setSourceFilters}
+                                    setThumbFilters={setThumbFilters}
                                     sortMode={sortMode}
-                                    sourceFilter={sourceFilter}
-                                    thumbFilter={thumbFilter}
+                                    sourceFilters={sourceFilters}
+                                    thumbFilters={thumbFilters}
                                 />
                             }
-                            wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
+                            wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 backdrop-blur-xs px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
                         />
                         <p className="sr-only">
                             Press {getSearchHotkeyHint()} or slash to focus
@@ -1556,7 +1720,7 @@ export function LibraryBrowser({ items }: Props) {
                     !showEmptyLibraryPeek ? (
                         <Button
                             onClick={() => {
-                                clearLibraryPalette().catch(() => undefined);
+                                clearLibraryPalette();
                             }}
                             size="xs"
                             variant="ghost"

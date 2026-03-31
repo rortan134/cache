@@ -97,7 +97,7 @@ export function IntegrationSetupHeading({
     );
 
     return (
-        <div className="flex items-center gap-2 rounded-full bg-muted/90 px-2.5 py-1.5">
+        <div className="flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5">
             <span aria-hidden="true" className="shrink-0 leading-none">
                 <RadialChart size={36} value={progressPercent} />
             </span>

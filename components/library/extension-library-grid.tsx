@@ -188,7 +188,6 @@ export function ExtensionLibraryGrid({
                                         No preview
                                     </div>
                                 )}
-
                                 <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-2">
                                     <span className="rounded-full bg-black/65 px-2 py-1 font-medium text-[11px] text-white backdrop-blur-sm">
                                         {source}
@@ -197,7 +196,6 @@ export function ExtensionLibraryGrid({
                                         Open
                                     </span>
                                 </div>
-
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                                         <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
@@ -209,7 +207,7 @@ export function ExtensionLibraryGrid({
                                     </div>
                                 </div>
                             </div>
-                            <p className="line-clamp-2 p-3 text-foreground text-sm leading-snug">
+                            <p className="line-clamp-2 truncate p-3 text-foreground text-sm leading-snug">
                                 {item.caption?.trim() || item.url}
                             </p>
                         </a>

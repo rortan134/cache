@@ -134,12 +134,11 @@ export function PinterestImportControls({
                     <Button
                         loading={isConnecting}
                         onClick={handleConnect}
-                        size="sm"
+                        size="icon"
                         type="button"
                         variant="outline"
                     >
                         <RefreshCw className="size-4" />
-                        Reconnect
                     </Button>
                 ) : null}
             </div>
