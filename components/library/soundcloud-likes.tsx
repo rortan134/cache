@@ -4,8 +4,8 @@ import type {
     LatestSoundcloudLikesResult,
     SoundcloudLikeTrack,
 } from "@/app/[locale]/library/actions";
-import { SoundCloud } from "@/components/shared/integration-icons";
 import { Button } from "@/components/ui/button";
+import { SoundCloud } from "@/components/ui/integration-icons";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
 import { ExternalLink, RefreshCw } from "lucide-react";

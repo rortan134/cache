@@ -1092,7 +1092,6 @@ function useResizeObserver(positioner: Positioner) {
             [WeakMap],
             (positioner: Positioner, onUpdate: () => void) => {
                 const updates: number[] = [];
-                const itemMap = new WeakMap<Element, number>();
 
                 const update = onRafSchedule(() => {
                     if (updates.length > 0) {
@@ -1105,8 +1104,8 @@ function useResizeObserver(positioner: Positioner) {
                 function onItemResize(target: ItemElement) {
                     const height = target.offsetHeight;
                     if (height > 0) {
-                        const index = itemMap.get(target);
-                        if (index !== undefined) {
+                        const index = Number(target.dataset.index);
+                        if (!Number.isNaN(index)) {
                             const position = positioner.get(index);
                             if (
                                 position !== undefined &&
@@ -1128,9 +1127,11 @@ function useResizeObserver(positioner: Positioner) {
                         if (!entry) {
                             continue;
                         }
-                        const index = itemMap.get(entry.target);
+                        const index = Number(
+                            (entry.target as ItemElement).dataset.index
+                        );
 
-                        if (index === undefined) {
+                        if (Number.isNaN(index)) {
                             continue;
                         }
                         let handler = scheduledItemMap.get(index);
@@ -1201,10 +1202,14 @@ function useScroller({
     const [isScrolling, setIsScrolling] = React.useState(false);
     const hasMountedRef = React.useRef(0);
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: scrollY must trigger the isScrolling timeout logic
     React.useEffect(() => {
-        if (hasMountedRef.current === 1) {
-            setIsScrolling(true);
+        if (hasMountedRef.current === 0) {
+            hasMountedRef.current = 1;
+            return;
         }
+
+        setIsScrolling(true);
         let didUnsubscribe = false;
 
         function requestTimeout(fn: () => void, delay: number) {
@@ -1230,12 +1235,11 @@ function useScroller({
             },
             40 + 1000 / fps
         );
-        hasMountedRef.current = 1;
         return () => {
             didUnsubscribe = true;
             cancelAnimationFrame(timeout.id);
         };
-    }, [fps]);
+    }, [fps, scrollY]);
 
     return { isScrolling, scrollTop: Math.max(0, scrollY - offset) };
 }
@@ -1351,6 +1355,7 @@ interface MasonryProps extends DivProps {
     columnWidth?: number;
     defaultHeight?: number;
     defaultWidth?: number;
+    deps?: React.DependencyList;
     fallback?: React.ReactNode;
     gap?: number | { column: number; row: number };
     itemHeight?: number;
@@ -1374,6 +1379,7 @@ function Masonry(props: MasonryProps) {
         fallback,
         linear = false,
         asChild,
+        deps = [],
         children,
         style,
         ref,
@@ -1425,22 +1431,23 @@ function Masonry(props: MasonryProps) {
         }
     });
 
-    const positioner = usePositioner({
-        columnCount,
-        columnGap,
-        columnWidth,
-        linear,
-        maxColumnCount,
-        rowGap,
-        width: containerPosition.width ?? size.width,
-    });
+    const positioner = usePositioner(
+        {
+            columnCount,
+            columnGap,
+            columnWidth,
+            linear,
+            maxColumnCount,
+            rowGap,
+            width: containerPosition.width ?? size.width,
+        },
+        deps
+    );
     const resizeObserver = useResizeObserver(positioner);
     const { scrollTop, isScrolling } = useScroller({
         fps: scrollFps,
         offset: containerPosition.offset,
     });
-
-    const itemMap = React.useRef(new WeakMap<ItemElement, number>()).current;
 
     const onItemRegister = React.useCallback(
         (index: number) => (node: ItemElement | null) => {
@@ -1448,7 +1455,6 @@ function Masonry(props: MasonryProps) {
                 return;
             }
 
-            itemMap.set(node, index);
             if (resizeObserver) {
                 resizeObserver.observe(node);
             }
@@ -1456,7 +1462,7 @@ function Masonry(props: MasonryProps) {
                 positioner.set(index, node.offsetHeight);
             }
         },
-        [itemMap, positioner, resizeObserver]
+        [positioner, resizeObserver]
     );
 
     const contextValue = React.useMemo<MasonryContextValue>(
@@ -1521,9 +1527,6 @@ function MasonryViewport(props: DivProps) {
         setMounted(true);
     }, []);
 
-    let startIndex = 0;
-    let stopIndex: number | undefined;
-
     const validChildren = React.Children.toArray(children).filter(
         (child): child is React.ReactElement<MasonryItemPropsWithRef> =>
             React.isValidElement(child) &&
@@ -1579,19 +1582,12 @@ function MasonryViewport(props: DivProps) {
 
         positionedChildren.push(
             React.cloneElement(child, {
+                "data-index": index,
                 key: child.key ?? index,
                 ref: context.onItemRegister(index),
                 style: itemStyle,
             })
         );
-
-        if (stopIndex === undefined) {
-            startIndex = index;
-            stopIndex = index;
-        } else {
-            startIndex = Math.min(startIndex, index);
-            stopIndex = Math.max(stopIndex, index);
-        }
     });
 
     if (layoutOutdated && mounted) {
@@ -1621,6 +1617,7 @@ function MasonryViewport(props: DivProps) {
 
             positionedChildren.push(
                 React.cloneElement(child, {
+                    "data-index": index,
                     key: child.key ?? index,
                     ref: context.onItemRegister(index),
                     style: itemStyle,
@@ -1629,6 +1626,7 @@ function MasonryViewport(props: DivProps) {
         }
     }
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: measuredCount and itemCount change must trigger re-measurement loop
     React.useEffect(() => {
         if (layoutOutdated && mounted) {
             if (rafId.current) {
@@ -1643,7 +1641,7 @@ function MasonryViewport(props: DivProps) {
                 cancelAnimationFrame(rafId.current);
             }
         };
-    }, [layoutOutdated, mounted]);
+    }, [layoutOutdated, mounted, measuredCount, itemCount]);
 
     const estimatedHeight = React.useMemo(() => {
         const measuredHeight = context.positioner.estimateHeight(

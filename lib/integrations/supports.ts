@@ -4,7 +4,7 @@ import {
     Pinterest,
     SoundCloud,
     TikTok,
-} from "@/components/shared/integration-icons";
+} from "@/components/ui/integration-icons";
 import type { ComponentType, SVGProps } from "react";
 
 export type IntegrationCategory = "media" | "social";

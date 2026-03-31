@@ -140,6 +140,7 @@ export function ExtensionLibraryGrid({
     return (
         <Masonry
             columnCount={columnCount}
+            deps={[layoutToken, items]}
             fallback={
                 <div
                     className={cn(
@@ -155,7 +156,6 @@ export function ExtensionLibraryGrid({
                 </div>
             }
             gap={8}
-            key={layoutToken}
             linear
         >
             {items.map((item) => {

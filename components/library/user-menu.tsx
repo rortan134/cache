@@ -1,17 +1,11 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
-import {
-    ChevronUp,
-    CreditCard,
-    LogOut,
-    Sparkles,
-    UserRound,
-} from "lucide-react";
+import { authClient } from "@/lib/auth/client";
+import { cn } from "@/lib/utils";
+import { ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -212,13 +206,7 @@ export function UserMenu({
         <Popover>
             <PopoverTrigger
                 className="w-full"
-                render={
-                    <Button
-                        className="h-auto w-full justify-between rounded-xl px-3 py-2"
-                        size="sm"
-                        variant="ghost"
-                    />
-                }
+                render={<Button variant="ghost" />}
             >
                 <span className="flex min-w-0 items-center gap-3">
                     <Avatar className="size-9 ring-1 ring-border/60">
@@ -239,14 +227,14 @@ export function UserMenu({
                         </span>
                     </span>
                 </span>
-                <ChevronUp
+                <ChevronsUpDown
                     aria-hidden
                     className="size-4 text-muted-foreground"
                 />
             </PopoverTrigger>
             <PopoverPopup
                 align="start"
-                className="w-[min(22rem,calc(100vw-2rem))] rounded-2xl"
+                className="w-[min(22rem,calc(100vw-2rem))]"
                 side="top"
             >
                 <div className="flex flex-col gap-4">
@@ -279,7 +267,6 @@ export function UserMenu({
                             </div>
                         </div>
                     </div>
-
                     <div className="flex flex-col gap-1">
                         {hasManagedSubscription ? (
                             <Button
@@ -314,12 +301,6 @@ export function UserMenu({
                             Log out
                         </Button>
                     </div>
-
-                    <div className="flex items-center gap-2 border-t pt-3 text-muted-foreground text-xs">
-                        <UserRound className="size-3.5" />
-                        <span>Signed in to Cache</span>
-                    </div>
-
                     {errorMessage ? (
                         <p className="text-destructive text-xs">
                             {errorMessage}

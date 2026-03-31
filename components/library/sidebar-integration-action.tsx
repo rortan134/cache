@@ -297,12 +297,11 @@ export function SidebarIntegrationAction({
                     <Button
                         loading={isImportingPinterest}
                         onClick={handlePinterestImport}
-                        size="sm"
+                        size="icon"
                         type="button"
                         variant="outline"
                     >
                         <RefreshCw className="size-4" />
-                        Import
                     </Button>
                 ) : null}
             </div>

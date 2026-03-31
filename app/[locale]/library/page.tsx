@@ -1,11 +1,10 @@
-import { getLatestSoundcloudLikes } from "./actions";
 import { LibraryBrowser } from "@/components/library/library-browser";
+import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
 import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
 import { SoundcloudLikes } from "@/components/library/soundcloud-likes";
-import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
 import { UserMenu } from "@/components/library/user-menu";
-import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PageShell, PageSidebarShell } from "@/components/ui/layouts";
 import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
@@ -18,6 +17,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getLatestSoundcloudLikes } from "./actions";
 
 export async function generateMetadata({
     params,

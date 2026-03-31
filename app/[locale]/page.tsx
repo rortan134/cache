@@ -1,12 +1,12 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { Chrome } from "@/components/shared/integration-icons";
-import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import {
     SessionHint,
     SignedInOnly,
     SignedOutOnly,
-} from "@/components/shared/session";
+} from "@/components/auth/session";
 import { Button } from "@/components/ui/button";
+import { Chrome } from "@/components/ui/integration-icons";
+import { PageShell, PageSidebarShell } from "@/components/ui/layouts";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
