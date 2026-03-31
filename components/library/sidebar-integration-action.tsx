@@ -1,12 +1,13 @@
 "use client";
 
+import { GooglePhotosImportButton } from "@/components/google-photos/google-photos-import-button";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth/client";
 import {
     CACHE_EXTENSION_DOWNLOAD_URL,
     CACHE_EXTENSION_READY_EVENT,
 } from "@/lib/constants";
 import type { IntegrationId } from "@/lib/integrations/supports";
-import { authClient } from "@/lib/auth/client";
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -77,26 +78,11 @@ function providerIdForIntegration(id: OAuthIntegrationId) {
     return id;
 }
 
-function extensionButtonLabel(
-    id: ExtensionIntegrationId,
-    extensionInstalled: boolean
-) {
+function extensionButtonLabel(extensionInstalled: boolean) {
     if (extensionInstalled) {
-        return id === "instagram" ? "Open Instagram" : "Open TikTok";
+        return "Open";
     }
     return "Get Extension";
-}
-
-function extensionHelperText(
-    id: ExtensionIntegrationId,
-    extensionInstalled: boolean
-) {
-    if (extensionInstalled) {
-        return id === "instagram"
-            ? "Open Instagram in Chrome and sync Saved posts from the extension."
-            : "Open TikTok in Chrome and sync Favorites from the extension.";
-    }
-    return "Install the Cache extension first, then sync from the social site.";
 }
 
 export function SidebarIntegrationAction({
@@ -275,11 +261,8 @@ export function SidebarIntegrationAction({
                     type="button"
                     variant="ghost"
                 >
-                    {extensionButtonLabel(id, extensionInstalled)}
+                    {extensionButtonLabel(extensionInstalled)}
                 </Button>
-                <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
-                    {extensionHelperText(id, extensionInstalled)}
-                </p>
             </div>
         );
     }
@@ -304,6 +287,15 @@ export function SidebarIntegrationAction({
                 >
                     {isParkedSoundcloud ? "Pending approval" : connectLabel}
                 </Button>
+                {id === "google-photos" && connected ? (
+                    <GooglePhotosImportButton
+                        buttonLabel="Open Picker"
+                        className=""
+                        locale={locale}
+                        size="sm"
+                        variant="outline"
+                    />
+                ) : null}
                 {id === "pinterest" && connected ? (
                     <Button
                         loading={isImportingPinterest}
@@ -313,7 +305,7 @@ export function SidebarIntegrationAction({
                         variant="outline"
                     >
                         <RefreshCw className="size-4" />
-                        Import Pins
+                        Import
                     </Button>
                 ) : null}
             </div>

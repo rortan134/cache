@@ -163,11 +163,13 @@ export default async function LibraryPage({
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                    <SoundcloudLikes
-                        locale={locale}
-                        parked={soundcloudParked}
-                        result={soundcloudLikes}
-                    />
+                    {soundcloudParked ? null : (
+                        <SoundcloudLikes
+                            locale={locale}
+                            parked={soundcloudParked}
+                            result={soundcloudLikes}
+                        />
+                    )}
                     <LibraryBrowser items={items} />
                 </div>
             </div>

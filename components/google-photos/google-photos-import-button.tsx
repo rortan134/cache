@@ -131,8 +131,18 @@ async function importSelectedMedia(sessionId: string): Promise<ImportResponse> {
 }
 
 export function GooglePhotosImportButton({
+    buttonLabel = "Import from Google Photos",
+    className = "justify-start",
     locale,
-}: Readonly<{ locale: string }>) {
+    size,
+    variant = "outline",
+}: Readonly<{
+    buttonLabel?: string;
+    className?: string;
+    locale: string;
+    size?: React.ComponentProps<typeof Button>["size"];
+    variant?: React.ComponentProps<typeof Button>["variant"];
+}>) {
     const router = useRouter();
     const { data: session, isPending } = useSession();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -192,14 +202,15 @@ export function GooglePhotosImportButton({
     return (
         <div className="flex flex-col gap-2">
             <Button
-                className="justify-start"
+                className={className}
                 loading={isImporting}
                 onClick={handleImport}
+                size={size}
                 type="button"
-                variant="outline"
+                variant={variant}
             >
                 <Images className="size-4" />
-                Import from Google Photos
+                {buttonLabel}
             </Button>
             {isPending ? (
                 <p className="text-muted-foreground text-xs">
