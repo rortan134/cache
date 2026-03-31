@@ -88,17 +88,17 @@ function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
                         });
 
                         const originalReplaceState = history.replaceState;
-                        history.replaceState = (_state, unused, url) => {
+                        history.replaceState = (state, unused, url) => {
                             const u = new URL(url ?? "", window.location.href);
                             const href = u.pathname + u.search + u.hash;
-                            originalReplaceState.call(history, unused, href);
+                            originalReplaceState.call(history, state, unused, href);
                         };
 
                         const originalPushState = history.pushState;
-                        history.pushState = (_state, unused, url) => {
+                        history.pushState = (state, unused, url) => {
                             const u = new URL(url ?? "", window.location.href);
                             const href = u.pathname + u.search + u.hash;
-                            originalPushState.call(history, unused, href);
+                            originalPushState.call(history, state, unused, href);
                         };
 
                         const appOrigin = new URL(baseUrl).origin;
