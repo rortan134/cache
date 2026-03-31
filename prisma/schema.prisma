@@ -8,9 +8,10 @@ generator client {
 }
 
 enum LibraryItemSource {
+    google_photos
     instagram
-    tiktok
     other
+    tiktok
 }
 
 model User {

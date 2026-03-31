@@ -1051,7 +1051,7 @@ function onRafSchedule<T extends unknown[]>(
     function onCallback(...args: T) {
         lastArgs = args;
 
-        if (frameId) {
+        if (!frameId) {
             frameId = requestAnimationFrame(() => {
                 frameId = null;
                 callback(...lastArgs);

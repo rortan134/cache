@@ -61,7 +61,7 @@ function integrationSetupHeadingText(args: {
     readonly connectedLabels: readonly string[];
     readonly missingLabels: readonly string[];
 }): string {
-    const { syncable, connectedCount, connectedLabels, missingLabels } = args;
+    const { syncable, connectedCount, missingLabels } = args;
     if (syncable < 1) {
         return "Connected accounts";
     }
@@ -71,7 +71,7 @@ function integrationSetupHeadingText(args: {
     if (connectedCount < syncable) {
         return `Connect ${formatEnglishList(missingLabels)} to unify your saved posts in one library`;
     }
-    return `You're set on ${formatEnglishList(connectedLabels)}—sync from the extension to stay up to date`;
+    return `You're all set — sync from the extension to stay up to date`;
 }
 
 export interface IntegrationSetupHeadingProps {

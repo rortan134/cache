@@ -130,6 +130,12 @@ export const auth = betterAuth({
         google: {
             clientId: requiredEnv("GOOGLE_CLIENT_ID"),
             clientSecret: requiredEnv("GOOGLE_CLIENT_SECRET"),
+            scope: [
+                "openid",
+                "email",
+                "profile",
+                "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
+            ],
         },
     },
     trustedOrigins,

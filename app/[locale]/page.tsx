@@ -1,4 +1,5 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { GooglePhotosImportButton } from "@/components/google-photos/google-photos-import-button";
 import { Chrome } from "@/components/shared/integration-icons";
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import {
@@ -111,14 +112,17 @@ export default async function Home({
                                 </GoogleSignInButton>
                             </SignedOutOnly>
                             <SignedInOnly>
-                                <Button
-                                    render={
-                                        <Link href="/library">
-                                            Go to my library
-                                        </Link>
-                                    }
-                                    size="xl"
-                                />
+                                <div className="flex flex-col gap-2">
+                                    <Button
+                                        render={
+                                            <Link href="/library">
+                                                Go to my library
+                                            </Link>
+                                        }
+                                        size="xl"
+                                    />
+                                    <GooglePhotosImportButton locale={locale} />
+                                </div>
                             </SignedInOnly>
                             <SessionHint />
                         </>

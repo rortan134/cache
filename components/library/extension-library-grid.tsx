@@ -1,7 +1,7 @@
 import { Masonry, MasonryItem } from "@/components/ui/masonry";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { normalizeURL } from "@/lib/url";
+import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import type { ReactElement } from "react";
 
@@ -21,6 +21,11 @@ const EMPTY_LIBRARY_PEEK_PLACEHOLDERS = [
 
 interface GridProps {
     readonly items: LibraryItem[];
+}
+
+interface SectionProps extends GridProps {
+    readonly emptyHint: string;
+    readonly title: string;
 }
 
 export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
@@ -48,16 +53,12 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
     );
 
     return (
-        <Masonry columnCount={4} fallback={fallback} gap={10}>
+        <Masonry columnCount={5} fallback={fallback} gap={8}>
             {EMPTY_LIBRARY_PEEK_PLACEHOLDERS.map(({ aspect, id }, index) => {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
                 return (
-                    <MasonryItem
-                        className="transition-opacity"
-                        key={id}
-                        style={{ opacity }}
-                    >
-                        <div className="flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card/40 ring-1 ring-border/30">
+                    <MasonryItem asChild key={id} style={{ opacity }}>
+                        <div className="group flex flex-col overflow-hidden rounded-lg border border-border/40 bg-card/40 ring-1 ring-border/30">
                             <Skeleton
                                 className={cn("w-full rounded-none", aspect)}
                             />
@@ -82,7 +83,7 @@ export function ExtensionLibraryGrid({
 
     return (
         <Masonry
-            columnCount={4}
+            columnCount={5}
             fallback={
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
                     {items.map((item) => (
@@ -90,7 +91,7 @@ export function ExtensionLibraryGrid({
                     ))}
                 </div>
             }
-            gap={10}
+            gap={8}
         >
             {items.map((item) => {
                 const href = normalizeURL(item.url);
@@ -98,39 +99,59 @@ export function ExtensionLibraryGrid({
 
                 return (
                     <MasonryItem asChild key={item.id}>
-                        <li>
-                            <a
-                                className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card ring-1 ring-border/40 transition hover:border-border hover:ring-border/80"
-                                href={href}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                            >
-                                <div className="relative aspect-3/4 w-full overflow-hidden bg-muted">
-                                    {item.thumbnailUrl ? (
-                                        <img
-                                            alt={alt}
-                                            className="size-full object-cover transition group-hover:scale-[1.02]"
-                                            height={400}
-                                            loading="lazy"
-                                            src={item.thumbnailUrl}
-                                            width={300}
-                                        />
-                                    ) : (
-                                        <div className="flex size-full items-center justify-center text-muted-foreground text-xs">
-                                            No preview
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex min-h-14 flex-col gap-1 p-3">
-                                    <p className="line-clamp-2 text-foreground text-xs leading-snug">
-                                        {item.caption?.trim() || item.url}
-                                    </p>
-                                </div>
-                            </a>
-                        </li>
+                        <a
+                            className="group flex flex-col overflow-hidden rounded-lg border border-border/40 bg-card/40 ring-1 ring-border/30"
+                            href={href}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                        >
+                            <div className="relative aspect-3/4 w-full overflow-hidden bg-muted">
+                                {item.thumbnailUrl ? (
+                                    <img
+                                        alt={alt}
+                                        className="size-full object-cover transition group-hover:scale-[1.02]"
+                                        height={400}
+                                        loading="lazy"
+                                        src={item.thumbnailUrl}
+                                        width={300}
+                                    />
+                                ) : (
+                                    <div className="flex size-full items-center justify-center text-muted-foreground text-xs">
+                                        No preview
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex min-h-14 flex-col gap-1 p-3">
+                                <p className="line-clamp-2 text-foreground text-xs leading-snug">
+                                    {item.caption?.trim() || item.url}
+                                </p>
+                            </div>
+                        </a>
                     </MasonryItem>
                 );
             })}
         </Masonry>
+    );
+}
+
+export function ExtensionLibrarySection({
+    emptyHint,
+    items,
+    title,
+}: SectionProps): ReactElement {
+    return (
+        <section className="flex w-full flex-col gap-3">
+            <div className="flex items-center justify-between gap-2">
+                <h2 className="font-medium text-lg">{title}</h2>
+                <span className="text-muted-foreground text-xs">
+                    {items.length} item{items.length === 1 ? "" : "s"}
+                </span>
+            </div>
+            {items.length === 0 ? (
+                <p className="text-muted-foreground text-sm">{emptyHint}</p>
+            ) : (
+                <ExtensionLibraryGrid items={items} />
+            )}
+        </section>
     );
 }

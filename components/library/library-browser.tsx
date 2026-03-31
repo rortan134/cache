@@ -59,6 +59,9 @@ function itemMonthKey(item: LibraryItem): string {
 
 function formatGroupHeading(mode: GroupByMode, key: string): string {
     if (mode === "source") {
+        if (key === LibraryItemSource.google_photos) {
+            return "Google Photos";
+        }
         if (key === LibraryItemSource.instagram) {
             return "Instagram";
         }
@@ -116,6 +119,9 @@ function sourceFilterChipLabel(source: SourceFilter): string | null {
     }
     if (source === LibraryItemSource.instagram) {
         return "Instagram";
+    }
+    if (source === LibraryItemSource.google_photos) {
+        return "Google Photos";
     }
     if (source === LibraryItemSource.tiktok) {
         return "TikTok";
@@ -399,6 +405,14 @@ export function LibraryBrowser({ items }: Props) {
                 value: "filter by all sources",
             },
             {
+                label: "Filter by: Google Photos",
+                onSelect: () => {
+                    setSourceFilter(LibraryItemSource.google_photos);
+                    leaveDrillDownAfterApply();
+                },
+                value: "filter by google photos source",
+            },
+            {
                 label: "Filter by: Instagram",
                 onSelect: () => {
                     setSourceFilter(LibraryItemSource.instagram);
@@ -677,7 +691,7 @@ export function LibraryBrowser({ items }: Props) {
                     >
                         <CommandInput
                             autoFocus={false}
-                            className="!bg-transparent rounded-none border-0 shadow-none outline-none ring-0 before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0"
+                            className="rounded-none border-0 bg-transparent! shadow-none outline-none ring-0 before:hidden has-focus-visible:border-transparent has-focus-visible:ring-0 has-focus-visible:ring-offset-0"
                             placeholder={inputPlaceholder}
                             trailing={
                                 <LibraryPaletteTrailing

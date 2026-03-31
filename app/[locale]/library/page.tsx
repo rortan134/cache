@@ -1,3 +1,4 @@
+import { ExtensionLibrarySection } from "@/components/library/extension-library-grid";
 import { LibraryBrowser } from "@/components/library/library-browser";
 import { LogoutConfirmButton } from "@/components/library/logout-confirm-button";
 import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
@@ -40,7 +41,8 @@ export default async function LibraryPage() {
         return redirect("/");
     }
 
-    const { items } = await getLibraryItemsForUser(userId);
+    const { googlePhotosItems, instagramItems, items, tiktokItems } =
+        await getLibraryItemsForUser(userId);
 
     return (
         <PageShell>
@@ -115,6 +117,21 @@ export default async function LibraryPage() {
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
+                    <ExtensionLibrarySection
+                        emptyHint="No Instagram items yet."
+                        items={instagramItems}
+                        title="Instagram"
+                    />
+                    <ExtensionLibrarySection
+                        emptyHint="No TikTok items yet."
+                        items={tiktokItems}
+                        title="TikTok"
+                    />
+                    <ExtensionLibrarySection
+                        emptyHint="No Google Photos imports yet."
+                        items={googlePhotosItems}
+                        title="Google Photos"
+                    />
                     <LibraryBrowser items={items} />
                 </div>
             </div>
