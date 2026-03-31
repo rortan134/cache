@@ -1,0 +1,339 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+    CACHE_EXTENSION_DOWNLOAD_URL,
+    CACHE_EXTENSION_READY_EVENT,
+} from "@/lib/constants";
+import type { IntegrationId } from "@/lib/integrations/supports";
+import { authClient } from "@/lib/auth/client";
+import { RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+
+type SidebarIntegrationActionProps = Readonly<{
+    connected: boolean;
+    id: IntegrationId;
+    locale: string;
+    pinterestImportedCount?: number;
+}>;
+
+type ExtensionIntegrationId = Extract<IntegrationId, "instagram" | "tiktok">;
+type OAuthIntegrationId = Extract<
+    IntegrationId,
+    "google-photos" | "pinterest" | "soundcloud"
+>;
+
+const EXTENSION_TARGET_URL: Record<ExtensionIntegrationId, string> = {
+    instagram: "https://www.instagram.com",
+    tiktok: "https://www.tiktok.com",
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+    return typeof value === "object" && value !== null
+        ? (value as Record<string, unknown>)
+        : null;
+}
+
+function readRedirectUrl(response: unknown): string | null {
+    const root = asRecord(response);
+    const payload = asRecord(root?.data) ?? root;
+    const url = payload?.url;
+    return typeof url === "string" && url.length > 0 ? url : null;
+}
+
+function openExternal(url: string) {
+    try {
+        if (typeof window.openai !== "undefined") {
+            window.openai.openExternal({ href: url });
+            return;
+        }
+    } catch {
+        // Fall back to a normal browser navigation when the desktop bridge is unavailable.
+    }
+
+    window.location.assign(url);
+}
+
+function isExtensionInstalled() {
+    return document.documentElement.dataset.cacheExtensionInstalled === "true";
+}
+
+function isExtensionIntegration(
+    id: IntegrationId
+): id is ExtensionIntegrationId {
+    return id === "instagram" || id === "tiktok";
+}
+
+function isOAuthIntegration(id: IntegrationId): id is OAuthIntegrationId {
+    return id === "google-photos" || id === "pinterest" || id === "soundcloud";
+}
+
+function providerIdForIntegration(id: OAuthIntegrationId) {
+    if (id === "google-photos") {
+        return "google";
+    }
+    return id;
+}
+
+function extensionButtonLabel(
+    id: ExtensionIntegrationId,
+    extensionInstalled: boolean
+) {
+    if (extensionInstalled) {
+        return id === "instagram" ? "Open Instagram" : "Open TikTok";
+    }
+    return "Get Extension";
+}
+
+function extensionHelperText(
+    id: ExtensionIntegrationId,
+    extensionInstalled: boolean
+) {
+    if (extensionInstalled) {
+        return id === "instagram"
+            ? "Open Instagram in Chrome and sync Saved posts from the extension."
+            : "Open TikTok in Chrome and sync Favorites from the extension.";
+    }
+    return "Install the Cache extension first, then sync from the social site.";
+}
+
+export function SidebarIntegrationAction({
+    connected,
+    id,
+    locale,
+    pinterestImportedCount = 0,
+}: SidebarIntegrationActionProps) {
+    const router = useRouter();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [isImportingPinterest, setIsImportingPinterest] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [extensionInstalled, setExtensionInstalled] = useState(false);
+
+    useEffect(() => {
+        const handleReady = () => {
+            setExtensionInstalled(true);
+        };
+
+        const handleMessage = (event: MessageEvent) => {
+            if (event.source !== window) {
+                return;
+            }
+
+            const payload = asRecord(event.data);
+            if (payload?.type === CACHE_EXTENSION_READY_EVENT) {
+                handleReady();
+            }
+        };
+
+        setExtensionInstalled(isExtensionInstalled());
+        window.addEventListener(
+            CACHE_EXTENSION_READY_EVENT,
+            handleReady as EventListener
+        );
+        window.addEventListener("message", handleMessage);
+
+        return () => {
+            window.removeEventListener(
+                CACHE_EXTENSION_READY_EVENT,
+                handleReady as EventListener
+            );
+            window.removeEventListener("message", handleMessage);
+        };
+    }, []);
+
+    const handleExtensionClick = useCallback(() => {
+        if (!isExtensionIntegration(id)) {
+            return;
+        }
+
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        openExternal(
+            extensionInstalled
+                ? EXTENSION_TARGET_URL[id]
+                : CACHE_EXTENSION_DOWNLOAD_URL
+        );
+    }, [extensionInstalled, id]);
+
+    const handleGoogleConnect = useCallback(async () => {
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        setIsConnecting(true);
+
+        try {
+            const result = await authClient.signIn.social({
+                callbackURL: `/${locale}/library`,
+                errorCallbackURL: `/${locale}/library`,
+                provider: "google",
+            });
+
+            if (result.error) {
+                setErrorMessage(
+                    result.error.message ??
+                        "Could not start the Google connection flow."
+                );
+            }
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Could not start the Google connection flow."
+            );
+        } finally {
+            setIsConnecting(false);
+        }
+    }, [locale]);
+
+    const handleGenericOAuthConnect = useCallback(async () => {
+        if (!isOAuthIntegration(id) || id === "google-photos") {
+            return;
+        }
+
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        setIsConnecting(true);
+
+        try {
+            const response = await authClient.$fetch("/oauth2/link", {
+                body: {
+                    callbackURL: `/${locale}/library`,
+                    disableRedirect: true,
+                    errorCallbackURL: `/${locale}/library`,
+                    providerId: providerIdForIntegration(id),
+                },
+                method: "POST",
+            });
+
+            const redirectUrl = readRedirectUrl(response);
+            if (!redirectUrl) {
+                setErrorMessage("Could not start the account connection flow.");
+                return;
+            }
+
+            window.location.assign(redirectUrl);
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Could not start the account connection flow."
+            );
+        } finally {
+            setIsConnecting(false);
+        }
+    }, [id, locale]);
+
+    const handlePinterestImport = useCallback(async () => {
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        setIsImportingPinterest(true);
+
+        try {
+            const response = await fetch("/api/pinterest/import", {
+                method: "POST",
+            });
+            const payload = (await response.json()) as
+                | {
+                      boardsCount: number;
+                      error?: string;
+                      importedCount: number;
+                      skippedCount: number;
+                  }
+                | { error: string };
+
+            if (!(response.ok && "importedCount" in payload)) {
+                throw new Error(
+                    payload.error ??
+                        "Could not import pins from Pinterest right now."
+                );
+            }
+
+            setSuccessMessage(
+                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`
+            );
+            router.refresh();
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Could not import pins from Pinterest right now."
+            );
+        } finally {
+            setIsImportingPinterest(false);
+        }
+    }, [router]);
+
+    if (isExtensionIntegration(id)) {
+        return (
+            <div className="ml-auto flex flex-col items-start gap-1">
+                <Button
+                    onClick={handleExtensionClick}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                >
+                    {extensionButtonLabel(id, extensionInstalled)}
+                </Button>
+                <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
+                    {extensionHelperText(id, extensionInstalled)}
+                </p>
+            </div>
+        );
+    }
+
+    const connectLabel = connected ? "Reconnect" : "Connect";
+
+    return (
+        <div className="ml-auto flex flex-col items-start gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+                <Button
+                    loading={isConnecting}
+                    onClick={
+                        id === "google-photos"
+                            ? handleGoogleConnect
+                            : handleGenericOAuthConnect
+                    }
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                >
+                    {connectLabel}
+                </Button>
+                {id === "pinterest" && connected ? (
+                    <Button
+                        loading={isImportingPinterest}
+                        onClick={handlePinterestImport}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                    >
+                        <RefreshCw className="size-4" />
+                        Import Pins
+                    </Button>
+                ) : null}
+            </div>
+            {id === "pinterest" && connected ? (
+                <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
+                    {pinterestImportedCount > 0
+                        ? `${pinterestImportedCount} Pinterest pin${pinterestImportedCount === 1 ? "" : "s"} already in your library.`
+                        : "Connect Pinterest, then import your saved Pins into the library."}
+                </p>
+            ) : null}
+            {errorMessage ? (
+                <p
+                    aria-live="polite"
+                    className="text-destructive text-xs underline decoration-dotted underline-offset-4"
+                    role="alert"
+                >
+                    {errorMessage}
+                </p>
+            ) : null}
+            {successMessage ? (
+                <p className="text-emerald-600 text-xs" role="status">
+                    {successMessage}
+                </p>
+            ) : null}
+        </div>
+    );
+}

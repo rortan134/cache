@@ -3,6 +3,18 @@
     const origin = window.location.origin;
     const TOKEN_MESSAGE_TYPE = "CACHE_SITE_TOKEN";
     const BRIDGE_REQUEST_TYPE = "CACHE_SITE_BRIDGE_REQUEST";
+    const READY_EVENT_TYPE = "CACHE_EXTENSION_READY";
+
+    function announceExtensionReady() {
+        try {
+            document.documentElement.dataset.cacheExtensionInstalled = "true";
+            window.postMessage(
+                { type: READY_EVENT_TYPE },
+                window.location.origin,
+            );
+            window.dispatchEvent(new CustomEvent(READY_EVENT_TYPE));
+        } catch {}
+    }
 
     /**
      * @returns {Promise<string>}
@@ -100,6 +112,8 @@
         void bridgeTokenToExtension().then((ok) => sendResponse({ ok }));
         return true;
     });
+
+    announceExtensionReady();
 
     // Passive auto-link on normal page load.
     void bridgeTokenToExtension();

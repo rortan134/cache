@@ -1,7 +1,8 @@
 import {
     Instagram,
     Photos,
-    // Pinterest, // disabled until Pinterest API approval
+    Pinterest,
+    SoundCloud,
     TikTok,
 } from "@/components/shared/integration-icons";
 import type { ComponentType, SVGProps } from "react";
@@ -13,7 +14,8 @@ export type IntegrationIcon = ComponentType<SVGProps<SVGSVGElement>>;
 export type IntegrationId =
     | "google-photos"
     | "instagram"
-    // | "pinterest" // disabled until Pinterest API approval
+    | "pinterest"
+    | "soundcloud"
     | "tiktok";
 
 /**
@@ -22,6 +24,7 @@ export type IntegrationId =
  */
 export const LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS = [
     "instagram",
+    "pinterest",
     "tiktok",
 ] as const satisfies readonly IntegrationId[];
 
@@ -61,15 +64,22 @@ export const INTEGRATIONS = [
         id: "google-photos",
         label: "Google Photos",
     },
-    // Pinterest — disabled until API approval
-    // {
-    //     capabilities: { bookmarks: true },
-    //     category: "social",
-    //     description: "Pins you save to boards.",
-    //     Icon: Pinterest,
-    //     id: "pinterest",
-    //     label: "Pinterest",
-    // },
+    {
+        capabilities: { bookmarks: false },
+        category: "media",
+        description: "Your latest liked tracks, refreshed from SoundCloud.",
+        Icon: SoundCloud,
+        id: "soundcloud",
+        label: "SoundCloud",
+    },
+    {
+        capabilities: { bookmarks: true },
+        category: "social",
+        description: "Pins you save to boards.",
+        Icon: Pinterest,
+        id: "pinterest",
+        label: "Pinterest",
+    },
 ] satisfies readonly SupportedIntegration[];
 
 const INTEGRATION_BY_ID = new Map<IntegrationId, SupportedIntegration>(

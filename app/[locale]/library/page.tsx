@@ -1,16 +1,19 @@
+import { getLatestSoundcloudLikes } from "./actions";
 import { LibraryBrowser } from "@/components/library/library-browser";
 import { LogoutConfirmButton } from "@/components/library/logout-confirm-button";
+import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
+import { SoundcloudLikes } from "@/components/library/soundcloud-likes";
 import { IntegrationSetupHeading } from "@/components/library/setup-wizard";
 import { PageShell, PageSidebarShell } from "@/components/shared/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
+import { prisma } from "@/prisma";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector } from "gt-next";
-import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,7 +35,12 @@ export async function generateMetadata({
     };
 }
 
-export default async function LibraryPage() {
+export default async function LibraryPage({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
     const session = await getServerSession();
     const userId = session?.user?.id;
 
@@ -40,7 +48,42 @@ export default async function LibraryPage() {
         return redirect("/");
     }
 
-    const { items } = await getLibraryItemsForUser(userId);
+    const [{ items }, linkedAccounts, soundcloudLikes] = await Promise.all([
+        getLibraryItemsForUser(userId),
+        prisma.account.findMany({
+            select: { providerId: true },
+            where: {
+                providerId: {
+                    in: ["google", "pinterest", "soundcloud"],
+                },
+                userId,
+            },
+        }),
+        getLatestSoundcloudLikes(),
+    ]);
+
+    const linkedProviderIds = new Set(
+        linkedAccounts.map((account) => account.providerId)
+    );
+    const pinterestImportedCount = items.filter(
+        (item) => item.source === LibraryItemSource.pinterest
+    ).length;
+    const soundcloudConnected = soundcloudLikes.status !== "NOT_CONNECTED";
+
+    const isIntegrationConnected = (
+        id: (typeof INTEGRATIONS)[number]["id"]
+    ) => {
+        if (id === "google-photos") {
+            return linkedProviderIds.has("google");
+        }
+        if (id === "pinterest") {
+            return linkedProviderIds.has("pinterest");
+        }
+        if (id === "soundcloud") {
+            return soundcloudConnected;
+        }
+        return false;
+    };
 
     return (
         <PageShell>
@@ -93,18 +136,16 @@ export default async function LibraryPage() {
                                                             {description}
                                                         </span>
                                                     </div>
-                                                    <Button
-                                                        className="ml-auto"
-                                                        size="sm"
-                                                        variant="ghost"
-                                                    >
-                                                        <Plus
-                                                            aria-hidden
-                                                            className="size-4"
-                                                            focusable="false"
-                                                        />
-                                                        Connect
-                                                    </Button>
+                                                    <SidebarIntegrationAction
+                                                        connected={isIntegrationConnected(
+                                                            id
+                                                        )}
+                                                        id={id}
+                                                        locale={locale}
+                                                        pinterestImportedCount={
+                                                            pinterestImportedCount
+                                                        }
+                                                    />
                                                 </div>
                                             </li>
                                         )
@@ -115,6 +156,7 @@ export default async function LibraryPage() {
                     }
                 />
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
+                    <SoundcloudLikes locale={locale} result={soundcloudLikes} />
                     <LibraryBrowser items={items} />
                 </div>
             </div>

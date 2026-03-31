@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   LibraryItem: 'LibraryItem',
+  Feedback: 'Feedback',
   Session: 'Session',
   Account: 'Account',
   Verification: 'Verification',
@@ -104,6 +105,17 @@ export const LibraryItemScalarFieldEnum = {
 } as const
 
 export type LibraryItemScalarFieldEnum = (typeof LibraryItemScalarFieldEnum)[keyof typeof LibraryItemScalarFieldEnum]
+
+
+export const FeedbackScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  pagePath: 'pagePath',
+  message: 'message',
+  createdAt: 'createdAt'
+} as const
+
+export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
 
 
 export const SessionScalarFieldEnum = {

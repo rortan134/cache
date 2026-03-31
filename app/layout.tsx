@@ -42,6 +42,10 @@ export default async function RootLayout({
         >
             <head>
                 <NextChatSDKBootstrap baseUrl={BASE_URL} />
+                <meta
+                    content="9c251d927955d913b23e047ef08ed572"
+                    name="p:domain_verify"
+                />
             </head>
             <body className="flex min-h-full flex-col">
                 <h1 className="sr-only">{SITE_APP_NAME}</h1>

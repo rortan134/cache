@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertDialog as AlertDialogParts } from "@base-ui/react/alert-dialog";
-import type React from "react";
+import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 export const AlertDialogCreateHandle: typeof AlertDialogParts.createHandle =

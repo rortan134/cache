@@ -10,6 +10,7 @@
  */
 export type * from './models/User.ts'
 export type * from './models/LibraryItem.ts'
+export type * from './models/Feedback.ts'
 export type * from './models/Session.ts'
 export type * from './models/Account.ts'
 export type * from './models/Verification.ts'

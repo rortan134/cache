@@ -65,6 +65,9 @@ function formatGroupHeading(mode: GroupByMode, key: string): string {
         if (key === LibraryItemSource.instagram) {
             return "Instagram";
         }
+        if (key === LibraryItemSource.pinterest) {
+            return "Pinterest";
+        }
         if (key === LibraryItemSource.tiktok) {
             return "TikTok";
         }
@@ -122,6 +125,9 @@ function sourceFilterChipLabel(source: SourceFilter): string | null {
     }
     if (source === LibraryItemSource.google_photos) {
         return "Google Photos";
+    }
+    if (source === LibraryItemSource.pinterest) {
+        return "Pinterest";
     }
     if (source === LibraryItemSource.tiktok) {
         return "TikTok";
@@ -419,6 +425,14 @@ export function LibraryBrowser({ items }: Props) {
                     leaveDrillDownAfterApply();
                 },
                 value: "filter by instagram source",
+            },
+            {
+                label: "Filter by: Pinterest",
+                onSelect: () => {
+                    setSourceFilter(LibraryItemSource.pinterest);
+                    leaveDrillDownAfterApply();
+                },
+                value: "filter by pinterest source",
             },
             {
                 label: "Filter by: TikTok",

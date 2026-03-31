@@ -13,6 +13,7 @@ export const LibraryItemSource = {
   google_photos: 'google_photos',
   instagram: 'instagram',
   other: 'other',
+  pinterest: 'pinterest',
   tiktok: 'tiktok'
 } as const
 

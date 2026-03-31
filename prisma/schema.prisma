@@ -11,6 +11,7 @@ enum LibraryItemSource {
     google_photos
     instagram
     other
+    pinterest
     tiktok
 }
 
@@ -27,6 +28,7 @@ model User {
     sessions             Session[]
     accounts             Account[]
     libraryItems         LibraryItem[]
+    feedbackEntries      Feedback[]
 
     @@unique([email])
     @@map("user")
@@ -48,6 +50,19 @@ model LibraryItem {
     @@unique([userId, source, externalId])
     @@index([userId])
     @@map("library_item")
+}
+
+model Feedback {
+    id        String   @id @default(cuid())
+    userId    String?
+    user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+    pagePath  String
+    message   String
+    createdAt DateTime @default(now())
+
+    @@index([pagePath])
+    @@index([userId])
+    @@map("feedback")
 }
 
 model Session {

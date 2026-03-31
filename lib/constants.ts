@@ -28,6 +28,9 @@ export const SITE_APP_NAME = "Cache App";
 /** Root / default document title when a segment does not override `title`. */
 export const SITE_DEFAULT_TITLE = `Bookmark manager | ${SITE_APP_NAME}`;
 
+export const CACHE_EXTENSION_DOWNLOAD_URL = "https://cachd.app";
+export const CACHE_EXTENSION_READY_EVENT = "CACHE_EXTENSION_READY";
+
 export const BASE_URL =
     process.env.NODE_ENV === "development"
         ? "http://localhost:3000"

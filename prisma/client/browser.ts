@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type LibraryItem = Prisma.LibraryItemModel
 /**
+ * Model Feedback
+ * 
+ */
+export type Feedback = Prisma.FeedbackModel
+/**
  * Model Session
  * 
  */
