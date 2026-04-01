@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
     return (
-        <article className="flex flex-col gap-8 text-[0.95rem] leading-relaxed text-stone-800">
+        <article className="flex flex-col gap-8 text-[0.95rem] text-stone-800 leading-relaxed">
             <header className="flex flex-col gap-3">
                 <h1 className="font-semibold text-2xl text-stone-950 tracking-tight">
                     CachdApp, Inc Terms of Service
@@ -39,7 +39,7 @@ export default function TermsOfServicePage() {
             </header>
 
             <section className="flex flex-col gap-4">
-                <h2 className="font-semibold text-xl text-stone-950 tracking-tight">
+                <h2 className="font-semibold text-stone-950 text-xl tracking-tight">
                     Cover Page
                 </h2>
 
@@ -70,10 +70,10 @@ export default function TermsOfServicePage() {
                     <p>
                         <strong>Cloud Service:</strong> The Cloud Service is a
                         cross-platform bookmarking and content library that
-                        aggregates, organizes, and surfaces the user&apos;s saved
-                        links and media from supported third-party platforms in
-                        a single interface, including via browser extensions and
-                        connected accounts.
+                        aggregates, organizes, and surfaces the user&apos;s
+                        saved links and media from supported third-party
+                        platforms in a single interface, including via browser
+                        extensions and connected accounts.
                     </p>
 
                     <p>
@@ -124,7 +124,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="flex flex-col gap-4">
-                <h2 className="font-semibold text-xl text-stone-950 tracking-tight">
+                <h2 className="font-semibold text-stone-950 text-xl tracking-tight">
                     Key Terms
                 </h2>
 
@@ -174,9 +174,9 @@ export default function TermsOfServicePage() {
                             Content, when used according to the terms of the
                             Agreement, violates, misappropriates, or otherwise
                             infringes upon anyone else&apos;s intellectual
-                            property or other proprietary rights; or (2)
-                            results from Customer&apos;s breach or alleged
-                            breach of Section 2.1 (Restrictions on Customer).
+                            property or other proprietary rights; or (2) results
+                            from Customer&apos;s breach or alleged breach of
+                            Section 2.1 (Restrictions on Customer).
                         </p>
                     </div>
 
@@ -202,7 +202,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="flex flex-col gap-4">
-                <h2 className="font-semibold text-xl text-stone-950 tracking-tight">
+                <h2 className="font-semibold text-stone-950 text-xl tracking-tight">
                     Attachments and Supplements
                 </h2>
                 <p>

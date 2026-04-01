@@ -31,14 +31,17 @@ export function PricingUpgradeButton({
 
             try {
                 const returnPath = `/${locale}/library`;
-                const response = await authClient.$fetch("/subscription/upgrade", {
-                    body: {
-                        cancelUrl: returnPath,
-                        plan: "pro",
-                        successUrl: returnPath,
-                    },
-                    method: "POST",
-                });
+                const response = await authClient.$fetch(
+                    "/subscription/upgrade",
+                    {
+                        body: {
+                            cancelUrl: returnPath,
+                            plan: "pro",
+                            successUrl: returnPath,
+                        },
+                        method: "POST",
+                    }
+                );
                 const redirectUrl = readRedirectUrl(response);
 
                 if (redirectUrl) {

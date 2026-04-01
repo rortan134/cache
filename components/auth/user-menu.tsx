@@ -104,7 +104,7 @@ function formatSubscriptionLabel(subscription: UserMenuSubscription | null): {
 }
 
 function getToneClassName(
-    tone: ReturnType<typeof formatSubscriptionLabel>["tone"],
+    tone: ReturnType<typeof formatSubscriptionLabel>["tone"]
 ): string {
     if (tone === "warn") {
         return "bg-amber-100 text-amber-900";
@@ -155,7 +155,7 @@ export function UserMenu({
                             successUrl: returnPath,
                         },
                         method: "POST",
-                    },
+                    }
                 );
                 const redirectUrl = readRedirectUrl(response);
 
@@ -183,7 +183,7 @@ export function UserMenu({
                             returnUrl: returnPath,
                         },
                         method: "POST",
-                    },
+                    }
                 );
                 const redirectUrl = readRedirectUrl(response);
 
@@ -260,9 +260,7 @@ export function UserMenu({
                                 <span
                                     className={cn(
                                         "inline-flex items-center rounded-full px-2 py-0.5 font-medium text-[11px]",
-                                        getToneClassName(
-                                            subscriptionLabel.tone,
-                                        ),
+                                        getToneClassName(subscriptionLabel.tone)
                                     )}
                                 >
                                     {subscriptionLabel.detail}

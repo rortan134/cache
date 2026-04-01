@@ -33,7 +33,7 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "library.metadata.description",
-            "Posts synced from the extension appear below by source.",
+            "Posts synced from the extension appear below by source."
         ),
         title: gtPublicString(locale, "library.metadata.title", "My library"),
     };
@@ -85,7 +85,7 @@ export default async function LibraryPage({
         ]);
 
     const linkedProviderIds = new Set(
-        linkedAccounts.map((account) => account.providerId),
+        linkedAccounts.map((account) => account.providerId)
     );
     const soundcloudConnected =
         !soundcloudParked && soundcloudLikes?.status !== "NOT_CONNECTED";
@@ -93,13 +93,13 @@ export default async function LibraryPage({
         subscriptions.find(
             (subscription) =>
                 subscription.status === "active" ||
-                subscription.status === "trialing",
+                subscription.status === "trialing"
         ) ??
         subscriptions[0] ??
         null;
 
     const isIntegrationConnected = (
-        id: (typeof INTEGRATIONS)[number]["id"],
+        id: (typeof INTEGRATIONS)[number]["id"]
     ) => {
         if (id === "google-photos") {
             return linkedProviderIds.has("google");
@@ -109,7 +109,7 @@ export default async function LibraryPage({
         }
         if (id === "chrome") {
             return items.some(
-                (item) => item.source === LibraryItemSource.chrome_bookmarks,
+                (item) => item.source === LibraryItemSource.chrome_bookmarks
             );
         }
         if (id === "soundcloud") {
@@ -208,7 +208,7 @@ export default async function LibraryPage({
                                                             </div>
                                                             <SidebarIntegrationAction
                                                                 connected={isIntegrationConnected(
-                                                                    id,
+                                                                    id
                                                                 )}
                                                                 id={id}
                                                                 locale={locale}
@@ -218,7 +218,7 @@ export default async function LibraryPage({
                                                             />
                                                         </div>
                                                     </li>
-                                                ),
+                                                )
                                             )}
                                         </ul>
                                     </CollapsiblePanel>

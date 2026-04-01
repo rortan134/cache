@@ -12,7 +12,7 @@ const SIGNUP_BASELINE_PERCENT = 10;
 
 function integrationSetupProgressPercent(
     connectedCount: number,
-    syncable: number,
+    syncable: number
 ): number {
     if (syncable < 1) {
         return 0;
@@ -28,7 +28,7 @@ function syncableLibrarySourceTotal(): number {
 }
 
 function partitionLibrarySyncLabels(
-    items: readonly { readonly source: LibraryItemSource }[],
+    items: readonly { readonly source: LibraryItemSource }[]
 ): { connectedLabels: string[]; missingLabels: string[] } {
     const connectedLabels: string[] = [];
     const missingLabels: string[] = [];
@@ -36,7 +36,7 @@ function partitionLibrarySyncLabels(
         const count = items.filter((item) =>
             id === "chrome"
                 ? item.source === "chrome_bookmarks"
-                : item.source === id,
+                : item.source === id
         ).length;
         const label = getIntegration(id).label;
         if (count > 0) {
@@ -67,7 +67,8 @@ function integrationSetupHeadingText(args: {
     return `You're all set — sync from the extension to stay up to date`;
 }
 
-export interface IntegrationSetupHeadingProps extends React.ComponentProps<"button"> {
+export interface IntegrationSetupHeadingProps
+    extends React.ComponentProps<"button"> {
     readonly items: readonly { readonly source: LibraryItemSource }[];
 }
 
@@ -88,7 +89,7 @@ export function IntegrationSetupWizard({
     });
     const progressPercent = integrationSetupProgressPercent(
         connectedCount,
-        syncable,
+        syncable
     );
 
     return (
@@ -96,7 +97,7 @@ export function IntegrationSetupWizard({
             {...props}
             className={cn(
                 "flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5",
-                className,
+                className
             )}
             type="button"
         >

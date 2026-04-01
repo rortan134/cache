@@ -71,6 +71,54 @@ function parseScrapedAt(iso: string | undefined): Date | null {
     return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function externalIdForIngestItem(
+    source: LibraryItemSource,
+    item: IngestItemInput
+): string | undefined {
+    if (source === LibraryItemSource.instagram) {
+        return item.shortcode;
+    }
+    if (
+        source === LibraryItemSource.tiktok ||
+        source === LibraryItemSource.chrome_bookmarks
+    ) {
+        return item.id;
+    }
+    return item.id;
+}
+
+function ingestItemKind(kind: IngestItemInput["kind"]): "bookmark" | "folder" {
+    if (kind === "folder") {
+        return "folder";
+    }
+    return "bookmark";
+}
+
+function buildIngestRow(
+    browserProfileId: string,
+    externalId: string,
+    item: IngestItemInput,
+    source: LibraryItemSource,
+    userId?: string
+) {
+    return {
+        ...(userId ? { userId } : {}),
+        browserProfileId,
+        caption: item.caption ?? null,
+        externalId,
+        kind: ingestItemKind(item.kind),
+        parentExternalId: item.parentExternalId ?? null,
+        postedAt: parseScrapedAt(item.postedAt),
+        scrapedAt: parseScrapedAt(item.scrapedAt),
+        source,
+        sourceDeviceId: item.sourceDeviceId ?? null,
+        sourceDeviceName: item.sourceDeviceName ?? null,
+        sourceMetadata: item.sourceMetadata ?? null,
+        thumbnailUrl: item.thumbnailUrl ?? null,
+        url: item.url,
+    };
+}
+
 export interface IngestItemInput {
     browserProfileId?: string;
     caption?: string;
@@ -139,57 +187,26 @@ export async function upsertLibraryItemsFromIngest(
             }): Promise<unknown>;
         };
         for (const item of items) {
-            let externalId: string | undefined;
-            if (source === LibraryItemSource.instagram) {
-                externalId = item.shortcode;
-            } else if (
-                source === LibraryItemSource.tiktok ||
-                source === LibraryItemSource.chrome_bookmarks
-            ) {
-                externalId = item.id;
-            }
-
+            const externalId = externalIdForIngestItem(source, item);
             if (!externalId) {
                 continue;
             }
             const browserProfileId =
                 item.browserProfileId?.trim() || DEFAULT_BROWSER_PROFILE_ID;
             await libraryItemDelegate.upsert({
-                create: {
+                create: buildIngestRow(
                     browserProfileId,
-                    caption: item.caption ?? null,
                     externalId,
-                    kind:
-                        item.kind === "folder"
-                            ? "folder"
-                            : "bookmark",
-                    parentExternalId: item.parentExternalId ?? null,
-                    postedAt: parseScrapedAt(item.postedAt),
-                    scrapedAt: parseScrapedAt(item.scrapedAt),
+                    item,
                     source,
-                    sourceDeviceId: item.sourceDeviceId ?? null,
-                    sourceDeviceName: item.sourceDeviceName ?? null,
-                    sourceMetadata: item.sourceMetadata ?? null,
-                    thumbnailUrl: item.thumbnailUrl ?? null,
-                    url: item.url,
-                    userId,
-                },
-                update: {
+                    userId
+                ),
+                update: buildIngestRow(
                     browserProfileId,
-                    caption: item.caption ?? null,
-                    kind:
-                        item.kind === "folder"
-                            ? "folder"
-                            : "bookmark",
-                    parentExternalId: item.parentExternalId ?? null,
-                    postedAt: parseScrapedAt(item.postedAt),
-                    scrapedAt: parseScrapedAt(item.scrapedAt),
-                    sourceDeviceId: item.sourceDeviceId ?? null,
-                    sourceDeviceName: item.sourceDeviceName ?? null,
-                    sourceMetadata: item.sourceMetadata ?? null,
-                    thumbnailUrl: item.thumbnailUrl ?? null,
-                    url: item.url,
-                },
+                    externalId,
+                    item,
+                    source
+                ),
                 where: {
                     userId_source_browserProfileId_externalId: {
                         browserProfileId,

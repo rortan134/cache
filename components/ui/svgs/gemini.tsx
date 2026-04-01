@@ -1,37 +1,30 @@
-import { type SVGProps } from 'react'
+import type { SVGProps } from "react";
 
 export function Gemini(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
             height="1em"
             style={{
-                flex: 'none',
+                flex: "none",
                 lineHeight: 1,
             }}
             viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
             width="1em"
-            {...props}>
-            <title>{'Gemini'}</title>
+            xmlns="http://www.w3.org/2000/svg"
+            {...props}
+        >
+            <title>{"Gemini"}</title>
             <defs>
                 <linearGradient
                     id="lobe-icons-gemini-fill"
                     x1="0%"
                     x2="68.73%"
                     y1="100%"
-                    y2="30.395%">
-                    <stop
-                        offset="0%"
-                        stopColor="#1C7DFF"
-                    />
-                    <stop
-                        offset="52.021%"
-                        stopColor="#1C69FF"
-                    />
-                    <stop
-                        offset="100%"
-                        stopColor="#F0DCD6"
-                    />
+                    y2="30.395%"
+                >
+                    <stop offset="0%" stopColor="#1C7DFF" />
+                    <stop offset="52.021%" stopColor="#1C69FF" />
+                    <stop offset="100%" stopColor="#F0DCD6" />
                 </linearGradient>
             </defs>
             <path
@@ -40,5 +33,5 @@ export function Gemini(props: SVGProps<SVGSVGElement>) {
                 fillRule="nonzero"
             />
         </svg>
-    )
+    );
 }

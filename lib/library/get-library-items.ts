@@ -6,7 +6,10 @@ import { prisma } from "@/prisma";
 export async function getLibraryItemsForUser(userId: string) {
     const libraryItemDelegate = prisma.libraryItem as unknown as {
         findMany(args: {
-            orderBy: readonly { readonly scrapedAt?: "asc" | "desc"; readonly updatedAt?: "asc" | "desc" }[];
+            orderBy: readonly {
+                readonly scrapedAt?: "asc" | "desc";
+                readonly updatedAt?: "asc" | "desc";
+            }[];
             where: {
                 kind: "bookmark";
                 userId: string;

@@ -78,13 +78,13 @@ const IntegrationCard = ({
         <div
             className={cn(
                 "relative flex size-12 rounded-xl border bg-background dark:bg-transparent",
-                className,
+                className
             )}
         >
             <div
                 className={cn(
                     "relative z-20 m-auto size-fit *:size-6",
-                    isCenter && "*:size-8",
+                    isCenter && "*:size-8"
                 )}
             >
                 {children}
@@ -104,7 +104,7 @@ const IntegrationCard = ({
                         position === "right-middle" &&
                             "top-1/2 right-full w-[120px] origin-right bg-linear-to-l",
                         position === "right-bottom" &&
-                            "top-1/2 right-full w-[130px] origin-right rotate-[25deg] bg-linear-to-l",
+                            "top-1/2 right-full w-[130px] origin-right rotate-[25deg] bg-linear-to-l"
                     )}
                 />
             )}

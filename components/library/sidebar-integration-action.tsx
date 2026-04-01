@@ -19,7 +19,10 @@ type SidebarIntegrationActionProps = Readonly<{
     soundcloudParked?: boolean;
 }>;
 
-type ExtensionIntegrationId = Extract<IntegrationId, "chrome" | "instagram" | "tiktok">;
+type ExtensionIntegrationId = Extract<
+    IntegrationId,
+    "chrome" | "instagram" | "tiktok"
+>;
 type OAuthIntegrationId = Extract<
     IntegrationId,
     "google-photos" | "pinterest" | "soundcloud"
@@ -85,6 +88,13 @@ function extensionButtonLabel(extensionInstalled: boolean) {
     return "Get Extension";
 }
 
+function chromeExtensionLabel(extensionInstalled: boolean) {
+    if (extensionInstalled) {
+        return "Installed";
+    }
+    return "Get Extension";
+}
+
 export function SidebarIntegrationAction({
     connected,
     id,
@@ -97,6 +107,9 @@ export function SidebarIntegrationAction({
     const [isImportingPinterest, setIsImportingPinterest] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [extensionInstalled, setExtensionInstalled] = useState(false);
+    const isChromeIntegration = id === "chrome";
+    const isGooglePhotosIntegration = id === "google-photos";
+    const isPinterestIntegration = id === "pinterest";
 
     useEffect(() => {
         const handleReady = () => {
@@ -296,6 +309,10 @@ export function SidebarIntegrationAction({
     }, [router]);
 
     if (isExtensionIntegration(id)) {
+        const extensionLabel = isChromeIntegration
+            ? chromeExtensionLabel(extensionInstalled)
+            : extensionButtonLabel(extensionInstalled);
+
         return (
             <div className="ml-auto flex flex-col items-start gap-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -307,13 +324,9 @@ export function SidebarIntegrationAction({
                         type="button"
                         variant="ghost"
                     >
-                        {id === "chrome"
-                            ? extensionInstalled
-                                ? "Installed"
-                                : "Get Extension"
-                            : extensionButtonLabel(extensionInstalled)}
+                        {extensionLabel}
                     </Button>
-                    {id === "chrome" && connected ? (
+                    {isChromeIntegration && connected ? (
                         <Button
                             loading={isConnecting}
                             onClick={handleChromePurge}
@@ -325,7 +338,7 @@ export function SidebarIntegrationAction({
                         </Button>
                     ) : null}
                 </div>
-                {id === "chrome" ? (
+                {isChromeIntegration ? (
                     <p className="max-w-52 text-muted-foreground text-xs">
                         Sync runs from the Cache extension after you grant
                         access to your browser bookmarks.
@@ -345,7 +358,7 @@ export function SidebarIntegrationAction({
                     disabled={isParkedSoundcloud}
                     loading={isConnecting}
                     onClick={
-                        id === "google-photos"
+                        isGooglePhotosIntegration
                             ? handleGoogleConnect
                             : handleGenericOAuthConnect
                     }
@@ -355,13 +368,13 @@ export function SidebarIntegrationAction({
                 >
                     {isParkedSoundcloud ? "Pending" : connectLabel}
                 </Button>
-                {id === "google-photos" && connected ? (
+                {isGooglePhotosIntegration && connected ? (
                     <GooglePhotosImportButton
                         locale={locale}
                         variant="outline"
                     />
                 ) : null}
-                {id === "pinterest" && connected ? (
+                {isPinterestIntegration && connected ? (
                     <Button
                         loading={isImportingPinterest}
                         onClick={handlePinterestImport}

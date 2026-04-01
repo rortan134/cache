@@ -8,7 +8,7 @@ import { submitFeedback } from "@/lib/feedback/submit-feedback";
 
 export async function createFeedback(
     _previousState: FeedbackActionState,
-    formData: FormData,
+    formData: FormData
 ): Promise<FeedbackActionState> {
     const parsed = FeedbackInputSchema.safeParse({
         message: formData.get("message"),

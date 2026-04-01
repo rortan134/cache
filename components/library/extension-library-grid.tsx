@@ -154,7 +154,7 @@ export function ExtensionLibraryGrid({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -172,7 +172,7 @@ export function ExtensionLibraryGrid({
                 const source = sourceLabel(item.source);
                 const domain = itemDomain(item.url);
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt,
+                    item.scrapedAt ?? item.createdAt
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =

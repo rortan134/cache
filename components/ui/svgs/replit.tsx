@@ -1,14 +1,17 @@
-import { type SVGProps } from 'react'
+import type { SVGProps } from "react";
 
 export function Replit(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
-            width="1em"
-            height="1em"
-            viewBox="0 0 20 24"
+            aria-label="Replit"
             fill="none"
+            height="1em"
+            role="img"
+            viewBox="0 0 20 24"
+            width="1em"
             xmlns="http://www.w3.org/2000/svg"
-            {...props}>
+            {...props}
+        >
             <path
                 d="M0 1.5C0 0.671573 0.671573 0 1.5 0H8.5C9.32843 0 10 0.671573 10 1.5V8H1.5C0.671573 8 0 7.32843 0 6.5V1.5Z"
                 fill="#F26207"
@@ -22,5 +25,5 @@ export function Replit(props: SVGProps<SVGSVGElement>) {
                 fill="#F26207"
             />
         </svg>
-    )
+    );
 }

@@ -30,7 +30,10 @@ const chromeBookmarkEventSchema = z
         type: z.enum(["delete", "import_complete", "move", "upsert"]),
     })
     .superRefine((value, ctx) => {
-        if ((value.type === "upsert" || value.type === "move") && !value.bookmark) {
+        if (
+            (value.type === "upsert" || value.type === "move") &&
+            !value.bookmark
+        ) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: "bookmark is required for upsert and move events",
@@ -46,11 +49,13 @@ const chromeBookmarkEventSchema = z
         }
         if (
             value.type === "import_complete" &&
-            (!value.snapshotExternalIds || value.snapshotExternalIds.length === 0)
+            (!value.snapshotExternalIds ||
+                value.snapshotExternalIds.length === 0)
         ) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "snapshotExternalIds is required for import_complete events",
+                message:
+                    "snapshotExternalIds is required for import_complete events",
                 path: ["snapshotExternalIds"],
             });
         }
@@ -66,11 +71,15 @@ export const chromeBookmarkSyncBodySchema = z.object({
         })
         .optional(),
     events: z.array(chromeBookmarkEventSchema).min(1),
-    mode: z.enum(["continuous_sync", "one_time_import"]).default("continuous_sync"),
+    mode: z
+        .enum(["continuous_sync", "one_time_import"])
+        .default("continuous_sync"),
     syncedAt: z.string().optional(),
 });
 
-export type ChromeBookmarkSyncBody = z.infer<typeof chromeBookmarkSyncBodySchema>;
+export type ChromeBookmarkSyncBody = z.infer<
+    typeof chromeBookmarkSyncBodySchema
+>;
 
 type ChromeItemKind = "bookmark" | "folder";
 
@@ -151,15 +160,15 @@ interface ChromeLibraryItemDelegate {
     }): Promise<ChromeLibraryRow>;
 }
 
-function chromeLibraryItemDelegate(
-    candidate: { libraryItem: unknown },
-): ChromeLibraryItemDelegate {
+function chromeLibraryItemDelegate(candidate: {
+    libraryItem: unknown;
+}): ChromeLibraryItemDelegate {
     return candidate.libraryItem as ChromeLibraryItemDelegate;
 }
 
 interface ChromeSyncResult {
-    readonly deleted: number;
     readonly deduped: number;
+    readonly deleted: number;
     readonly processed: number;
     readonly pruned: number;
     readonly upserted: number;
@@ -189,7 +198,7 @@ function normalizeChromeBookmarkRecord(
     browserProfileId: string,
     bookmark: z.infer<typeof chromeBookmarkNodeSchema>,
     occurredAt: string | undefined,
-    device: ChromeBookmarkSyncBody["device"],
+    device: ChromeBookmarkSyncBody["device"]
 ): ChromeBookmarkRecord {
     const title = bookmark.title?.trim();
     const metadata = {
@@ -226,15 +235,16 @@ function normalizeChromeBookmarkRecord(
         url:
             bookmark.kind === "folder"
                 ? chromeFolderUrl(browserProfileId, bookmark.externalId)
-                : bookmark.url ?? chromeFolderUrl(browserProfileId, bookmark.externalId),
+                : (bookmark.url ??
+                  chromeFolderUrl(browserProfileId, bookmark.externalId)),
     };
 }
 
-async function findChromeByAlias(
+function findChromeByAlias(
     tx: { libraryItem: unknown },
     userId: string,
     browserProfileId: string,
-    externalId: string,
+    externalId: string
 ) {
     return chromeLibraryItemDelegate(tx).findFirst({
         where: {
@@ -248,10 +258,10 @@ async function findChromeByAlias(
     });
 }
 
-async function promoteAliasToPrimary(
+function promoteAliasToPrimary(
     tx: { libraryItem: unknown },
     row: Awaited<ReturnType<typeof findChromeByAlias>>,
-    externalId: string,
+    externalId: string
 ) {
     if (!row) {
         return null;
@@ -274,7 +284,7 @@ async function findChromeLogicalDuplicate(
     tx: { libraryItem: unknown },
     userId: string,
     browserProfileId: string,
-    record: ReturnType<typeof normalizeChromeBookmarkRecord>,
+    record: ReturnType<typeof normalizeChromeBookmarkRecord>
 ) {
     if (record.kind !== "bookmark") {
         return null;
@@ -296,7 +306,8 @@ async function findChromeLogicalDuplicate(
     return (
         candidates.find(
             (candidate) =>
-                normalizeChromeCaption(candidate.caption) === normalizedIncomingCaption,
+                normalizeChromeCaption(candidate.caption) ===
+                normalizedIncomingCaption
         ) ?? null
     );
 }
@@ -307,13 +318,13 @@ async function upsertChromeBookmarkEvent(
     browserProfileId: string,
     bookmark: z.infer<typeof chromeBookmarkNodeSchema>,
     occurredAt: string | undefined,
-    device: ChromeBookmarkSyncBody["device"],
+    device: ChromeBookmarkSyncBody["device"]
 ): Promise<{ deduped: boolean }> {
     const record = normalizeChromeBookmarkRecord(
         browserProfileId,
         bookmark,
         occurredAt,
-        device,
+        device
     );
 
     const delegate = chromeLibraryItemDelegate(tx);
@@ -350,10 +361,14 @@ async function upsertChromeBookmarkEvent(
         tx,
         userId,
         browserProfileId,
-        record.externalId,
+        record.externalId
     );
     if (aliasMatch) {
-        const promoted = await promoteAliasToPrimary(tx, aliasMatch, record.externalId);
+        const promoted = await promoteAliasToPrimary(
+            tx,
+            aliasMatch,
+            record.externalId
+        );
         if (promoted) {
             await delegate.update({
                 data: {
@@ -377,7 +392,7 @@ async function upsertChromeBookmarkEvent(
         tx,
         userId,
         browserProfileId,
-        record,
+        record
     );
     if (duplicate) {
         const aliasIds = new Set(duplicate.sourceAliasIds);
@@ -416,7 +431,7 @@ async function deleteChromeBookmarkEvent(
     tx: { libraryItem: unknown },
     userId: string,
     browserProfileId: string,
-    externalId: string,
+    externalId: string
 ): Promise<boolean> {
     const delegate = chromeLibraryItemDelegate(tx);
     const exact = await delegate.findUnique({
@@ -452,7 +467,7 @@ async function deleteChromeBookmarkEvent(
         tx,
         userId,
         browserProfileId,
-        externalId,
+        externalId
     );
     if (!aliasMatch) {
         return false;
@@ -460,7 +475,9 @@ async function deleteChromeBookmarkEvent(
 
     await delegate.update({
         data: {
-            sourceAliasIds: aliasMatch.sourceAliasIds.filter((value) => value !== externalId),
+            sourceAliasIds: aliasMatch.sourceAliasIds.filter(
+                (value) => value !== externalId
+            ),
         },
         where: { id: aliasMatch.id },
     });
@@ -471,7 +488,7 @@ async function pruneChromeSnapshot(
     tx: { libraryItem: unknown },
     userId: string,
     browserProfileId: string,
-    snapshotExternalIds: readonly string[],
+    snapshotExternalIds: readonly string[]
 ): Promise<number> {
     const seen = new Set(snapshotExternalIds);
     const delegate = chromeLibraryItemDelegate(tx);
@@ -494,14 +511,18 @@ async function pruneChromeSnapshot(
             continue;
         }
 
-        const aliasCandidate = row.sourceAliasIds.find((aliasId) => seen.has(aliasId));
+        const aliasCandidate = row.sourceAliasIds.find((aliasId) =>
+            seen.has(aliasId)
+        );
         if (aliasCandidate) {
             await delegate.update({
                 data: {
                     externalId: aliasCandidate,
                     sourceAliasIds: [
                         row.externalId,
-                        ...row.sourceAliasIds.filter((aliasId) => aliasId !== aliasCandidate),
+                        ...row.sourceAliasIds.filter(
+                            (aliasId) => aliasId !== aliasCandidate
+                        ),
                     ],
                 },
                 where: { id: row.id },
@@ -518,11 +539,12 @@ async function pruneChromeSnapshot(
     return pruned;
 }
 
-export async function applyChromeBookmarkSyncEvents(
+export function applyChromeBookmarkSyncEvents(
     userId: string,
-    body: ChromeBookmarkSyncBody,
+    body: ChromeBookmarkSyncBody
 ): Promise<ChromeSyncResult> {
-    const browserProfileId = body.browserProfileId || DEFAULT_BROWSER_PROFILE_ID;
+    const browserProfileId =
+        body.browserProfileId || DEFAULT_BROWSER_PROFILE_ID;
 
     return prisma.$transaction(async (tx) => {
         let deleted = 0;
@@ -536,7 +558,7 @@ export async function applyChromeBookmarkSyncEvents(
                     tx,
                     userId,
                     browserProfileId,
-                    event.externalId ?? "",
+                    event.externalId ?? ""
                 );
                 if (removed) {
                     deleted += 1;
@@ -549,8 +571,13 @@ export async function applyChromeBookmarkSyncEvents(
                     tx,
                     userId,
                     browserProfileId,
-                    event.snapshotExternalIds ?? [],
+                    event.snapshotExternalIds ?? []
                 );
+                continue;
+            }
+
+            const bookmark = event.bookmark;
+            if (!bookmark) {
                 continue;
             }
 
@@ -558,9 +585,9 @@ export async function applyChromeBookmarkSyncEvents(
                 tx,
                 userId,
                 browserProfileId,
-                event.bookmark!,
+                bookmark,
                 event.occurredAt,
-                body.device,
+                body.device
             );
             upserted += 1;
             if (result.deduped) {
@@ -569,8 +596,8 @@ export async function applyChromeBookmarkSyncEvents(
         }
 
         return {
-            deleted,
             deduped,
+            deleted,
             processed: body.events.length,
             pruned,
             upserted,
@@ -578,7 +605,9 @@ export async function applyChromeBookmarkSyncEvents(
     });
 }
 
-export async function purgeChromeBookmarksForUser(userId: string): Promise<number> {
+export async function purgeChromeBookmarksForUser(
+    userId: string
+): Promise<number> {
     const result = await chromeLibraryItemDelegate(prisma).deleteMany({
         where: {
             source: LibraryItemSource.chrome_bookmarks,

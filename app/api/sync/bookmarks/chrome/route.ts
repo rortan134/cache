@@ -27,27 +27,33 @@ export async function POST(request: Request) {
     if (!bearer) {
         return Response.json(
             { error: "Missing Authorization: Bearer <extension ingest token>" },
-            { headers: cors, status: 401 },
+            { headers: cors, status: 401 }
         );
     }
 
     const userId = await resolveExtensionIngestUserId(bearer);
     if (!userId) {
-        return Response.json({ error: "Unauthorized" }, { headers: cors, status: 401 });
+        return Response.json(
+            { error: "Unauthorized" },
+            { headers: cors, status: 401 }
+        );
     }
 
     let json: unknown;
     try {
         json = await request.json();
     } catch {
-        return Response.json({ error: "Invalid JSON" }, { headers: cors, status: 400 });
+        return Response.json(
+            { error: "Invalid JSON" },
+            { headers: cors, status: 400 }
+        );
     }
 
     const parsed = chromeBookmarkSyncBodySchema.safeParse(json);
     if (!parsed.success) {
         return Response.json(
             { error: parsed.error.flatten() },
-            { headers: cors, status: 400 },
+            { headers: cors, status: 400 }
         );
     }
 
@@ -72,7 +78,7 @@ export async function DELETE() {
         log.error("Failed to purge Chrome bookmarks", error);
         return Response.json(
             { error: "Could not purge Chrome bookmarks right now." },
-            { status: 500 },
+            { status: 500 }
         );
     }
 }

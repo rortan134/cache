@@ -27,12 +27,12 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "home.metadata.description",
-            "One place to view, manage, and organize bookmarks across browsers and platforms — built for power users who save at volume.",
+            "One place to view, manage, and organize bookmarks across browsers and platforms — built for power users who save at volume."
         ),
         title: gtPublicString(
             locale,
             "home.metadata.title",
-            "Unify your bookmarks across every platform",
+            "Unify your bookmarks across every platform"
         ),
     };
 }
