@@ -4,7 +4,7 @@ import {
     listPinterestBoardPins,
     listPinterestBoards,
     PinterestApiError,
-} from "@/lib/pinterest/api";
+} from "@/lib/integrations/pinterest/api";
 import { prisma } from "@/prisma";
 import { headers } from "next/headers";
 

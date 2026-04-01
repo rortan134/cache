@@ -129,9 +129,9 @@ export default async function Home({
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Library">
-                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
                                     Curate a library of all the content you love
-                                </p>
+                                </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Get inspired, find that one lesson, advice,
                                     recipe, or idea you've been looking for, in
@@ -148,15 +148,20 @@ export default async function Home({
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Integrations">
-                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
                                     Integrate any social media platform
-                                </p>
+                                </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Ditch the endless scrolling and tabbing
                                     through multiple platforms to find what
                                     matters to you.
                                 </p>
                             </T>
+                            <div className="flex w-full items-center gap-5">
+                                {INTEGRATIONS.map(({ id, Icon }) => (
+                                    <Icon className="size-6" key={id} />
+                                ))}
+                            </div>
                         </div>
                         <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
                             <figure className="overflow-hidden">
@@ -167,9 +172,9 @@ export default async function Home({
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Feed">
-                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
                                     Explore through one centralized feed
-                                </p>
+                                </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Streamline the way you consume and reengage
                                     with your saved content from a single clean
@@ -186,9 +191,9 @@ export default async function Home({
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Organization">
-                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
                                     Stay organized. Spot stale bookmarks easily
-                                </p>
+                                </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Import once and go from messy to organized
                                     in minutes, then search, manage or group.
@@ -204,9 +209,9 @@ export default async function Home({
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Habits">
-                                <p className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
                                     Stop leaving it for later
-                                </p>
+                                </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Create more actionable opportunities for
                                     yourself by having your most insightful
@@ -219,11 +224,6 @@ export default async function Home({
                                 {/* <Image alt="" height={800} src="" width={800} /> */}
                             </figure>
                         </div>
-                    </div>
-                    <div className="flex w-full items-center gap-4">
-                        {INTEGRATIONS.map(({ id, Icon }) => (
-                            <Icon className="size-6" key={id} />
-                        ))}
                     </div>
                     <footer>
                         <div className="relative mx-auto mt-auto grid h-auto w-full grid-cols-12 gap-x-[min(2.25vw,32px)] pt-[120px] lg:top-0">

@@ -16,7 +16,6 @@ type SidebarIntegrationActionProps = Readonly<{
     connected: boolean;
     id: IntegrationId;
     locale: string;
-    pinterestImportedCount?: number;
     soundcloudParked?: boolean;
 }>;
 
@@ -62,7 +61,7 @@ function isExtensionInstalled() {
 }
 
 function isExtensionIntegration(
-    id: IntegrationId
+    id: IntegrationId,
 ): id is ExtensionIntegrationId {
     return id === "instagram" || id === "tiktok";
 }
@@ -89,7 +88,6 @@ export function SidebarIntegrationAction({
     connected,
     id,
     locale,
-    pinterestImportedCount = 0,
     soundcloudParked = false,
 }: SidebarIntegrationActionProps) {
     const router = useRouter();
@@ -118,14 +116,14 @@ export function SidebarIntegrationAction({
         setExtensionInstalled(isExtensionInstalled());
         window.addEventListener(
             CACHE_EXTENSION_READY_EVENT,
-            handleReady as EventListener
+            handleReady as EventListener,
         );
         window.addEventListener("message", handleMessage);
 
         return () => {
             window.removeEventListener(
                 CACHE_EXTENSION_READY_EVENT,
-                handleReady as EventListener
+                handleReady as EventListener,
             );
             window.removeEventListener("message", handleMessage);
         };
@@ -141,7 +139,7 @@ export function SidebarIntegrationAction({
         openExternal(
             extensionInstalled
                 ? EXTENSION_TARGET_URL[id]
-                : CACHE_EXTENSION_DOWNLOAD_URL
+                : CACHE_EXTENSION_DOWNLOAD_URL,
         );
     }, [extensionInstalled, id]);
 
@@ -160,14 +158,14 @@ export function SidebarIntegrationAction({
             if (result.error) {
                 setErrorMessage(
                     result.error.message ??
-                        "Could not start the Google connection flow."
+                        "Could not start the Google connection flow.",
                 );
             }
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the Google connection flow."
+                    : "Could not start the Google connection flow.",
             );
         } finally {
             setIsConnecting(false);
@@ -205,7 +203,7 @@ export function SidebarIntegrationAction({
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the account connection flow."
+                    : "Could not start the account connection flow.",
             );
         } finally {
             setIsConnecting(false);
@@ -233,19 +231,19 @@ export function SidebarIntegrationAction({
             if (!(response.ok && "importedCount" in payload)) {
                 throw new Error(
                     payload.error ??
-                        "Could not import pins from Pinterest right now."
+                        "Could not import pins from Pinterest right now.",
                 );
             }
 
             setSuccessMessage(
-                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`
+                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`,
             );
             router.refresh();
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not import pins from Pinterest right now."
+                    : "Could not import pins from Pinterest right now.",
             );
         } finally {
             setIsImportingPinterest(false);
@@ -305,13 +303,6 @@ export function SidebarIntegrationAction({
                     </Button>
                 ) : null}
             </div>
-            {id === "pinterest" && connected ? (
-                <p className="max-w-56 text-[11px] text-muted-foreground leading-snug">
-                    {pinterestImportedCount > 0
-                        ? `${pinterestImportedCount} pin${pinterestImportedCount === 1 ? "" : "s"} already in your library.`
-                        : "Connect Pinterest, then import your saved Pins into the library."}
-                </p>
-            ) : null}
             {errorMessage ? (
                 <p
                     aria-live="polite"

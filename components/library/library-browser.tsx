@@ -18,6 +18,7 @@ import {
     CommandPanel,
     CommandShortcut,
 } from "@/components/ui/command";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
@@ -230,10 +231,6 @@ function compareSectionKeys(
 
 function truncateLabel(label: string, max = 22): string {
     return label.length > max ? `${label.slice(0, max)}…` : label;
-}
-
-function getSearchHotkeyHint(): string {
-    return `${getSystemControlKey()}K`;
 }
 
 function appendUniqueSearchTerm(
@@ -771,9 +768,10 @@ function LibraryPaletteTrailing({
         <>
             {chips}
             {isPaletteFocused ? null : (
-                <kbd className="hidden shrink-0 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 font-medium text-[11px] text-muted-foreground tracking-wide sm:inline-flex">
-                    {getSearchHotkeyHint()}
-                </kbd>
+                <KbdGroup>
+                    <Kbd>{getSystemControlKey()}</Kbd>
+                    <Kbd>K</Kbd>
+                </KbdGroup>
             )}
             {canReset ? (
                 <Button
@@ -1641,8 +1639,8 @@ export function LibraryBrowser({ items }: Props) {
                             wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 backdrop-blur-xs px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
                         />
                         <p className="sr-only">
-                            Press {getSearchHotkeyHint()} or slash to focus
-                            search. Use arrow keys to navigate results and
+                            Press {`${getSystemControlKey()}K`} or slash to
+                            focus search. Use arrow keys to navigate results and
                             Escape to clear, go back, or close the command list.
                         </p>
                         <div

@@ -67,7 +67,7 @@ function addInterval(treeNode: TreeNode, high: number, index: number): boolean {
 
 function removeInterval(
     treeNode: TreeNode,
-    index: number
+    index: number,
 ): NodeOperation | undefined {
     let node: ListNode | null = treeNode.list;
     if (node.index === index) {
@@ -323,7 +323,7 @@ interface IntervalTree {
     search(
         low: number,
         high: number,
-        onCallback: (index: number, low: number) => void
+        onCallback: (index: number, low: number) => void,
     ): void;
     size: number;
 }
@@ -494,7 +494,7 @@ interface Cache<K = CacheKey, V = unknown> {
 
 function onDeepMemo<T extends unknown[], U>(
     constructors: CacheConstructor[],
-    fn: (...args: T) => U
+    fn: (...args: T) => U,
 ): (...args: T) => U {
     if (!(constructors.length && constructors[0])) {
         throw new Error("At least one constructor is required");
@@ -561,7 +561,7 @@ function onDeepMemo<T extends unknown[], U>(
                 } else {
                     if (!constructors[1]) {
                         throw new Error(
-                            "Second constructor is required for non-single depth cache"
+                            "Second constructor is required for non-single depth cache",
                         );
                     }
                     map = createCache(constructors[1]);
@@ -581,7 +581,7 @@ function onDeepMemo<T extends unknown[], U>(
                 const nextConstructor = constructors[i + 1];
                 if (!nextConstructor) {
                     throw new Error(
-                        `Constructor at index ${i + 1} is required`
+                        `Constructor at index ${i + 1} is required`,
                     );
                 }
                 map = createCache(nextConstructor);
@@ -618,7 +618,7 @@ interface Positioner {
     range: (
         low: number,
         high: number,
-        onItemRender: (index: number, left: number, top: number) => void
+        onItemRender: (index: number, left: number, top: number) => void,
     ) => void;
     set: (index: number, height: number) => void;
     shortestColumn: () => number;
@@ -653,7 +653,7 @@ function usePositioner(
         maxColumnCount,
         linear = false,
     }: UsePositionerOptions,
-    deps: React.DependencyList = []
+    deps: React.DependencyList = [],
 ): Positioner {
     const initPositioner = React.useCallback((): Positioner => {
         function binarySearch(a: number[], y: number): number {
@@ -680,12 +680,12 @@ function usePositioner(
             columnCount ||
             Math.min(
                 Math.floor((width + columnGap) / (columnWidth + columnGap)),
-                maxColumnCount || Number.POSITIVE_INFINITY
+                maxColumnCount || Number.POSITIVE_INFINITY,
             ) ||
             1;
         const computedColumnWidth = Math.floor(
             (width - columnGap * (computedColumnCount - 1)) /
-                computedColumnCount
+                computedColumnCount,
         );
 
         const intervalTree = createIntervalTree();
@@ -709,7 +709,7 @@ function usePositioner(
             estimateHeight: (itemCount, defaultItemHeight): number => {
                 const tallestColumn = Math.max(
                     0,
-                    Math.max.apply(null, columnHeights)
+                    Math.max.apply(null, columnHeights),
                 );
 
                 return itemCount === intervalTree.size
@@ -717,7 +717,7 @@ function usePositioner(
                     : tallestColumn +
                           Math.ceil(
                               (itemCount - intervalTree.size) /
-                                  computedColumnCount
+                                  computedColumnCount,
                           ) *
                               defaultItemHeight;
             },
@@ -809,7 +809,7 @@ function usePositioner(
             // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: batch relayout
             update: (updates: number[]) => {
                 const columns: (number | undefined)[] = new Array(
-                    computedColumnCount
+                    computedColumnCount,
                 );
                 let i = 0;
                 let j = 0;
@@ -835,14 +835,14 @@ function usePositioner(
                     intervalTree.insert(
                         item.top,
                         item.top + item.height,
-                        currentIndex
+                        currentIndex,
                     );
                     columns[item.columnIndex] =
                         columns[item.columnIndex] === undefined
                             ? currentIndex
                             : Math.min(
                                   currentIndex,
-                                  columns[item.columnIndex] ?? currentIndex
+                                  columns[item.columnIndex] ?? currentIndex,
                               );
                 }
 
@@ -859,7 +859,7 @@ function usePositioner(
 
                     const startIndex = binarySearch(
                         itemsInColumn,
-                        currentColumn
+                        currentColumn,
                     );
                     if (startIndex === -1) {
                         continue;
@@ -908,7 +908,7 @@ function usePositioner(
                         intervalTree.insert(
                             item.top,
                             item.top + item.height,
-                            currentIndex
+                            currentIndex,
                         );
                     }
                 }
@@ -941,7 +941,7 @@ function usePositioner(
     ];
     const prevOptsRef = React.useRef(opts);
     const optsChanged = !opts.every(
-        (item, i) => prevOptsRef.current[i] === item
+        (item, i) => prevOptsRef.current[i] === item,
     );
 
     if (
@@ -1005,7 +1005,7 @@ function useDebouncedWindowSize(options: DebouncedWindowSizeOptions) {
                 setSize(value);
             }, delayMs);
         },
-        [delayMs]
+        [delayMs],
     );
 
     React.useEffect(() => {
@@ -1043,7 +1043,7 @@ interface OnRafScheduleReturn<T extends unknown[]> {
 }
 
 function onRafSchedule<T extends unknown[]>(
-    callback: (...args: T) => void
+    callback: (...args: T) => void,
 ): OnRafScheduleReturn<T> {
     let lastArgs: T = [] as unknown as T;
     let frameId: number | null = null;
@@ -1128,7 +1128,7 @@ function useResizeObserver(positioner: Positioner) {
                             continue;
                         }
                         const index = Number(
-                            (entry.target as ItemElement).dataset.index
+                            (entry.target as ItemElement).dataset.index,
                         );
 
                         if (Number.isNaN(index)) {
@@ -1153,12 +1153,12 @@ function useResizeObserver(positioner: Positioner) {
                 };
 
                 return observer;
-            }
+            },
         );
     }, []);
 
     const resizeObserver = createResizeObserver(positioner, () =>
-        setLayoutVersion((prev) => prev + 1)
+        setLayoutVersion((prev) => prev + 1),
     );
 
     React.useEffect(() => () => resizeObserver.disconnect(), [resizeObserver]);
@@ -1179,12 +1179,14 @@ function useScroller({
             : (globalThis.window.scrollY ??
                   document.documentElement.scrollTop ??
                   0),
-        { fps, leading: true }
+        { fps, leading: true },
     );
 
     const onScroll = React.useCallback(() => {
         setScrollY(
-            globalThis.window.scrollY ?? document.documentElement.scrollTop ?? 0
+            globalThis.window.scrollY ??
+                document.documentElement.scrollTop ??
+                0,
         );
     }, [setScrollY]);
 
@@ -1233,7 +1235,7 @@ function useScroller({
                 }
                 setIsScrolling(false);
             },
-            40 + 1000 / fps
+            40 + 1000 / fps,
         );
         return () => {
             didUnsubscribe = true;
@@ -1249,7 +1251,7 @@ function useThrottle<State>(
     options: {
         fps?: number;
         leading?: boolean;
-    } = {}
+    } = {},
 ): [State, React.Dispatch<React.SetStateAction<State>>] {
     const { fps = 30, leading = false } = options;
     const [state, setState] = React.useState(initialState);
@@ -1259,7 +1261,7 @@ function useThrottle<State>(
     const ms = 1000 / fps;
     const prevCountRef = React.useRef(0);
     const trailingTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
-        null
+        null,
     );
 
     const clearTrailing = React.useCallback(() => {
@@ -1305,7 +1307,7 @@ function useThrottle<State>(
                 prevCountRef.current = 0;
             }, ms);
         },
-        [leading, ms, clearTrailing]
+        [leading, ms, clearTrailing],
     );
 
     return [state, throttledSetState];
@@ -1441,7 +1443,7 @@ function Masonry(props: MasonryProps) {
             rowGap,
             width: containerPosition.width ?? size.width,
         },
-        deps
+        deps,
     );
     const resizeObserver = useResizeObserver(positioner);
     const { scrollTop, isScrolling } = useScroller({
@@ -1462,7 +1464,7 @@ function Masonry(props: MasonryProps) {
                 positioner.set(index, node.offsetHeight);
             }
         },
-        [positioner, resizeObserver]
+        [positioner, resizeObserver],
     );
 
     const contextValue = React.useMemo<MasonryContextValue>(
@@ -1488,7 +1490,7 @@ function Masonry(props: MasonryProps) {
             overscan,
             fallback,
             isScrolling,
-        ]
+        ],
     );
 
     const RootPrimitive = asChild ? SlotPrimitive : "div";
@@ -1530,7 +1532,7 @@ function MasonryViewport(props: DivProps) {
     const validChildren = React.Children.toArray(children).filter(
         (child): child is React.ReactElement<MasonryItemPropsWithRef> =>
             React.isValidElement(child) &&
-            (child.type === MasonryItem || child.type === MasonryItem)
+            (child.type === MasonryItem || child.type === MasonryItem),
     );
     const itemCount = validChildren.length;
 
@@ -1553,7 +1555,7 @@ function MasonryViewport(props: DivProps) {
             willChange: context.isScrolling ? "transform" : undefined,
             writingMode: "horizontal-tb",
         }),
-        [context.columnWidth, context.isScrolling]
+        [context.columnWidth, context.isScrolling],
     );
 
     const hiddenItemStyle = React.useMemo(
@@ -1564,7 +1566,7 @@ function MasonryViewport(props: DivProps) {
             writingMode: "horizontal-tb",
             zIndex: -1000,
         }),
-        [context.columnWidth]
+        [context.columnWidth],
     );
 
     context.positioner.range(rangeStart, rangeEnd, (index, left, top) => {
@@ -1582,11 +1584,11 @@ function MasonryViewport(props: DivProps) {
 
         positionedChildren.push(
             React.cloneElement(child, {
-                "data-index": index,
+                ["data-index" as string]: index,
                 key: child.key ?? index,
                 ref: context.onItemRegister(index),
                 style: itemStyle,
-            })
+            }),
         );
     });
 
@@ -1596,8 +1598,8 @@ function MasonryViewport(props: DivProps) {
             Math.ceil(
                 ((context.scrollTop + overscanPixels - shortestColumnSize) /
                     context.itemHeight) *
-                    context.positioner.columnCount
-            )
+                    context.positioner.columnCount,
+            ),
         );
 
         for (
@@ -1617,11 +1619,11 @@ function MasonryViewport(props: DivProps) {
 
             positionedChildren.push(
                 React.cloneElement(child, {
-                    "data-index": index,
+                    ["data-index" as string]: index,
                     key: child.key ?? index,
                     ref: context.onItemRegister(index),
                     style: itemStyle,
-                })
+                }),
             );
         }
     }
@@ -1646,7 +1648,7 @@ function MasonryViewport(props: DivProps) {
     const estimatedHeight = React.useMemo(() => {
         const measuredHeight = context.positioner.estimateHeight(
             measuredCount,
-            context.itemHeight
+            context.itemHeight,
         );
         if (measuredCount === itemCount) {
             return measuredHeight;
@@ -1654,7 +1656,7 @@ function MasonryViewport(props: DivProps) {
         const remainingItems = itemCount - measuredCount;
         const estimatedRemainingHeight = Math.ceil(
             (remainingItems / context.positioner.columnCount) *
-                context.itemHeight
+                context.itemHeight,
         );
         return measuredHeight + estimatedRemainingHeight;
     }, [context.positioner, context.itemHeight, measuredCount, itemCount]);
@@ -1670,7 +1672,7 @@ function MasonryViewport(props: DivProps) {
             willChange: context.isScrolling ? "contents" : undefined,
             ...style,
         }),
-        [context.isScrolling, estimatedHeight, style]
+        [context.isScrolling, estimatedHeight, style],
     );
 
     if (!mounted && context.fallback) {

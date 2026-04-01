@@ -5,6 +5,7 @@ import {
     initialFeedbackActionState,
 } from "@/app/[locale]/feedback/actions";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -51,9 +52,7 @@ export function FeedbackWidget(): React.ReactElement {
                     }
                 >
                     <span className="font-medium text-sm">Feedback</span>
-                    <span className="flex size-6 items-center justify-center rounded-full bg-muted text-[11px] text-muted-foreground">
-                        F
-                    </span>
+                    <Kbd>F</Kbd>
                 </PopoverTrigger>
                 <PopoverPopup
                     align="end"

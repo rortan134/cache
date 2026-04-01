@@ -10,7 +10,6 @@ import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import { prisma } from "@/prisma";
-import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector } from "gt-next";
 import type { Metadata } from "next";
@@ -29,7 +28,7 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "library.metadata.description",
-            "Posts synced from the extension appear below by source."
+            "Posts synced from the extension appear below by source.",
         ),
         title: gtPublicString(locale, "library.metadata.title", "My library"),
     };
@@ -81,24 +80,21 @@ export default async function LibraryPage({
         ]);
 
     const linkedProviderIds = new Set(
-        linkedAccounts.map((account) => account.providerId)
+        linkedAccounts.map((account) => account.providerId),
     );
-    const pinterestImportedCount = items.filter(
-        (item) => item.source === LibraryItemSource.pinterest
-    ).length;
     const soundcloudConnected =
         !soundcloudParked && soundcloudLikes?.status !== "NOT_CONNECTED";
     const prioritizedSubscription =
         subscriptions.find(
             (subscription) =>
                 subscription.status === "active" ||
-                subscription.status === "trialing"
+                subscription.status === "trialing",
         ) ??
         subscriptions[0] ??
         null;
 
     const isIntegrationConnected = (
-        id: (typeof INTEGRATIONS)[number]["id"]
+        id: (typeof INTEGRATIONS)[number]["id"],
     ) => {
         if (id === "google-photos") {
             return linkedProviderIds.has("google");
@@ -188,20 +184,17 @@ export default async function LibraryPage({
                                                     </div>
                                                     <SidebarIntegrationAction
                                                         connected={isIntegrationConnected(
-                                                            id
+                                                            id,
                                                         )}
                                                         id={id}
                                                         locale={locale}
-                                                        pinterestImportedCount={
-                                                            pinterestImportedCount
-                                                        }
                                                         soundcloudParked={
                                                             soundcloudParked
                                                         }
                                                     />
                                                 </div>
                                             </li>
-                                        )
+                                        ),
                                     )}
                                 </ul>
                             </div>
