@@ -32,6 +32,7 @@ export type LibraryItemMinAggregateOutputType = {
   url: string | null
   caption: string | null
   thumbnailUrl: string | null
+  postedAt: Date | null
   scrapedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -45,6 +46,7 @@ export type LibraryItemMaxAggregateOutputType = {
   url: string | null
   caption: string | null
   thumbnailUrl: string | null
+  postedAt: Date | null
   scrapedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,6 +60,7 @@ export type LibraryItemCountAggregateOutputType = {
   url: number
   caption: number
   thumbnailUrl: number
+  postedAt: number
   scrapedAt: number
   createdAt: number
   updatedAt: number
@@ -73,6 +76,7 @@ export type LibraryItemMinAggregateInputType = {
   url?: true
   caption?: true
   thumbnailUrl?: true
+  postedAt?: true
   scrapedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +90,7 @@ export type LibraryItemMaxAggregateInputType = {
   url?: true
   caption?: true
   thumbnailUrl?: true
+  postedAt?: true
   scrapedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -99,6 +104,7 @@ export type LibraryItemCountAggregateInputType = {
   url?: true
   caption?: true
   thumbnailUrl?: true
+  postedAt?: true
   scrapedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -185,6 +191,7 @@ export type LibraryItemGroupByOutputType = {
   url: string
   caption: string | null
   thumbnailUrl: string | null
+  postedAt: Date | null
   scrapedAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -219,6 +226,7 @@ export type LibraryItemWhereInput = {
   url?: Prisma.StringFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  postedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
@@ -233,6 +241,7 @@ export type LibraryItemOrderByWithRelationInput = {
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrderInput | Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  postedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   scrapedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -251,6 +260,7 @@ export type LibraryItemWhereUniqueInput = Prisma.AtLeast<{
   url?: Prisma.StringFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  postedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
@@ -265,6 +275,7 @@ export type LibraryItemOrderByWithAggregationInput = {
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrderInput | Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  postedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   scrapedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -284,6 +295,7 @@ export type LibraryItemScalarWhereWithAggregatesInput = {
   url?: Prisma.StringWithAggregatesFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
+  postedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LibraryItem"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"LibraryItem"> | Date | string
@@ -296,6 +308,7 @@ export type LibraryItemCreateInput = {
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -310,6 +323,7 @@ export type LibraryItemUncheckedCreateInput = {
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -322,6 +336,7 @@ export type LibraryItemUpdateInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -336,6 +351,7 @@ export type LibraryItemUncheckedUpdateInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -349,6 +365,7 @@ export type LibraryItemCreateManyInput = {
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -361,6 +378,7 @@ export type LibraryItemUpdateManyMutationInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -374,6 +392,7 @@ export type LibraryItemUncheckedUpdateManyInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -403,6 +422,7 @@ export type LibraryItemCountOrderByAggregateInput = {
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrder
+  postedAt?: Prisma.SortOrder
   scrapedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -416,6 +436,7 @@ export type LibraryItemMaxOrderByAggregateInput = {
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrder
+  postedAt?: Prisma.SortOrder
   scrapedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -429,6 +450,7 @@ export type LibraryItemMinOrderByAggregateInput = {
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrder
+  postedAt?: Prisma.SortOrder
   scrapedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -491,6 +513,7 @@ export type LibraryItemCreateWithoutUserInput = {
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -503,6 +526,7 @@ export type LibraryItemUncheckedCreateWithoutUserInput = {
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -545,6 +569,7 @@ export type LibraryItemScalarWhereInput = {
   url?: Prisma.StringFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  postedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
@@ -557,6 +582,7 @@ export type LibraryItemCreateManyUserInput = {
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -569,6 +595,7 @@ export type LibraryItemUpdateWithoutUserInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -581,6 +608,7 @@ export type LibraryItemUncheckedUpdateWithoutUserInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -593,6 +621,7 @@ export type LibraryItemUncheckedUpdateManyWithoutUserInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -608,6 +637,7 @@ export type LibraryItemSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -622,6 +652,7 @@ export type LibraryItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -636,6 +667,7 @@ export type LibraryItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -650,12 +682,13 @@ export type LibraryItemSelectScalar = {
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LibraryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "source" | "externalId" | "url" | "caption" | "thumbnailUrl" | "scrapedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["libraryItem"]>
+export type LibraryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "source" | "externalId" | "url" | "caption" | "thumbnailUrl" | "postedAt" | "scrapedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["libraryItem"]>
 export type LibraryItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -679,6 +712,7 @@ export type $LibraryItemPayload<ExtArgs extends runtime.Types.Extensions.Interna
     url: string
     caption: string | null
     thumbnailUrl: string | null
+    postedAt: Date | null
     scrapedAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -1113,6 +1147,7 @@ export interface LibraryItemFieldRefs {
   readonly url: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly caption: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly thumbnailUrl: Prisma.FieldRef<"LibraryItem", 'String'>
+  readonly postedAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>
   readonly scrapedAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>

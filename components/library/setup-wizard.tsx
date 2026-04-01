@@ -3,14 +3,16 @@ import {
     getIntegration,
     LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS,
 } from "@/lib/integrations/supports";
+import { cn } from "@/lib/utils";
 import type { LibraryItemSource } from "@/prisma/client/enums";
+import { ChevronDown } from "lucide-react";
 
 /** Baseline fill so the ring reads as progress; attributes the first step to signing up. */
 const SIGNUP_BASELINE_PERCENT = 10;
 
 function integrationSetupProgressPercent(
     connectedCount: number,
-    syncable: number
+    syncable: number,
 ): number {
     if (syncable < 1) {
         return 0;
@@ -25,26 +27,17 @@ function syncableLibrarySourceTotal(): number {
     return LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS.length;
 }
 
-function formatEnglishList(items: readonly string[]): string {
-    if (items.length === 0) {
-        return "";
-    }
-    if (items.length === 1) {
-        return items[0] ?? "";
-    }
-    if (items.length === 2) {
-        return `${items[0] ?? ""} and ${items[1] ?? ""}`;
-    }
-    return `${items.slice(0, -1).join(", ")}, and ${items.at(-1) ?? ""}`;
-}
-
 function partitionLibrarySyncLabels(
-    items: readonly { readonly source: LibraryItemSource }[]
+    items: readonly { readonly source: LibraryItemSource }[],
 ): { connectedLabels: string[]; missingLabels: string[] } {
     const connectedLabels: string[] = [];
     const missingLabels: string[] = [];
     for (const id of LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS) {
-        const count = items.filter((item) => item.source === id).length;
+        const count = items.filter((item) =>
+            id === "chrome"
+                ? item.source === "chrome_bookmarks"
+                : item.source === id,
+        ).length;
         const label = getIntegration(id).label;
         if (count > 0) {
             connectedLabels.push(label);
@@ -61,7 +54,7 @@ function integrationSetupHeadingText(args: {
     readonly connectedLabels: readonly string[];
     readonly missingLabels: readonly string[];
 }): string {
-    const { syncable, connectedCount, missingLabels } = args;
+    const { syncable, connectedCount } = args;
     if (syncable < 1) {
         return "Connected accounts";
     }
@@ -69,17 +62,19 @@ function integrationSetupHeadingText(args: {
         return "Get setup with your first account";
     }
     if (connectedCount < syncable) {
-        return `Connect ${formatEnglishList(missingLabels)} to unify your saved posts in one library`;
+        return "Connect more platforms to unify your saved posts in one library";
     }
     return `You're all set — sync from the extension to stay up to date`;
 }
 
-export interface IntegrationSetupHeadingProps {
+export interface IntegrationSetupHeadingProps extends React.ComponentProps<"button"> {
     readonly items: readonly { readonly source: LibraryItemSource }[];
 }
 
-export function IntegrationSetupHeading({
+export function IntegrationSetupWizard({
     items,
+    className,
+    ...props
 }: IntegrationSetupHeadingProps) {
     const syncable = syncableLibrarySourceTotal();
     const { connectedLabels, missingLabels } =
@@ -93,15 +88,27 @@ export function IntegrationSetupHeading({
     });
     const progressPercent = integrationSetupProgressPercent(
         connectedCount,
-        syncable
+        syncable,
     );
 
     return (
-        <div className="flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5">
+        <button
+            {...props}
+            className={cn(
+                "flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5",
+                className,
+            )}
+            type="button"
+        >
             <span aria-hidden="true" className="shrink-0 leading-none">
                 <RadialChart size={36} value={progressPercent} />
             </span>
-            <span className="font-medium text-sm">{text}</span>
-        </div>
+            <span className="select-none font-medium text-sm">{text}</span>
+            <ChevronDown
+                aria-hidden
+                className="inline-block size-4 shrink-0 group-data-panel-open:[&_svg]:rotate-180"
+                focusable="false"
+            />
+        </button>
     );
 }

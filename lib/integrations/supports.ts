@@ -1,4 +1,5 @@
 import {
+    Chrome,
     Instagram,
     Photos,
     Pinterest,
@@ -12,6 +13,7 @@ export type IntegrationCategory = "media" | "social";
 export type IntegrationIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 export type IntegrationId =
+    | "chrome"
     | "google-photos"
     | "instagram"
     | "pinterest"
@@ -23,6 +25,7 @@ export type IntegrationId =
  * Extend when Prisma adds a matching `LibraryItemSource` value.
  */
 export const LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS = [
+    "chrome",
     "instagram",
     "pinterest",
     "tiktok",
@@ -40,6 +43,14 @@ export interface SupportedIntegration {
 }
 
 export const INTEGRATIONS = [
+    {
+        capabilities: { bookmarks: true },
+        category: "social",
+        description: "Browser bookmarks from your Chrome profile",
+        Icon: Chrome,
+        id: "chrome",
+        label: "Chrome",
+    },
     {
         capabilities: { bookmarks: true },
         category: "social",

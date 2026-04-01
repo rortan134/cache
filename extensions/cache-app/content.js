@@ -305,6 +305,58 @@ function hasUsableImageUrl(url) {
     return Boolean(url && !url.startsWith("data:"));
 }
 
+/**
+ * TikTok IDs are Snowflake IDs. The first 32 bits are the Unix timestamp in seconds.
+ * @param {string} id
+ * @returns {string | null}
+ */
+function getPostedAtFromTikTokId(id) {
+    try {
+        const bigId = BigInt(id);
+        const timestamp = Number(bigId >> 32n) * 1000;
+        return new Date(timestamp).toISOString();
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Instagram often includes the date in the img alt text in the Saved grid.
+ * Example: "Photo by @user on October 25, 2023. May be an image of..."
+ * @param {string} alt
+ * @returns {string | null}
+ */
+function getPostedAtFromInstagramAlt(alt) {
+    if (!alt) {
+        return null;
+    }
+    // English: "on October 25, 2023"
+    const enMatch = alt.match(/on\s+([A-Z][a-z]+\s+\d{1,2},\s+\d{4})/);
+    if (enMatch?.[1]) {
+        const d = new Date(enMatch[1]);
+        if (!Number.isNaN(d.getTime())) {
+            return d.toISOString();
+        }
+    }
+    // Spanish: "el 25 de octubre de 2023"
+    const esMatch = alt.match(/el\s+(\d{1,2}\s+de\s+[a-z]+\s+de\s+\d{4})/i);
+    if (esMatch?.[1]) {
+        // Simple manual parse for Spanish months if Date() fails
+        const months = {
+            enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+            julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
+        };
+        const parts = esMatch[1].toLowerCase().split(/\s+de\s+/);
+        if (parts.length === 3) {
+            const d = new Date(Number(parts[2]), months[parts[1]] ?? 0, Number(parts[0]));
+            if (!Number.isNaN(d.getTime())) {
+                return d.toISOString();
+            }
+        }
+    }
+    return null;
+}
+
 // --- Instagram ---
 
 const IG_SAVED_PATH_RE = /^\/[^/]+\/saved(\/.*)?$/;
@@ -455,6 +507,7 @@ function mergeInstagramDomIntoAccumulated(accumulated) {
         ).trim();
         const row = {
             caption,
+            postedAt: getPostedAtFromInstagramAlt(caption),
             scrapedAt: new Date().toISOString(),
             shortcode: parsed.shortcode,
             thumbnailUrl,
@@ -471,10 +524,14 @@ function mergeInstagramDomIntoAccumulated(accumulated) {
                 hasUsableImageUrl(thumbnailUrl);
             const shouldFillCaption =
                 prev && !prev.caption && Boolean(caption);
-            if (shouldFillThumbnail || shouldFillCaption) {
+            const postedAt = getPostedAtFromInstagramAlt(caption);
+            const shouldFillPostedAt =
+                prev && !prev.postedAt && Boolean(postedAt);
+            if (shouldFillThumbnail || shouldFillCaption || shouldFillPostedAt) {
                 accumulated.set(parsed.shortcode, {
                     ...prev,
                     caption: prev.caption || caption,
+                    postedAt: prev.postedAt || postedAt,
                     thumbnailUrl: prev.thumbnailUrl || thumbnailUrl,
                 });
             }
@@ -902,6 +959,7 @@ function mergeTikTokDomIntoAccumulated(accumulated) {
         const row = {
             caption,
             id: parsed.id,
+            postedAt: getPostedAtFromTikTokId(parsed.id),
             scrapedAt: new Date().toISOString(),
             thumbnailUrl,
             url: parsed.url,

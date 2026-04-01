@@ -1,0 +1,78 @@
+import { auth } from "@/lib/auth/server";
+import {
+    applyChromeBookmarkSyncEvents,
+    chromeBookmarkSyncBodySchema,
+    purgeChromeBookmarksForUser,
+} from "@/lib/library/chrome-bookmarks";
+import {
+    extensionIngestCorsHeaders,
+    parseBearerToken,
+    resolveExtensionIngestUserId,
+} from "@/lib/library/extension-ingest";
+import { createLogger } from "@/lib/logs/console/logger";
+import { headers } from "next/headers";
+
+const log = createLogger("api:sync:chrome-bookmarks");
+
+export function OPTIONS() {
+    return new Response(null, {
+        headers: extensionIngestCorsHeaders(),
+        status: 204,
+    });
+}
+
+export async function POST(request: Request) {
+    const cors = extensionIngestCorsHeaders();
+    const bearer = parseBearerToken(request);
+    if (!bearer) {
+        return Response.json(
+            { error: "Missing Authorization: Bearer <extension ingest token>" },
+            { headers: cors, status: 401 },
+        );
+    }
+
+    const userId = await resolveExtensionIngestUserId(bearer);
+    if (!userId) {
+        return Response.json({ error: "Unauthorized" }, { headers: cors, status: 401 });
+    }
+
+    let json: unknown;
+    try {
+        json = await request.json();
+    } catch {
+        return Response.json({ error: "Invalid JSON" }, { headers: cors, status: 400 });
+    }
+
+    const parsed = chromeBookmarkSyncBodySchema.safeParse(json);
+    if (!parsed.success) {
+        return Response.json(
+            { error: parsed.error.flatten() },
+            { headers: cors, status: 400 },
+        );
+    }
+
+    const result = await applyChromeBookmarkSyncEvents(userId, parsed.data);
+    return Response.json({ ok: true, ...result }, { headers: cors });
+}
+
+export async function DELETE() {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    if (!session?.user?.id) {
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const purged = await purgeChromeBookmarksForUser(session.user.id);
+        return Response.json({ ok: true, purged });
+    } catch (error) {
+        log.error("Failed to purge Chrome bookmarks", error);
+        return Response.json(
+            { error: "Could not purge Chrome bookmarks right now." },
+            { status: 500 },
+        );
+    }
+}

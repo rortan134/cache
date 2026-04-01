@@ -10,11 +10,49 @@
         <main class="panel">
             <h1 class="title">Cache App</h1>
             <p class="hint">
-                Open <strong>Instagram → Saved</strong> or
-                <strong>TikTok → Favorites (videos)</strong> in this tab, then
-                sync.
+                Sync Instagram Saved and TikTok Favorites from the active tab,
+                or import Chrome bookmarks into Cache with your consent.
             </p>
-            <button type="button" id="sync" class="btn">Sync</button>
+
+            <section class="section" aria-labelledby="manual-sync-heading">
+                <h2 id="manual-sync-heading" class="section-title">
+                    Manual sync
+                </h2>
+                <button type="button" id="sync" class="btn">
+                    Sync current tab
+                </button>
+            </section>
+
+            <section class="section" aria-labelledby="chrome-sync-heading">
+                <div class="section-row">
+                    <h2 id="chrome-sync-heading" class="section-title">
+                        Chrome bookmarks
+                    </h2>
+                    <label class="switch">
+                        <input type="checkbox" id="chromeContinuous">
+                        <span>Continuous sync</span>
+                    </label>
+                </div>
+                <label class="field">
+                    <span class="field-label">Sync mode</span>
+                    <select id="chromeMode" class="select">
+                        <option value="one_time_import">
+                            One-time import
+                        </option>
+                        <option value="continuous_sync">
+                            Continuous sync
+                        </option>
+                    </select>
+                </label>
+                <p class="consent">
+                    Cache will read your Chrome bookmarks and store them on the
+                    Cache server for your signed-in account.
+                </p>
+                <button type="button" id="chromeSync" class="btn">
+                    Import Chrome bookmarks
+                </button>
+            </section>
+
             <button type="button" id="openCache" class="btn btn-secondary">
                 Open Cache
             </button>
@@ -22,6 +60,7 @@
             <section class="meta" aria-label="Sync status">
                 <p id="instagramMeta" class="meta-line"></p>
                 <p id="tiktokMeta" class="meta-line"></p>
+                <p id="chromeMeta" class="meta-line"></p>
             </section>
         </main>
         <script src="cache-config.js"></script>

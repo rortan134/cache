@@ -10,6 +10,7 @@
 */
 
 export const LibraryItemSource = {
+  chrome_bookmarks: 'chrome_bookmarks',
   google_photos: 'google_photos',
   instagram: 'instagram',
   other: 'other',

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
+import { LocaleSelector } from "gt-next";
 import { ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -103,7 +104,7 @@ function formatSubscriptionLabel(subscription: UserMenuSubscription | null): {
 }
 
 function getToneClassName(
-    tone: ReturnType<typeof formatSubscriptionLabel>["tone"]
+    tone: ReturnType<typeof formatSubscriptionLabel>["tone"],
 ): string {
     if (tone === "warn") {
         return "bg-amber-100 text-amber-900";
@@ -154,7 +155,7 @@ export function UserMenu({
                             successUrl: returnPath,
                         },
                         method: "POST",
-                    }
+                    },
                 );
                 const redirectUrl = readRedirectUrl(response);
 
@@ -182,7 +183,7 @@ export function UserMenu({
                             returnUrl: returnPath,
                         },
                         method: "POST",
-                    }
+                    },
                 );
                 const redirectUrl = readRedirectUrl(response);
 
@@ -259,7 +260,9 @@ export function UserMenu({
                                 <span
                                     className={cn(
                                         "inline-flex items-center rounded-full px-2 py-0.5 font-medium text-[11px]",
-                                        getToneClassName(subscriptionLabel.tone)
+                                        getToneClassName(
+                                            subscriptionLabel.tone,
+                                        ),
                                     )}
                                 >
                                     {subscriptionLabel.detail}
@@ -306,6 +309,7 @@ export function UserMenu({
                             {errorMessage}
                         </p>
                     ) : null}
+                    <LocaleSelector />
                 </div>
             </PopoverPopup>
         </Popover>

@@ -12,6 +12,7 @@ import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import QRCodeDownloadImage from "@/public/download-qrcode.png";
 import { LocaleSelector, T } from "gt-next";
+import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,12 +27,12 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "home.metadata.description",
-            "One place to view, manage, and organize bookmarks across browsers and platforms — built for power users who save at volume."
+            "One place to view, manage, and organize bookmarks across browsers and platforms — built for power users who save at volume.",
         ),
         title: gtPublicString(
             locale,
             "home.metadata.title",
-            "Unify your bookmarks across every platform"
+            "Unify your bookmarks across every platform",
         ),
     };
 }
@@ -49,7 +50,7 @@ export default async function Home({
                 <PageSidebarShell
                     bottom={
                         <>
-                            <div className="hidden items-center gap-5 lg:flex">
+                            <div className="hidden items-center gap-4 lg:flex">
                                 <Image
                                     alt="Download QR Code"
                                     className="size-20"
@@ -60,7 +61,7 @@ export default async function Home({
                                 <div className="flex flex-col gap-[6px] pb-[2px]">
                                     <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
                                         <T context="Chrome web store browser extension">
-                                            Download the extension
+                                            Install the extension
                                         </T>
                                     </p>
                                     <p className="flex shrink-0 flex-row items-center gap-[6px] truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
@@ -92,14 +93,14 @@ export default async function Home({
                                 />
                             </Link>
                             <div className="flex flex-col gap-3 text-balance">
-                                <T>
+                                <T context="'Cache' is the product's name">
                                     <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
                                         Unify your bookmarks.
                                     </h1>
                                     <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                        Meet Cache – One place to view, manage,
-                                        and organize all of your bookmarks
-                                        across platforms at volume.
+                                        Meet Cache – one place to collect,
+                                        organize, and rediscover everything
+                                        you’ve saved across platforms.
                                     </p>
                                 </T>
                             </div>
@@ -115,6 +116,7 @@ export default async function Home({
                                     render={
                                         <Link href="/library">
                                             Go to my library
+                                            <ChevronRight className="size-4" />
                                         </Link>
                                     }
                                     size="xl"
@@ -149,12 +151,13 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Integrations">
                                 <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Integrate any social media platform
+                                    Connect your favorite media platforms
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                    Ditch the endless scrolling and tabbing
-                                    through multiple platforms to find what
-                                    matters to you.
+                                    Bring together bookmarks from social, video,
+                                    and the web. Ditch the endless scrolling and
+                                    tabbing through multiple platforms to find
+                                    what matters to you.
                                 </p>
                             </T>
                             <div className="flex w-full items-center gap-5">
@@ -173,7 +176,7 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Feed">
                                 <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Explore through one centralized feed
+                                    Explore from a single, fast feed
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Streamline the way you consume and reengage
@@ -210,12 +213,13 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Habits">
                                 <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Stop leaving it for later
+                                    Stop leaving it for "later"
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Create more actionable opportunities for
                                     yourself by having your most insightful
-                                    saved content on top of mind.
+                                    saved content top of mind instead of losing
+                                    them in a backlog of forgotten bookmarks.
                                 </p>
                             </T>
                         </div>
@@ -269,7 +273,7 @@ export default async function Home({
                                     </div>
                                 </div>
                                 <div className="relative col-span-full flex flex-col items-start justify-between font-sans text-xs leading-[1.22] tracking-[-3%]">
-                                    <span>
+                                    <span className="opacity-90">
                                         <T context="Disclaimer">
                                             *Third-party platforms you connect
                                             through the Service are operated

@@ -1,6 +1,6 @@
 import { gtPublicString } from "@/lib/gt-public-json";
 import type { Metadata } from "next";
-import { LogoutPageClient } from "./logout-page-client";
+import { LogoutPageClient } from "./client";
 
 export async function generateMetadata({
     params,

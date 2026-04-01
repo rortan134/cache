@@ -1,5 +1,6 @@
 import { LibraryItemSource } from "@/prisma/client/enums";
 import { auth } from "@/lib/auth/server";
+import { DEFAULT_BROWSER_PROFILE_ID } from "@/lib/library/chrome-bookmarks";
 import {
     listPinterestBoardPins,
     listPinterestBoards,
@@ -54,6 +55,35 @@ async function importPinterestBoards(
     importedCount: number;
     skippedCount: number;
 }> {
+    const libraryItemDelegate = prisma.libraryItem as unknown as {
+        upsert(args: {
+            create: {
+                browserProfileId: string;
+                caption: string | null;
+                externalId: string;
+                scrapedAt: Date | null;
+                source: LibraryItemSource;
+                thumbnailUrl: string | null;
+                url: string;
+                userId: string;
+            };
+            update: {
+                browserProfileId: string;
+                caption: string | null;
+                scrapedAt: Date | null;
+                thumbnailUrl: string | null;
+                url: string;
+            };
+            where: {
+                userId_source_browserProfileId_externalId: {
+                    browserProfileId: string;
+                    externalId: string;
+                    source: LibraryItemSource;
+                    userId: string;
+                };
+            };
+        }): Promise<unknown>;
+    };
     const boards = await listPinterestBoards(accessToken);
     const importedExternalIds = new Set<string>();
     let skippedCount = 0;
@@ -72,8 +102,9 @@ async function importPinterestBoards(
                 continue;
             }
 
-            await prisma.libraryItem.upsert({
+            await libraryItemDelegate.upsert({
                 create: {
+                    browserProfileId: DEFAULT_BROWSER_PROFILE_ID,
                     caption: pin.caption,
                     externalId: pin.externalId,
                     scrapedAt: pin.scrapedAt,
@@ -83,13 +114,15 @@ async function importPinterestBoards(
                     userId,
                 },
                 update: {
+                    browserProfileId: DEFAULT_BROWSER_PROFILE_ID,
                     caption: pin.caption,
                     scrapedAt: pin.scrapedAt,
                     thumbnailUrl: pin.thumbnailUrl,
                     url: pin.url,
                 },
                 where: {
-                    userId_source_externalId: {
+                    userId_source_browserProfileId_externalId: {
+                        browserProfileId: DEFAULT_BROWSER_PROFILE_ID,
                         externalId: pin.externalId,
                         source: LibraryItemSource.pinterest,
                         userId,

@@ -1,0 +1,70 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { EllipsisIcon } from "lucide-react";
+import * as React from "react";
+
+interface TruncateAfterProps {
+    after?: number;
+    children: React.ReactNode;
+    className?: string;
+}
+
+const TruncateAfter = ({
+    after = 5,
+    children,
+    className,
+}: TruncateAfterProps) => {
+    const count = React.Children.count(children);
+
+    if (count === 0) {
+        return null;
+    }
+
+    const displayed: React.ReactNode[] = [];
+    const remaining: React.ReactNode[] = [];
+
+    React.Children.map(children, (child, index) => {
+        if (index < after) {
+            displayed.push(child);
+        } else {
+            remaining.push(child);
+        }
+    });
+
+    const numTruncated = remaining.length;
+
+    return (
+        <div className={cn("flex flex-wrap items-center gap-2", className)}>
+            {displayed}
+            {numTruncated > 0 && (
+                <Popover>
+                    <PopoverTrigger className="inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-muted">
+                        <Badge
+                            className="h-6 cursor-pointer px-1.5"
+                            variant="outline"
+                        >
+                            <EllipsisIcon className="size-4" />
+                            <span className="ms-1">+{numTruncated}</span>
+                        </Badge>
+                    </PopoverTrigger>
+                    <PopoverContent
+                        align="end"
+                        className="w-auto p-2"
+                        side="top"
+                    >
+                        <div className="flex flex-col gap-2">{remaining}</div>
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
+    );
+};
+
+export { TruncateAfter };

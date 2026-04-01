@@ -1,13 +1,11 @@
 "use client";
 
-import {
-    createFeedback,
-    initialFeedbackActionState,
-} from "@/app/[locale]/feedback/actions";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { createFeedback } from "@/lib/feedback/actions";
+import type { FeedbackActionState } from "@/lib/feedback/schema";
 import { cn } from "@/lib/utils";
 import { Send } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -16,12 +14,17 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useHotkeys } from "react-hotkeys-hook";
 
+const initialFeedbackActionState: FeedbackActionState = {
+    message: "",
+    status: "idle",
+} satisfies FeedbackActionState;
+
 export function FeedbackWidget(): React.ReactElement {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const [state, formAction] = useActionState(
         createFeedback,
-        initialFeedbackActionState
+        initialFeedbackActionState,
     );
     const formRef = useRef<HTMLFormElement>(null);
 
@@ -93,7 +96,7 @@ export function FeedbackWidget(): React.ReactElement {
                                         "min-h-5 text-xs",
                                         state.status === "error"
                                             ? "text-destructive"
-                                            : "text-muted-foreground"
+                                            : "text-muted-foreground",
                                     )}
                                     id="feedback-status"
                                     role={

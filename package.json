@@ -14,7 +14,8 @@
         "db-migrate": "prisma migrate dev",
         "lint": "ultracite check",
         "lint:fix": "ultracite fix",
-        "type-check": "tsc --noEmit",
+        "analyze": "next experimental-analyze",
+        "type-check": "tsc --noEmit --emitDeclarationOnly false",
         "validate": "knip --production --exclude types",
         "prepare": "husky"
     },

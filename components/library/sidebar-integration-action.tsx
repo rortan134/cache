@@ -1,6 +1,6 @@
 "use client";
 
-import { GooglePhotosImportButton } from "@/components/google-photos/google-photos-import-button";
+import { GooglePhotosImportButton } from "@/components/library/google-photos-import-button";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
 import {
@@ -19,13 +19,14 @@ type SidebarIntegrationActionProps = Readonly<{
     soundcloudParked?: boolean;
 }>;
 
-type ExtensionIntegrationId = Extract<IntegrationId, "instagram" | "tiktok">;
+type ExtensionIntegrationId = Extract<IntegrationId, "chrome" | "instagram" | "tiktok">;
 type OAuthIntegrationId = Extract<
     IntegrationId,
     "google-photos" | "pinterest" | "soundcloud"
 >;
 
 const EXTENSION_TARGET_URL: Record<ExtensionIntegrationId, string> = {
+    chrome: CACHE_EXTENSION_DOWNLOAD_URL,
     instagram: "https://www.instagram.com",
     tiktok: "https://www.tiktok.com",
 };
@@ -61,9 +62,9 @@ function isExtensionInstalled() {
 }
 
 function isExtensionIntegration(
-    id: IntegrationId,
+    id: IntegrationId
 ): id is ExtensionIntegrationId {
-    return id === "instagram" || id === "tiktok";
+    return id === "chrome" || id === "instagram" || id === "tiktok";
 }
 
 function isOAuthIntegration(id: IntegrationId): id is OAuthIntegrationId {
@@ -116,14 +117,14 @@ export function SidebarIntegrationAction({
         setExtensionInstalled(isExtensionInstalled());
         window.addEventListener(
             CACHE_EXTENSION_READY_EVENT,
-            handleReady as EventListener,
+            handleReady as EventListener
         );
         window.addEventListener("message", handleMessage);
 
         return () => {
             window.removeEventListener(
                 CACHE_EXTENSION_READY_EVENT,
-                handleReady as EventListener,
+                handleReady as EventListener
             );
             window.removeEventListener("message", handleMessage);
         };
@@ -136,12 +137,56 @@ export function SidebarIntegrationAction({
 
         setErrorMessage(null);
         setSuccessMessage(null);
+        if (id === "chrome") {
+            if (extensionInstalled) {
+                return;
+            }
+            openExternal(CACHE_EXTENSION_DOWNLOAD_URL);
+            return;
+        }
+
         openExternal(
             extensionInstalled
                 ? EXTENSION_TARGET_URL[id]
-                : CACHE_EXTENSION_DOWNLOAD_URL,
+                : CACHE_EXTENSION_DOWNLOAD_URL
         );
     }, [extensionInstalled, id]);
+
+    const handleChromePurge = useCallback(async () => {
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        setIsConnecting(true);
+
+        try {
+            const response = await fetch("/api/sync/bookmarks/chrome", {
+                method: "DELETE",
+            });
+            const payload = (await response.json()) as
+                | { ok: true; purged: number }
+                | { error: string };
+
+            if (!(response.ok && "ok" in payload)) {
+                throw new Error(
+                    "error" in payload
+                        ? payload.error
+                        : "Could not purge Chrome bookmarks right now."
+                );
+            }
+
+            setSuccessMessage(
+                `Purged ${payload.purged} Chrome item${payload.purged === 1 ? "" : "s"} from Cache.`
+            );
+            router.refresh();
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Could not purge Chrome bookmarks right now."
+            );
+        } finally {
+            setIsConnecting(false);
+        }
+    }, [router]);
 
     const handleGoogleConnect = useCallback(async () => {
         setErrorMessage(null);
@@ -158,14 +203,14 @@ export function SidebarIntegrationAction({
             if (result.error) {
                 setErrorMessage(
                     result.error.message ??
-                        "Could not start the Google connection flow.",
+                        "Could not start the Google connection flow."
                 );
             }
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the Google connection flow.",
+                    : "Could not start the Google connection flow."
             );
         } finally {
             setIsConnecting(false);
@@ -203,7 +248,7 @@ export function SidebarIntegrationAction({
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the account connection flow.",
+                    : "Could not start the account connection flow."
             );
         } finally {
             setIsConnecting(false);
@@ -231,19 +276,19 @@ export function SidebarIntegrationAction({
             if (!(response.ok && "importedCount" in payload)) {
                 throw new Error(
                     payload.error ??
-                        "Could not import pins from Pinterest right now.",
+                        "Could not import pins from Pinterest right now."
                 );
             }
 
             setSuccessMessage(
-                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`,
+                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`
             );
             router.refresh();
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not import pins from Pinterest right now.",
+                    : "Could not import pins from Pinterest right now."
             );
         } finally {
             setIsImportingPinterest(false);
@@ -253,14 +298,39 @@ export function SidebarIntegrationAction({
     if (isExtensionIntegration(id)) {
         return (
             <div className="ml-auto flex flex-col items-start gap-1">
-                <Button
-                    onClick={handleExtensionClick}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                >
-                    {extensionButtonLabel(extensionInstalled)}
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        disabled={id === "chrome" && extensionInstalled}
+                        loading={id === "chrome" && isConnecting}
+                        onClick={handleExtensionClick}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                    >
+                        {id === "chrome"
+                            ? extensionInstalled
+                                ? "Installed"
+                                : "Get Extension"
+                            : extensionButtonLabel(extensionInstalled)}
+                    </Button>
+                    {id === "chrome" && connected ? (
+                        <Button
+                            loading={isConnecting}
+                            onClick={handleChromePurge}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                        >
+                            Disconnect + purge
+                        </Button>
+                    ) : null}
+                </div>
+                {id === "chrome" ? (
+                    <p className="max-w-52 text-muted-foreground text-xs">
+                        Sync runs from the Cache extension after you grant
+                        access to your browser bookmarks.
+                    </p>
+                ) : null}
             </div>
         );
     }

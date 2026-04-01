@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth/server";
+import { DEFAULT_BROWSER_PROFILE_ID } from "@/lib/library/chrome-bookmarks";
 import type { GooglePhotosPickedMediaItem } from "@/lib/integrations/google-photos/picker-api";
 import {
     deletePickerSession,
@@ -70,6 +71,35 @@ export async function POST(request: Request) {
     }
 
     try {
+        const libraryItemDelegate = prisma.libraryItem as unknown as {
+            upsert(args: {
+                create: {
+                    browserProfileId: string;
+                    caption: string | null;
+                    externalId: string;
+                    scrapedAt: Date | null;
+                    source: LibraryItemSource;
+                    thumbnailUrl: string | null;
+                    url: string;
+                    userId: string;
+                };
+                update: {
+                    browserProfileId: string;
+                    caption: string | null;
+                    scrapedAt: Date | null;
+                    thumbnailUrl: string | null;
+                    url: string;
+                };
+                where: {
+                    userId_source_browserProfileId_externalId: {
+                        browserProfileId: string;
+                        externalId: string;
+                        source: LibraryItemSource;
+                        userId: string;
+                    };
+                };
+            }): Promise<unknown>;
+        };
         const pickerSession = await getPickerSession(
             accessToken,
             parsedBody.data.sessionId
@@ -97,8 +127,9 @@ export async function POST(request: Request) {
             }
 
             // Google Photos Picker baseUrl values are short-lived; durable storage is a follow-up.
-            await prisma.libraryItem.upsert({
+            await libraryItemDelegate.upsert({
                 create: {
+                    browserProfileId: DEFAULT_BROWSER_PROFILE_ID,
                     caption: item.mediaFile?.filename ?? null,
                     externalId: item.id,
                     scrapedAt: item.createTime
@@ -110,6 +141,7 @@ export async function POST(request: Request) {
                     userId: session.user.id,
                 },
                 update: {
+                    browserProfileId: DEFAULT_BROWSER_PROFILE_ID,
                     caption: item.mediaFile?.filename ?? null,
                     scrapedAt: item.createTime
                         ? new Date(item.createTime)
@@ -118,7 +150,8 @@ export async function POST(request: Request) {
                     url,
                 },
                 where: {
-                    userId_source_externalId: {
+                    userId_source_browserProfileId_externalId: {
+                        browserProfileId: DEFAULT_BROWSER_PROFILE_ID,
                         externalId: item.id,
                         source: LibraryItemSource.google_photos,
                         userId: session.user.id,

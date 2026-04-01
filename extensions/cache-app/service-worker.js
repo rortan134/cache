@@ -1,10 +1,12 @@
 importScripts("cache-config.js");
 
-/** @typedef {{ shortcode: string, url: string, thumbnailUrl: string, caption: string, scrapedAt: string }} InstagramSavedItem */
-/** @typedef {{ id: string, url: string, thumbnailUrl: string, caption: string, scrapedAt: string }} TikTokFavoriteItem */
+/** @typedef {{ shortcode: string, url: string, thumbnailUrl: string, caption: string, postedAt: string, scrapedAt: string }} InstagramSavedItem */
+/** @typedef {{ id: string, url: string, thumbnailUrl: string, caption: string, postedAt: string, scrapedAt: string }} TikTokFavoriteItem */
 
 const INSTAGRAM_STORAGE_VERSION = 1;
 const TIKTOK_STORAGE_VERSION = 1;
+const CHROME_SYNC_BATCH_SIZE = 200;
+const DEFAULT_BROWSER_PROFILE_ID = "default";
 
 const INSTAGRAM_KEYS = {
     bookmarkCount: "bookmarkCount",
@@ -20,160 +22,170 @@ const TIKTOK_KEYS = {
     videos: "tiktokFavoriteVideos",
 };
 
+const CHROME_KEYS = {
+    bookmarkCount: "chromeBookmarkCount",
+    browserProfileId: "chromeBrowserProfileId",
+    deviceId: "chromeDeviceId",
+    deviceName: "chromeDeviceName",
+    lastError: "chromeLastError",
+    lastSyncAt: "chromeLastSyncAt",
+    pendingEvents: "chromePendingEvents",
+    pendingMode: "chromePendingMode",
+    syncEnabled: "chromeSyncEnabled",
+};
+
 const SYNC_KEYS = {
     syncApiKey: "syncApiKey",
     syncEndpoint: "syncEndpoint",
 };
 
-/**
- * @returns {string}
- */
+let chromeFlushInFlight = null;
+
 function defaultIngestEndpoint() {
-    const o = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
-    const p = String(globalThis.CACHE_INGEST_PATH ?? "");
-    if (!o || !p.startsWith("/")) {
+    const origin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
+    const path = String(globalThis.CACHE_INGEST_PATH ?? "");
+    if (!origin || !path.startsWith("/")) {
         return "";
     }
-    return `${o}${p}`;
+    return `${origin}${path}`;
 }
 
-/**
- * @param {unknown} msg
- * @returns {"instagram" | "tiktok"}
- */
+function defaultChromeSyncEndpoint() {
+    const origin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
+    return origin ? `${origin}/api/sync/bookmarks/chrome` : "";
+}
+
 function messageSource(msg) {
-    return msg && typeof msg === "object" && msg.source === "tiktok"
-        ? "tiktok"
-        : "instagram";
+    if (msg && typeof msg === "object") {
+        if (msg.source === "tiktok") return "tiktok";
+        if (msg.source === "chrome_bookmarks" || msg.source === "chrome")
+            return "chrome_bookmarks";
+    }
+    return "instagram";
 }
 
-/**
- * @param {Record<string, unknown>} data
- * @returns {Promise<InstagramSavedItem[]>}
- */
-async function migrateInstagramIfNeeded(data) {
-    const version =
-        typeof data[INSTAGRAM_KEYS.storageVersion] === "number"
-            ? data[INSTAGRAM_KEYS.storageVersion]
-            : 0;
-    const raw = data[INSTAGRAM_KEYS.bookmarks];
-    let bookmarks = Array.isArray(raw) ? /** @type {unknown[]} */ (raw) : [];
+function generateClientId(prefix) {
+    return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
-    if (version < INSTAGRAM_STORAGE_VERSION) {
-        bookmarks = bookmarks
-            .map((row) => {
-                if (row && typeof row === "object" && !Array.isArray(row)) {
-                    return /** @type {InstagramSavedItem} */ (row);
-                }
-                return null;
-            })
-            .filter(Boolean);
-        await chrome.storage.local.set({
-            [INSTAGRAM_KEYS.bookmarks]: bookmarks,
-            [INSTAGRAM_KEYS.storageVersion]: INSTAGRAM_STORAGE_VERSION,
+async function ensureChromeIdentity() {
+    const stored = await chrome.storage.local.get([
+        CHROME_KEYS.browserProfileId,
+        CHROME_KEYS.deviceId,
+        CHROME_KEYS.deviceName,
+    ]);
+
+    const patch = {};
+    const profileId =
+        typeof stored[CHROME_KEYS.browserProfileId] === "string" &&
+        stored[CHROME_KEYS.browserProfileId]
+            ? stored[CHROME_KEYS.browserProfileId]
+            : generateClientId("chrome_profile");
+    const deviceId =
+        typeof stored[CHROME_KEYS.deviceId] === "string" &&
+        stored[CHROME_KEYS.deviceId]
+            ? stored[CHROME_KEYS.deviceId]
+            : generateClientId("device");
+    if (profileId !== stored[CHROME_KEYS.browserProfileId]) {
+        patch[CHROME_KEYS.browserProfileId] = profileId;
+    }
+    if (deviceId !== stored[CHROME_KEYS.deviceId]) {
+        patch[CHROME_KEYS.deviceId] = deviceId;
+    }
+
+    let deviceName =
+        typeof stored[CHROME_KEYS.deviceName] === "string"
+            ? stored[CHROME_KEYS.deviceName]
+            : "";
+    if (!deviceName) {
+        try {
+            const platform = await chrome.runtime.getPlatformInfo();
+            deviceName = `Chrome on ${platform.os}`;
+        } catch {
+            deviceName = "Chrome browser";
+        }
+        patch[CHROME_KEYS.deviceName] = deviceName;
+    }
+
+    if (Object.keys(patch).length > 0) {
+        await chrome.storage.local.set(patch);
+    }
+
+    return { deviceId, deviceName, profileId };
+}
+
+function mapChromeBookmarkNode(node, browserProfileId) {
+    return {
+        dateAdded: typeof node.dateAdded === "number" ? node.dateAdded : undefined,
+        dateGroupModified:
+            typeof node.dateGroupModified === "number"
+                ? node.dateGroupModified
+                : undefined,
+        externalId: String(node.id),
+        index: typeof node.index === "number" ? node.index : undefined,
+        kind: node.url ? "bookmark" : "folder",
+        parentExternalId:
+            typeof node.parentId === "string" && node.parentId
+                ? node.parentId
+                : undefined,
+        title: typeof node.title === "string" ? node.title : "",
+        url:
+            typeof node.url === "string" && node.url
+                ? node.url
+                : `cache://chrome-bookmarks/folder/${encodeURIComponent(browserProfileId)}/${encodeURIComponent(String(node.id))}`,
+    };
+}
+
+function flattenChromeBookmarkTree(nodes, browserProfileId, result, snapshotIds) {
+    for (const node of nodes) {
+        const externalId = String(node.id);
+        snapshotIds.push(externalId);
+        result.push({
+            bookmark: mapChromeBookmarkNode(node, browserProfileId),
+            occurredAt: new Date().toISOString(),
+            type: "upsert",
         });
-    }
-
-    return /** @type {InstagramSavedItem[]} */ (bookmarks);
-}
-
-/**
- * @param {Record<string, unknown>} data
- * @returns {Promise<TikTokFavoriteItem[]>}
- */
-async function migrateTikTokIfNeeded(data) {
-    const version =
-        typeof data[TIKTOK_KEYS.storageVersion] === "number"
-            ? data[TIKTOK_KEYS.storageVersion]
-            : 0;
-    const raw = data[TIKTOK_KEYS.videos];
-    let videos = Array.isArray(raw) ? /** @type {unknown[]} */ (raw) : [];
-
-    if (version < TIKTOK_STORAGE_VERSION) {
-        videos = videos
-            .map((row) => {
-                if (row && typeof row === "object" && !Array.isArray(row)) {
-                    return /** @type {TikTokFavoriteItem} */ (row);
-                }
-                return null;
-            })
-            .filter(Boolean);
-        await chrome.storage.local.set({
-            [TIKTOK_KEYS.storageVersion]: TIKTOK_STORAGE_VERSION,
-            [TIKTOK_KEYS.videos]: videos,
-        });
-    }
-
-    return /** @type {TikTokFavoriteItem[]} */ (videos);
-}
-
-/**
- * @param {InstagramSavedItem[]} incoming
- * @param {InstagramSavedItem[]} existing
- * @returns {InstagramSavedItem[]}
- */
-function mergeByShortcode(incoming, existing) {
-    const map = new Map();
-    for (const item of existing) {
-        if (item?.shortcode) {
-            map.set(item.shortcode, item);
+        if (node.children) {
+            flattenChromeBookmarkTree(
+                node.children,
+                browserProfileId,
+                result,
+                snapshotIds,
+            );
         }
     }
-    for (const item of incoming) {
-        if (item?.shortcode) {
-            const prev = map.get(item.shortcode);
-            map.set(item.shortcode, {
-                ...prev,
-                ...item,
-                scrapedAt:
-                    item.scrapedAt ||
-                    prev?.scrapedAt ||
-                    new Date().toISOString(),
-            });
-        }
-    }
-    return [...map.values()];
 }
 
-/**
- * @param {TikTokFavoriteItem[]} incoming
- * @param {TikTokFavoriteItem[]} existing
- * @returns {TikTokFavoriteItem[]}
- */
-function mergeByVideoId(incoming, existing) {
-    const map = new Map();
-    for (const item of existing) {
-        if (item?.id) {
-            map.set(item.id, item);
-        }
-    }
-    for (const item of incoming) {
-        if (item?.id) {
-            const prev = map.get(item.id);
-            map.set(item.id, {
-                ...prev,
-                ...item,
-                scrapedAt:
-                    item.scrapedAt ||
-                    prev?.scrapedAt ||
-                    new Date().toISOString(),
-            });
-        }
-    }
-    return [...map.values()];
-}
-
-/**
- * @returns {Promise<{ instagramCount: number, tiktokCount: number, instagramLastSyncAt?: string, tiktokLastSyncAt?: string }>}
- */
 async function readSyncMetaForUi() {
     const data = await chrome.storage.local.get([
         INSTAGRAM_KEYS.bookmarkCount,
         INSTAGRAM_KEYS.lastSyncAt,
         TIKTOK_KEYS.favoriteCount,
         TIKTOK_KEYS.lastSyncAt,
+        CHROME_KEYS.bookmarkCount,
+        CHROME_KEYS.lastError,
+        CHROME_KEYS.lastSyncAt,
+        CHROME_KEYS.pendingEvents,
+        CHROME_KEYS.syncEnabled,
     ]);
+    const chromePending = Array.isArray(data[CHROME_KEYS.pendingEvents])
+        ? data[CHROME_KEYS.pendingEvents].length
+        : 0;
     return {
+        chromeCount:
+            typeof data[CHROME_KEYS.bookmarkCount] === "number"
+                ? data[CHROME_KEYS.bookmarkCount]
+                : 0,
+        chromeContinuousSync: data[CHROME_KEYS.syncEnabled] === true,
+        chromeLastError:
+            typeof data[CHROME_KEYS.lastError] === "string"
+                ? data[CHROME_KEYS.lastError]
+                : "",
+        chromeLastSyncAt:
+            typeof data[CHROME_KEYS.lastSyncAt] === "string"
+                ? data[CHROME_KEYS.lastSyncAt]
+                : undefined,
+        chromePendingEvents: chromePending,
         instagramCount:
             typeof data[INSTAGRAM_KEYS.bookmarkCount] === "number"
                 ? data[INSTAGRAM_KEYS.bookmarkCount]
@@ -193,12 +205,38 @@ async function readSyncMetaForUi() {
     };
 }
 
-/**
- * @param {string | undefined} endpoint
- * @param {string | undefined} apiKey
- * @param {InstagramSavedItem[] | TikTokFavoriteItem[]} items
- * @param {"instagram" | "tiktok"} source
- */
+async function notifySyncError(code, message) {
+    await chrome.runtime
+        .sendMessage({
+            code,
+            message: message ?? "",
+            type: "SYNC_ERROR",
+        })
+        .catch(() => {});
+}
+
+async function notifySyncProgress(activeSource) {
+    const meta = await readSyncMetaForUi();
+    await chrome.runtime
+        .sendMessage({
+            activeSource,
+            type: "SYNC_PROGRESS",
+            ...meta,
+        })
+        .catch(() => {});
+}
+
+async function notifySyncDone(completedSource) {
+    const meta = await readSyncMetaForUi();
+    await chrome.runtime
+        .sendMessage({
+            completedSource,
+            type: "SYNC_DONE",
+            ...meta,
+        })
+        .catch(() => {});
+}
+
 async function postToOptionalBackend(endpoint, apiKey, items, source) {
     if (!endpoint?.trim()) {
         return;
@@ -213,9 +251,7 @@ async function postToOptionalBackend(endpoint, apiKey, items, source) {
         Accept: "application/json",
         "Content-Type": "application/json",
     };
-    if (apiKey?.trim()) {
-        headers.Authorization = `Bearer ${apiKey.trim()}`;
-    }
+    headers.Authorization = `Bearer ${apiKey.trim()}`;
     const res = await fetch(endpoint.trim(), {
         body: JSON.stringify({
             items,
@@ -230,15 +266,320 @@ async function postToOptionalBackend(endpoint, apiKey, items, source) {
             "[Cache App] Optional sync failed:",
             source,
             res.status,
-            await res.text().catch(() => "")
+            await res.text().catch(() => ""),
         );
     }
 }
 
-/**
- * @param {unknown[]} items
- * @param {boolean} final
- */
+async function postChromeSyncBatch(endpoint, apiKey, payload) {
+    if (!endpoint?.trim()) {
+        throw new Error("Missing Chrome sync endpoint.");
+    }
+    if (!apiKey?.trim()) {
+        throw new Error(
+            "No ingest token found. Open Cache while signed in so the extension can link this browser.",
+        );
+    }
+    const res = await fetch(endpoint.trim(), {
+        body: JSON.stringify(payload),
+        headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${apiKey.trim()}`,
+            "Content-Type": "application/json",
+        },
+        method: "POST",
+    });
+    if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`Chrome bookmark sync failed (${res.status}): ${body}`);
+    }
+    return res.json().catch(() => null);
+}
+
+async function readChromeQueueState() {
+    const data = await chrome.storage.local.get([
+        CHROME_KEYS.pendingEvents,
+        CHROME_KEYS.pendingMode,
+        CHROME_KEYS.syncEnabled,
+    ]);
+    return {
+        events: Array.isArray(data[CHROME_KEYS.pendingEvents])
+            ? data[CHROME_KEYS.pendingEvents]
+            : [],
+        mode:
+            data[CHROME_KEYS.pendingMode] === "one_time_import"
+                ? "one_time_import"
+                : "continuous_sync",
+        syncEnabled: data[CHROME_KEYS.syncEnabled] === true,
+    };
+}
+
+async function setChromeLastError(message) {
+    await chrome.storage.local.set({
+        [CHROME_KEYS.lastError]: message,
+    });
+}
+
+async function enqueueChromeEvents(events, mode) {
+    if (!Array.isArray(events) || events.length === 0) {
+        return;
+    }
+    const current = await readChromeQueueState();
+    await chrome.storage.local.set({
+        [CHROME_KEYS.pendingEvents]: [...current.events, ...events],
+        [CHROME_KEYS.pendingMode]: mode ?? current.mode,
+    });
+    await notifySyncProgress("chrome");
+}
+
+async function flushChromeBookmarkQueue() {
+    if (chromeFlushInFlight) {
+        return chromeFlushInFlight;
+    }
+
+    chromeFlushInFlight = (async () => {
+        const settings = await chrome.storage.local.get([
+            CHROME_KEYS.bookmarkCount,
+            CHROME_KEYS.pendingEvents,
+            CHROME_KEYS.pendingMode,
+            SYNC_KEYS.syncApiKey,
+            SYNC_KEYS.syncEndpoint,
+        ]);
+        const pendingEvents = Array.isArray(settings[CHROME_KEYS.pendingEvents])
+            ? settings[CHROME_KEYS.pendingEvents]
+            : [];
+        if (pendingEvents.length === 0) {
+            chromeFlushInFlight = null;
+            return;
+        }
+
+        const identity = await ensureChromeIdentity();
+        const apiKey =
+            typeof settings[SYNC_KEYS.syncApiKey] === "string"
+                ? settings[SYNC_KEYS.syncApiKey]
+                : "";
+        const storedEndpoint =
+            typeof settings[SYNC_KEYS.syncEndpoint] === "string"
+                ? settings[SYNC_KEYS.syncEndpoint]
+                : "";
+        const endpoint = storedEndpoint.trim()
+            ? `${storedEndpoint.replace(/\/api\/integrations\/instagram\/saved$/, "")}/api/sync/bookmarks/chrome`
+            : defaultChromeSyncEndpoint();
+        const mode =
+            settings[CHROME_KEYS.pendingMode] === "one_time_import"
+                ? "one_time_import"
+                : "continuous_sync";
+
+        try {
+            await notifySyncProgress("chrome");
+
+            let offset = 0;
+            while (offset < pendingEvents.length) {
+                const batch = pendingEvents.slice(
+                    offset,
+                    offset + CHROME_SYNC_BATCH_SIZE,
+                );
+                await postChromeSyncBatch(endpoint, apiKey, {
+                    browserProfileId:
+                        identity.profileId || DEFAULT_BROWSER_PROFILE_ID,
+                    device: {
+                        id: identity.deviceId,
+                        name: identity.deviceName,
+                    },
+                    events: batch,
+                    mode,
+                    syncedAt: new Date().toISOString(),
+                });
+                offset += batch.length;
+            }
+
+            const bookmarkCount = pendingEvents.reduce((count, event) => {
+                if (event?.type === "upsert" || event?.type === "move") {
+                    return count + (event.bookmark?.kind === "bookmark" ? 1 : 0);
+                }
+                return count;
+            }, 0);
+
+            await chrome.storage.local.set({
+                [CHROME_KEYS.bookmarkCount]: Math.max(
+                    typeof settings[CHROME_KEYS.bookmarkCount] === "number"
+                        ? settings[CHROME_KEYS.bookmarkCount]
+                        : 0,
+                    bookmarkCount,
+                ),
+                [CHROME_KEYS.lastError]: "",
+                [CHROME_KEYS.lastSyncAt]: new Date().toISOString(),
+                [CHROME_KEYS.pendingEvents]: [],
+            });
+            await notifySyncDone("chrome");
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            console.warn("[Cache App] Chrome bookmark sync error:", error);
+            await setChromeLastError(message);
+            await notifySyncError("CHROME_SYNC_FAILED", message);
+        } finally {
+            chromeFlushInFlight = null;
+        }
+    })();
+
+    return chromeFlushInFlight;
+}
+
+async function queueChromeBookmarkNode(node, type) {
+    const identity = await ensureChromeIdentity();
+    const bookmark = mapChromeBookmarkNode(node, identity.profileId);
+    await enqueueChromeEvents(
+        [
+            {
+                bookmark,
+                occurredAt: new Date().toISOString(),
+                type,
+            },
+        ],
+        "continuous_sync",
+    );
+    await flushChromeBookmarkQueue();
+}
+
+async function queueChromeDelete(externalId) {
+    await enqueueChromeEvents(
+        [
+            {
+                externalId: String(externalId),
+                occurredAt: new Date().toISOString(),
+                type: "delete",
+            },
+        ],
+        "continuous_sync",
+    );
+    await flushChromeBookmarkQueue();
+}
+
+async function runChromeInitialImport(mode) {
+    const identity = await ensureChromeIdentity();
+    const tree = await chrome.bookmarks.getTree();
+    const events = [];
+    const snapshotExternalIds = [];
+    flattenChromeBookmarkTree(tree, identity.profileId, events, snapshotExternalIds);
+
+    const bookmarkCount = events.reduce((count, event) => {
+        return count + (event.bookmark?.kind === "bookmark" ? 1 : 0);
+    }, 0);
+
+    events.push({
+        snapshotExternalIds,
+        type: "import_complete",
+    });
+
+    await chrome.storage.local.set({
+        [CHROME_KEYS.bookmarkCount]: bookmarkCount,
+        [CHROME_KEYS.lastError]: "",
+        [CHROME_KEYS.syncEnabled]: mode === "continuous_sync",
+    });
+    await enqueueChromeEvents(events, mode);
+    await flushChromeBookmarkQueue();
+}
+
+async function searchChromeBookmarks(query) {
+    if (!query?.trim()) {
+        return [];
+    }
+    const results = await chrome.bookmarks.search(query.trim());
+    const identity = await ensureChromeIdentity();
+    return results.map((node) => mapChromeBookmarkNode(node, identity.profileId));
+}
+
+async function migrateInstagramIfNeeded(data) {
+    const version =
+        typeof data[INSTAGRAM_KEYS.storageVersion] === "number"
+            ? data[INSTAGRAM_KEYS.storageVersion]
+            : 0;
+    const raw = data[INSTAGRAM_KEYS.bookmarks];
+    let bookmarks = Array.isArray(raw) ? raw : [];
+
+    if (version < INSTAGRAM_STORAGE_VERSION) {
+        bookmarks = bookmarks
+            .map((row) =>
+                row && typeof row === "object" && !Array.isArray(row) ? row : null,
+            )
+            .filter(Boolean);
+        await chrome.storage.local.set({
+            [INSTAGRAM_KEYS.bookmarks]: bookmarks,
+            [INSTAGRAM_KEYS.storageVersion]: INSTAGRAM_STORAGE_VERSION,
+        });
+    }
+
+    return bookmarks;
+}
+
+async function migrateTikTokIfNeeded(data) {
+    const version =
+        typeof data[TIKTOK_KEYS.storageVersion] === "number"
+            ? data[TIKTOK_KEYS.storageVersion]
+            : 0;
+    const raw = data[TIKTOK_KEYS.videos];
+    let videos = Array.isArray(raw) ? raw : [];
+
+    if (version < TIKTOK_STORAGE_VERSION) {
+        videos = videos
+            .map((row) =>
+                row && typeof row === "object" && !Array.isArray(row) ? row : null,
+            )
+            .filter(Boolean);
+        await chrome.storage.local.set({
+            [TIKTOK_KEYS.storageVersion]: TIKTOK_STORAGE_VERSION,
+            [TIKTOK_KEYS.videos]: videos,
+        });
+    }
+
+    return videos;
+}
+
+function mergeByShortcode(incoming, existing) {
+    const map = new Map();
+    for (const item of existing) {
+        if (item?.shortcode) {
+            map.set(item.shortcode, item);
+        }
+    }
+    for (const item of incoming) {
+        if (item?.shortcode) {
+            const prev = map.get(item.shortcode);
+            map.set(item.shortcode, {
+                ...prev,
+                ...item,
+                postedAt: item.postedAt || prev?.postedAt,
+                scrapedAt:
+                    item.scrapedAt || prev?.scrapedAt || new Date().toISOString(),
+            });
+        }
+    }
+    return [...map.values()];
+}
+
+function mergeByVideoId(incoming, existing) {
+    const map = new Map();
+    for (const item of existing) {
+        if (item?.id) {
+            map.set(item.id, item);
+        }
+    }
+    for (const item of incoming) {
+        if (item?.id) {
+            const prev = map.get(item.id);
+            map.set(item.id, {
+                ...prev,
+                ...item,
+                postedAt: item.postedAt || prev?.postedAt,
+                scrapedAt:
+                    item.scrapedAt || prev?.scrapedAt || new Date().toISOString(),
+            });
+        }
+    }
+    return [...map.values()];
+}
+
 async function persistInstagramItems(items, final) {
     const data = await chrome.storage.local.get([
         INSTAGRAM_KEYS.bookmarks,
@@ -249,80 +590,52 @@ async function persistInstagramItems(items, final) {
 
     const existing = await migrateInstagramIfNeeded(data);
     const incoming = Array.isArray(items) ? items : [];
-    const merged = mergeByShortcode(
-        /** @type {InstagramSavedItem[]} */ (incoming),
-        existing
-    );
+    const merged = mergeByShortcode(incoming, existing);
 
     const patch = {
-        [INSTAGRAM_KEYS.bookmarks]: merged,
         [INSTAGRAM_KEYS.bookmarkCount]: merged.length,
+        [INSTAGRAM_KEYS.bookmarks]: merged,
         [INSTAGRAM_KEYS.storageVersion]: INSTAGRAM_STORAGE_VERSION,
     };
 
     if (final) {
-        const lastSyncAt = new Date().toISOString();
-        patch[INSTAGRAM_KEYS.lastSyncAt] = lastSyncAt;
+        patch[INSTAGRAM_KEYS.lastSyncAt] = new Date().toISOString();
         await chrome.storage.local.set(patch);
 
-        const stored =
-            typeof data[SYNC_KEYS.syncEndpoint] === "string"
+        const endpoint =
+            (typeof data[SYNC_KEYS.syncEndpoint] === "string"
                 ? data[SYNC_KEYS.syncEndpoint]
-                : "";
-        const endpoint = stored.trim() || defaultIngestEndpoint();
+                : ""
+            ).trim() || defaultIngestEndpoint();
         const apiKey =
             typeof data[SYNC_KEYS.syncApiKey] === "string"
                 ? data[SYNC_KEYS.syncApiKey]
                 : "";
+
         try {
             await postToOptionalBackend(endpoint, apiKey, merged, "instagram");
-        } catch (err) {
-            console.warn("[Cache App] Instagram optional sync error:", err);
+        } catch (error) {
+            console.warn("[Cache App] Instagram optional sync error:", error);
         }
 
-        const meta = await readSyncMetaForUi();
-        await chrome.runtime
-            .sendMessage({
-                completedSource: "instagram",
-                type: "SYNC_DONE",
-                ...meta,
-            })
-            .catch(() => {
-                /* no extension page listening */
-            });
+        await notifySyncDone("instagram");
     } else {
         await chrome.storage.local.set(patch);
-        const meta = await readSyncMetaForUi();
-        await chrome.runtime
-            .sendMessage({
-                activeSource: "instagram",
-                type: "SYNC_PROGRESS",
-                ...meta,
-            })
-            .catch(() => {
-                /* no extension page listening */
-            });
+        await notifySyncProgress("instagram");
     }
 }
 
-/**
- * @param {unknown[]} items
- * @param {boolean} final
- */
 async function persistTikTokItems(items, final) {
     const data = await chrome.storage.local.get([
-        TIKTOK_KEYS.videos,
         TIKTOK_KEYS.storageVersion,
+        TIKTOK_KEYS.videos,
         SYNC_KEYS.syncEndpoint,
         SYNC_KEYS.syncApiKey,
     ]);
 
     const existing = await migrateTikTokIfNeeded(data);
     const incoming = Array.isArray(items) ? items : [];
-    const merged = mergeByVideoId(
-        /** @type {TikTokFavoriteItem[]} */ (incoming),
-        existing
-    );
+    const merged = mergeByVideoId(incoming, existing);
 
     const patch = {
         [TIKTOK_KEYS.favoriteCount]: merged.length,
@@ -331,54 +644,32 @@ async function persistTikTokItems(items, final) {
     };
 
     if (final) {
-        const lastSyncAt = new Date().toISOString();
-        patch[TIKTOK_KEYS.lastSyncAt] = lastSyncAt;
+        patch[TIKTOK_KEYS.lastSyncAt] = new Date().toISOString();
         await chrome.storage.local.set(patch);
 
-        const stored =
-            typeof data[SYNC_KEYS.syncEndpoint] === "string"
+        const endpoint =
+            (typeof data[SYNC_KEYS.syncEndpoint] === "string"
                 ? data[SYNC_KEYS.syncEndpoint]
-                : "";
-        const endpoint = stored.trim() || defaultIngestEndpoint();
+                : ""
+            ).trim() || defaultIngestEndpoint();
         const apiKey =
             typeof data[SYNC_KEYS.syncApiKey] === "string"
                 ? data[SYNC_KEYS.syncApiKey]
                 : "";
+
         try {
             await postToOptionalBackend(endpoint, apiKey, merged, "tiktok");
-        } catch (err) {
-            console.warn("[Cache App] TikTok optional sync error:", err);
+        } catch (error) {
+            console.warn("[Cache App] TikTok optional sync error:", error);
         }
 
-        const meta = await readSyncMetaForUi();
-        await chrome.runtime
-            .sendMessage({
-                completedSource: "tiktok",
-                type: "SYNC_DONE",
-                ...meta,
-            })
-            .catch(() => {
-                /* no extension page listening */
-            });
+        await notifySyncDone("tiktok");
     } else {
         await chrome.storage.local.set(patch);
-        const meta = await readSyncMetaForUi();
-        await chrome.runtime
-            .sendMessage({
-                activeSource: "tiktok",
-                type: "SYNC_PROGRESS",
-                ...meta,
-            })
-            .catch(() => {
-                /* no extension page listening */
-            });
+        await notifySyncProgress("tiktok");
     }
 }
 
-/**
- * @param {unknown[]} items
- * @param {{ final: boolean, source: "instagram" | "tiktok" }} options
- */
 async function persistBookmarkItems(items, options) {
     if (options.source === "tiktok") {
         await persistTikTokItems(items, options.final);
@@ -387,29 +678,71 @@ async function persistBookmarkItems(items, options) {
     }
 }
 
-/**
- * @param {string} code
- * @param {string} [message]
- */
-async function notifySyncError(code, message) {
-    await chrome.runtime
-        .sendMessage({
-            code,
-            message: message ?? "",
-            type: "SYNC_ERROR",
-        })
-        .catch(() => {
-            /* no extension page listening */
-        });
-}
+chrome.bookmarks.onCreated.addListener((_id, node) => {
+    void queueChromeBookmarkNode(node, "upsert");
+});
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.bookmarks.onRemoved.addListener((id) => {
+    void queueChromeDelete(id);
+});
+
+chrome.bookmarks.onChanged.addListener((id) => {
+    void chrome.bookmarks
+        .get(id)
+        .then((nodes) => {
+            if (nodes[0]) {
+                return queueChromeBookmarkNode(nodes[0], "upsert");
+            }
+        })
+        .catch((error) => {
+            console.warn("[Cache App] Could not reload changed bookmark", error);
+        });
+});
+
+chrome.bookmarks.onMoved.addListener((id) => {
+    void chrome.bookmarks
+        .get(id)
+        .then((nodes) => {
+            if (nodes[0]) {
+                return queueChromeBookmarkNode(nodes[0], "move");
+            }
+        })
+        .catch((error) => {
+            console.warn("[Cache App] Could not reload moved bookmark", error);
+        });
+});
+
+chrome.bookmarks.onChildrenReordered.addListener((id) => {
+    void chrome.bookmarks
+        .getChildren(id)
+        .then((children) =>
+            Promise.all(children.map((child) => queueChromeBookmarkNode(child, "move"))),
+        )
+        .catch((error) => {
+            console.warn("[Cache App] Could not reload reordered folder", error);
+        });
+});
+
+chrome.bookmarks.onImportEnded.addListener(() => {
+    void runChromeInitialImport("continuous_sync");
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+    void ensureChromeIdentity();
+    void flushChromeBookmarkQueue();
+});
+
+chrome.runtime.onStartup?.addListener(() => {
+    void ensureChromeIdentity();
+    void flushChromeBookmarkQueue();
+});
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === "CACHE_SITE_BRIDGE") {
         (async () => {
             const endpoint =
                 typeof msg.endpoint === "string" ? msg.endpoint.trim() : "";
-            const token =
-                typeof msg.token === "string" ? msg.token.trim() : "";
+            const token = typeof msg.token === "string" ? msg.token.trim() : "";
             if (!endpoint || !token) {
                 return;
             }
@@ -417,6 +750,7 @@ chrome.runtime.onMessage.addListener((msg) => {
                 [SYNC_KEYS.syncApiKey]: token,
                 [SYNC_KEYS.syncEndpoint]: endpoint,
             });
+            await flushChromeBookmarkQueue();
         })();
         return true;
     }
@@ -424,18 +758,15 @@ chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.type === "BOOKMARKS_CHUNK" || msg?.type === "BOOKMARKS_COMPLETE") {
         (async () => {
             try {
-                await persistBookmarkItems(
-                    Array.isArray(msg.items) ? msg.items : [],
-                    {
-                        final: msg.type === "BOOKMARKS_COMPLETE",
-                        source: messageSource(msg),
-                    }
-                );
-            } catch (err) {
-                console.error("[Cache App] bookmark persist failed:", err);
+                await persistBookmarkItems(Array.isArray(msg.items) ? msg.items : [], {
+                    final: msg.type === "BOOKMARKS_COMPLETE",
+                    source: messageSource(msg),
+                });
+            } catch (error) {
+                console.error("[Cache App] bookmark persist failed:", error);
                 await notifySyncError(
                     "MERGE_FAILED",
-                    err instanceof Error ? err.message : String(err)
+                    error instanceof Error ? error.message : String(error),
                 );
             }
         })();
@@ -446,8 +777,59 @@ chrome.runtime.onMessage.addListener((msg) => {
         (async () => {
             await notifySyncError(
                 typeof msg.code === "string" ? msg.code : "UNKNOWN",
-                msg.message
+                msg.message,
             );
+        })();
+        return true;
+    }
+
+    if (msg?.type === "SYNC_CHROME_BOOKMARKS") {
+        (async () => {
+            try {
+                const mode =
+                    msg.mode === "one_time_import"
+                        ? "one_time_import"
+                        : "continuous_sync";
+                await runChromeInitialImport(mode);
+                sendResponse?.({ ok: true });
+            } catch (error) {
+                const message =
+                    error instanceof Error ? error.message : String(error);
+                await setChromeLastError(message);
+                await notifySyncError("CHROME_SYNC_FAILED", message);
+                sendResponse?.({ error: message, ok: false });
+            }
+        })();
+        return true;
+    }
+
+    if (msg?.type === "TOGGLE_CHROME_SYNC") {
+        (async () => {
+            await chrome.storage.local.set({
+                [CHROME_KEYS.syncEnabled]: !!msg.enabled,
+            });
+            if (msg.enabled) {
+                await runChromeInitialImport("continuous_sync");
+            }
+            sendResponse?.({ ok: true });
+        })();
+        return true;
+    }
+
+    if (msg?.type === "SEARCH_CHROME_BOOKMARKS") {
+        (async () => {
+            const results = await searchChromeBookmarks(
+                typeof msg.query === "string" ? msg.query : "",
+            );
+            sendResponse?.({ ok: true, results });
+        })();
+        return true;
+    }
+
+    if (msg?.type === "GET_SYNC_META") {
+        (async () => {
+            const meta = await readSyncMetaForUi();
+            sendResponse?.({ ok: true, ...meta });
         })();
         return true;
     }

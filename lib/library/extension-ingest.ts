@@ -1,5 +1,6 @@
 import "server-only";
 
+import { DEFAULT_BROWSER_PROFILE_ID } from "@/lib/library/chrome-bookmarks";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import { prisma } from "@/prisma";
 
@@ -53,9 +54,13 @@ export async function resolveExtensionIngestUserId(
 export function normalizeLibrarySource(
     raw: string | undefined
 ): LibraryItemSource {
-    return raw === "tiktok"
-        ? LibraryItemSource.tiktok
-        : LibraryItemSource.instagram;
+    if (raw === "tiktok") {
+        return LibraryItemSource.tiktok;
+    }
+    if (raw === "chrome_bookmarks" || raw === "chrome") {
+        return LibraryItemSource.chrome_bookmarks;
+    }
+    return LibraryItemSource.instagram;
 }
 
 function parseScrapedAt(iso: string | undefined): Date | null {
@@ -67,10 +72,17 @@ function parseScrapedAt(iso: string | undefined): Date | null {
 }
 
 export interface IngestItemInput {
+    browserProfileId?: string;
     caption?: string;
     id?: string;
+    kind?: "bookmark" | "folder";
+    parentExternalId?: string;
+    postedAt?: string;
     scrapedAt?: string;
     shortcode?: string;
+    sourceDeviceId?: string;
+    sourceDeviceName?: string;
+    sourceMetadata?: Record<string, unknown> | null;
     thumbnailUrl?: string;
     url: string;
 }
@@ -85,32 +97,102 @@ export async function upsertLibraryItemsFromIngest(
 ): Promise<number> {
     let count = 0;
     await prisma.$transaction(async (tx) => {
+        const libraryItemDelegate = tx.libraryItem as unknown as {
+            upsert(args: {
+                create: {
+                    browserProfileId: string;
+                    caption: string | null;
+                    externalId: string;
+                    kind: "bookmark" | "folder";
+                    parentExternalId: string | null;
+                    postedAt: Date | null;
+                    scrapedAt: Date | null;
+                    source: LibraryItemSource;
+                    sourceDeviceId: string | null;
+                    sourceDeviceName: string | null;
+                    sourceMetadata: Record<string, unknown> | null;
+                    thumbnailUrl: string | null;
+                    url: string;
+                    userId: string;
+                };
+                update: {
+                    browserProfileId: string;
+                    caption: string | null;
+                    kind: "bookmark" | "folder";
+                    parentExternalId: string | null;
+                    postedAt: Date | null;
+                    scrapedAt: Date | null;
+                    sourceDeviceId: string | null;
+                    sourceDeviceName: string | null;
+                    sourceMetadata: Record<string, unknown> | null;
+                    thumbnailUrl: string | null;
+                    url: string;
+                };
+                where: {
+                    userId_source_browserProfileId_externalId: {
+                        browserProfileId: string;
+                        externalId: string;
+                        source: LibraryItemSource;
+                        userId: string;
+                    };
+                };
+            }): Promise<unknown>;
+        };
         for (const item of items) {
-            const externalId =
-                source === LibraryItemSource.instagram
-                    ? item.shortcode
-                    : item.id;
+            let externalId: string | undefined;
+            if (source === LibraryItemSource.instagram) {
+                externalId = item.shortcode;
+            } else if (
+                source === LibraryItemSource.tiktok ||
+                source === LibraryItemSource.chrome_bookmarks
+            ) {
+                externalId = item.id;
+            }
+
             if (!externalId) {
                 continue;
             }
-            await tx.libraryItem.upsert({
+            const browserProfileId =
+                item.browserProfileId?.trim() || DEFAULT_BROWSER_PROFILE_ID;
+            await libraryItemDelegate.upsert({
                 create: {
+                    browserProfileId,
                     caption: item.caption ?? null,
                     externalId,
+                    kind:
+                        item.kind === "folder"
+                            ? "folder"
+                            : "bookmark",
+                    parentExternalId: item.parentExternalId ?? null,
+                    postedAt: parseScrapedAt(item.postedAt),
                     scrapedAt: parseScrapedAt(item.scrapedAt),
                     source,
+                    sourceDeviceId: item.sourceDeviceId ?? null,
+                    sourceDeviceName: item.sourceDeviceName ?? null,
+                    sourceMetadata: item.sourceMetadata ?? null,
                     thumbnailUrl: item.thumbnailUrl ?? null,
                     url: item.url,
                     userId,
                 },
                 update: {
+                    browserProfileId,
                     caption: item.caption ?? null,
+                    kind:
+                        item.kind === "folder"
+                            ? "folder"
+                            : "bookmark",
+                    parentExternalId: item.parentExternalId ?? null,
+                    postedAt: parseScrapedAt(item.postedAt),
                     scrapedAt: parseScrapedAt(item.scrapedAt),
+                    sourceDeviceId: item.sourceDeviceId ?? null,
+                    sourceDeviceName: item.sourceDeviceName ?? null,
+                    sourceMetadata: item.sourceMetadata ?? null,
                     thumbnailUrl: item.thumbnailUrl ?? null,
                     url: item.url,
                 },
                 where: {
-                    userId_source_externalId: {
+                    userId_source_browserProfileId_externalId: {
+                        browserProfileId,
                         externalId,
                         source,
                         userId,

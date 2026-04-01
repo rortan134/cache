@@ -1,16 +1,15 @@
 const statusEl = document.getElementById("status");
 const syncBtn = document.getElementById("sync");
+const chromeSyncBtn = document.getElementById("chromeSync");
+const chromeModeEl = document.getElementById("chromeMode");
+const chromeContinuousEl = document.getElementById("chromeContinuous");
 const instagramMetaEl = document.getElementById("instagramMeta");
 const tiktokMetaEl = document.getElementById("tiktokMeta");
+const chromeMetaEl = document.getElementById("chromeMeta");
 const openCacheBtnEl = document.getElementById("openCache");
 
-/** Default locale path segment for opening the web app (matches Next `[locale]` routes). */
 const CACHE_APP_DEFAULT_LOCALE = "en-US";
 
-/**
- * @param {string} raw
- * @returns {string | null}
- */
 function deriveOriginFromEndpoint(raw) {
     const s = (raw ?? "").trim();
     if (!s) {
@@ -30,10 +29,6 @@ function setOpenCacheVisible(visible) {
     openCacheBtnEl.style.display = visible ? "" : "none";
 }
 
-/**
- * Attempts to re-link by asking an open Cache tab to bridge token immediately.
- * @returns {Promise<boolean>}
- */
 async function requestBridgeFromOpenCacheTab() {
     const appOrigin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(
         /\/$/,
@@ -53,14 +48,14 @@ async function requestBridgeFromOpenCacheTab() {
         ) {
             urlPatterns = [...urlPatterns, `https://www.${u.hostname}/*`];
         }
-    } catch {
-        // leave default pattern only
-    }
+    } catch {}
+
     try {
         tabs = await chrome.tabs.query({ url: urlPatterns });
     } catch {
         return false;
     }
+
     for (const tab of tabs) {
         if (!tab.id) {
             continue;
@@ -72,17 +67,11 @@ async function requestBridgeFromOpenCacheTab() {
             if (res && typeof res === "object" && res.ok === true) {
                 return true;
             }
-        } catch {
-            // ignore and continue trying other tabs
-        }
+        } catch {}
     }
     return false;
 }
 
-/**
- * @param {string} text
- * @param {'idle' | 'ok' | 'error'} kind
- */
 function setStatus(text, kind) {
     if (!statusEl) {
         return;
@@ -97,12 +86,10 @@ function setStatus(text, kind) {
     }
 }
 
-/**
- * @param {string} code
- * @param {string} [message]
- */
 function formatErrorMessage(code, message) {
     const map = {
+        CHROME_SYNC_FAILED:
+            message || "Chrome bookmarks could not be synced right now.",
         MERGE_FAILED: message || "Could not save data.",
         NO_ITEMS: "No items found. Scroll the grid, then sync again.",
         NOT_SAVED_PAGE: "Open your Saved collection on Instagram first.",
@@ -111,15 +98,9 @@ function formatErrorMessage(code, message) {
         UNSUPPORTED_PAGE:
             "Open instagram.com or tiktok.com (Saved or Favorites) in this tab.",
     };
-    return (
-        map[/** @type {keyof typeof map} */ (code)] ?? message ?? "Sync failed."
-    );
+    return map[code] ?? message ?? "Sync failed.";
 }
 
-/**
- * @param {string | undefined} iso
- * @returns {string}
- */
 function formatLastSync(iso) {
     if (!iso) {
         return "—";
@@ -131,49 +112,51 @@ function formatLastSync(iso) {
     }
 }
 
-async function refreshFromStorage() {
-    const data = await chrome.storage.local.get([
-        "bookmarkCount",
-        "lastSyncAt",
-        "tiktokFavoriteCount",
-        "tiktokLastSyncAt",
-    ]);
+async function loadMeta() {
+    const response = await chrome.runtime.sendMessage({ type: "GET_SYNC_META" });
+    return response && typeof response === "object" ? response : {};
+}
 
-    const igCount =
-        typeof data.bookmarkCount === "number" ? data.bookmarkCount : 0;
-    const ttCount =
-        typeof data.tiktokFavoriteCount === "number"
-            ? data.tiktokFavoriteCount
-            : 0;
+async function refreshFromStorage() {
+    const meta = await loadMeta();
 
     if (instagramMetaEl) {
-        instagramMetaEl.textContent = `Instagram Saved: ${igCount} · last sync ${formatLastSync(typeof data.lastSyncAt === "string" ? data.lastSyncAt : undefined)}`;
+        instagramMetaEl.textContent = `Instagram Saved: ${meta.instagramCount ?? 0} · last sync ${formatLastSync(meta.instagramLastSyncAt)}`;
     }
     if (tiktokMetaEl) {
-        tiktokMetaEl.textContent = `TikTok Favorites: ${ttCount} · last sync ${formatLastSync(typeof data.tiktokLastSyncAt === "string" ? data.tiktokLastSyncAt : undefined)}`;
+        tiktokMetaEl.textContent = `TikTok Favorites: ${meta.tiktokCount ?? 0} · last sync ${formatLastSync(meta.tiktokLastSyncAt)}`;
+    }
+    if (chromeMetaEl) {
+        const pending = meta.chromePendingEvents ?? 0;
+        const mode = meta.chromeContinuousSync ? "continuous" : "one-time";
+        const error = meta.chromeLastError ? ` · error ${meta.chromeLastError}` : "";
+        chromeMetaEl.textContent = `Chrome bookmarks: ${meta.chromeCount ?? 0} · ${mode} mode · pending ${pending} · last sync ${formatLastSync(meta.chromeLastSyncAt)}${error}`;
+    }
+    if (chromeContinuousEl) {
+        chromeContinuousEl.checked = meta.chromeContinuousSync === true;
+    }
+    if (chromeModeEl) {
+        chromeModeEl.value =
+            meta.chromeContinuousSync === true
+                ? "continuous_sync"
+                : chromeModeEl.value || "one_time_import";
     }
 }
 
-/**
- * Sync is allowed when the configured Cache origin has a session cookie and the site
- * bootstrap has stored an ingest token.
- */
 async function applyCacheSessionGate() {
-    if (!syncBtn) {
-        return;
-    }
     const appOrigin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(
         /\/$/,
         "",
     );
     if (!appOrigin) {
         syncBtn.disabled = true;
+        chromeSyncBtn.disabled = true;
         setOpenCacheVisible(true);
         setStatus(
             "Extension is missing CACHE_APP_ORIGIN in cache-config.js.",
             "error",
         );
-        return;
+        return false;
     }
 
     const keyData = await chrome.storage.local.get(["syncApiKey"]);
@@ -189,62 +172,56 @@ async function applyCacheSessionGate() {
     }
     if (!token) {
         syncBtn.disabled = true;
+        chromeSyncBtn.disabled = true;
         setOpenCacheVisible(true);
         setStatus(
             "Sign in to Cache and keep a cachd.app tab open, then reopen this popup.",
             "error",
         );
-        return;
+        return false;
     }
 
     syncBtn.disabled = false;
-    // User is already linked; hiding avoids the misleading localhost button.
+    chromeSyncBtn.disabled = false;
     setOpenCacheVisible(false);
     if (statusEl && !statusEl.classList.contains("error")) {
         statusEl.textContent = "";
     }
+    return true;
 }
 
-/**
- * @param {unknown} msg
- */
 function handleProgressMessage(msg) {
-    if (typeof msg !== "object" || msg === null) {
-        return;
-    }
-    const m = /** @type {Record<string, unknown>} */ (msg);
-    const ig = typeof m.instagramCount === "number" ? m.instagramCount : 0;
-    const tt = typeof m.tiktokCount === "number" ? m.tiktokCount : 0;
-    const active = m.activeSource === "tiktok" ? "TikTok" : "Instagram";
-    setStatus(`Syncing ${active}… ${ig} Saved · ${tt} Favorites`, "idle");
-    void refreshFromStorage();
+    const activeMap = {
+        chrome: "Chrome bookmarks",
+        instagram: "Instagram Saved",
+        tiktok: "TikTok Favorites",
+    };
+    const active = activeMap[msg.activeSource] ?? "items";
+    setStatus(`Syncing ${active}…`, "idle");
 }
 
-/**
- * @param {unknown} msg
- */
 function handleDoneMessage(msg) {
-    if (typeof msg !== "object" || msg === null) {
-        return;
-    }
-    const m = /** @type {Record<string, unknown>} */ (msg);
-    const ig = typeof m.instagramCount === "number" ? m.instagramCount : 0;
-    const tt = typeof m.tiktokCount === "number" ? m.tiktokCount : 0;
-    const src =
-        m.completedSource === "tiktok" ? "TikTok Favorites" : "Instagram Saved";
-    setStatus(`Done — ${src} updated (${ig} Saved · ${tt} Favorites).`, "ok");
+    const sourceMap = {
+        chrome: "Chrome bookmarks",
+        instagram: "Instagram Saved",
+        tiktok: "TikTok Favorites",
+    };
+    const src = sourceMap[msg.completedSource] ?? "items";
+    setStatus(`Done. ${src} updated.`, "ok");
 }
 
 chrome.runtime.onMessage.addListener((msg) => {
-    const btn = document.getElementById("sync");
     if (msg?.type === "SYNC_PROGRESS") {
         handleProgressMessage(msg);
         void refreshFromStorage();
     }
     if (msg?.type === "SYNC_DONE") {
         handleDoneMessage(msg);
-        if (btn) {
-            btn.disabled = false;
+        if (syncBtn) {
+            syncBtn.disabled = false;
+        }
+        if (chromeSyncBtn) {
+            chromeSyncBtn.disabled = false;
         }
         void refreshFromStorage();
         void applyCacheSessionGate();
@@ -257,20 +234,23 @@ chrome.runtime.onMessage.addListener((msg) => {
             ),
             "error",
         );
-        if (btn) {
-            btn.disabled = false;
+        if (syncBtn) {
+            syncBtn.disabled = false;
         }
-        void applyCacheSessionGate();
+        if (chromeSyncBtn) {
+            chromeSyncBtn.disabled = false;
+        }
+        void refreshFromStorage();
     }
 });
 
 syncBtn?.addEventListener("click", async () => {
-    await applyCacheSessionGate();
-    if (syncBtn?.disabled) {
+    const linked = await applyCacheSessionGate();
+    if (!linked || syncBtn?.disabled) {
         return;
     }
 
-    setStatus("Syncing…", "idle");
+    setStatus("Syncing current tab…", "idle");
     syncBtn.disabled = true;
 
     try {
@@ -279,34 +259,82 @@ syncBtn?.addEventListener("click", async () => {
             currentWindow: true,
         });
         if (!tab?.id) {
-            setStatus("No active tab.", "error");
-            syncBtn.disabled = false;
-            await applyCacheSessionGate();
-            return;
+            throw new Error("No active tab.");
         }
         const url = tab.url ?? "";
         if (
             !url.startsWith("https://www.instagram.com/") &&
             !url.startsWith("https://www.tiktok.com/")
         ) {
-            setStatus(
+            throw new Error(
                 "Open Instagram or TikTok in this tab (Saved or Favorites).",
-                "error",
             );
-            syncBtn.disabled = false;
-            await applyCacheSessionGate();
-            return;
         }
 
         await chrome.tabs.sendMessage(tab.id, { type: "START_SYNC" });
-    } catch {
+    } catch (error) {
         setStatus(
-            "Could not reach this page. Reload the tab and try again.",
+            error instanceof Error
+                ? error.message
+                : "Could not reach this page. Reload the tab and try again.",
             "error",
         );
         syncBtn.disabled = false;
         await applyCacheSessionGate();
     }
+});
+
+chromeSyncBtn?.addEventListener("click", async () => {
+    const linked = await applyCacheSessionGate();
+    if (!linked || chromeSyncBtn?.disabled) {
+        return;
+    }
+
+    const selectedMode =
+        chromeModeEl?.value === "continuous_sync"
+            ? "continuous_sync"
+            : "one_time_import";
+    const continuousEnabled = chromeContinuousEl?.checked === true;
+    const mode = continuousEnabled ? "continuous_sync" : selectedMode;
+
+    setStatus(
+        mode === "continuous_sync"
+            ? "Importing Chrome bookmarks and enabling continuous sync…"
+            : "Importing Chrome bookmarks…",
+        "idle",
+    );
+    chromeSyncBtn.disabled = true;
+
+    try {
+        if (chromeContinuousEl) {
+            chromeContinuousEl.checked = mode === "continuous_sync";
+        }
+        await chrome.runtime.sendMessage({
+            mode,
+            type: "SYNC_CHROME_BOOKMARKS",
+        });
+    } catch (error) {
+        setStatus(
+            error instanceof Error
+                ? error.message
+                : "Chrome bookmarks could not be synced right now.",
+            "error",
+        );
+        chromeSyncBtn.disabled = false;
+        await applyCacheSessionGate();
+    }
+});
+
+chromeContinuousEl?.addEventListener("change", async () => {
+    const enabled = chromeContinuousEl.checked;
+    if (chromeModeEl) {
+        chromeModeEl.value = enabled ? "continuous_sync" : "one_time_import";
+    }
+    await chrome.runtime.sendMessage({
+        enabled,
+        type: "TOGGLE_CHROME_SYNC",
+    });
+    void refreshFromStorage();
 });
 
 openCacheBtnEl?.addEventListener("click", async () => {
@@ -338,8 +366,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") {
         return;
     }
-    if (changes.syncApiKey || changes.syncEndpoint) {
+    if (
+        changes.syncApiKey ||
+        changes.syncEndpoint ||
+        changes.chromeSyncEnabled ||
+        changes.chromeLastSyncAt ||
+        changes.chromePendingEvents
+    ) {
         void applyCacheSessionGate();
+        void refreshFromStorage();
     }
 });
 

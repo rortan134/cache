@@ -61,20 +61,18 @@ function SessionHint() {
     }
 
     return (
-        <>
-            <div className="flex items-center gap-2">
-                <Info className="size-4 opacity-50" />
-                <p className="font-medium text-xs leading-[1.22] tracking-[-3%] opacity-50">
-                    You are signed in as{" "}
-                    {session?.user.email ?? <Skeleton>Placeholder</Skeleton>}
-                </p>
-            </div>
-            <Button
-                loading={isPending}
-                render={<Link href="/logout">Log out</Link>}
-                variant="ghost"
-            />
-        </>
+        <div className="flex items-center gap-2">
+            <Info className="size-4 opacity-50" />
+            <p className="font-medium text-xs leading-[1.22] tracking-[-3%] opacity-50">
+                You are signed in as{" "}
+                {session?.user.email ?? <Skeleton>Placeholder</Skeleton>}
+                <Button
+                    loading={isPending}
+                    render={<Link href="/logout">Log out</Link>}
+                    variant="link"
+                />
+            </p>
+        </div>
     );
 }
 

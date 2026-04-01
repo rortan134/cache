@@ -18,7 +18,7 @@ const itemSchema = z
         url: z.string(),
     })
     .refine((row) => Boolean(row.shortcode || row.id), {
-        message: "Each item needs shortcode (Instagram) or id (TikTok)",
+        message: "Each item needs shortcode (Instagram), id (TikTok), or id (Chrome)",
     });
 
 const bodySchema = z.object({

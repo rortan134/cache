@@ -990,6 +990,7 @@ export const LibraryItemScalarFieldEnum = {
   url: 'url',
   caption: 'caption',
   thumbnailUrl: 'thumbnailUrl',
+  postedAt: 'postedAt',
   scrapedAt: 'scrapedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

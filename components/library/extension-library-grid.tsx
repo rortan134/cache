@@ -39,6 +39,9 @@ interface SectionProps extends GridProps {
 }
 
 function sourceLabel(source: LibraryItemSource): string {
+    if (source === LibraryItemSource.chrome_bookmarks) {
+        return "Chrome";
+    }
     if (source === LibraryItemSource.google_photos) {
         return "Google Photos";
     }
@@ -62,9 +65,14 @@ function itemDomain(url: string): string {
     }
 }
 
-function itemDateLabel(item: LibraryItem): string {
-    const value = item.scrapedAt ?? item.createdAt;
-    const date = value instanceof Date ? value : new Date(value);
+function itemDateLabel(dateValue: Date | string | null | undefined): string {
+    if (!dateValue) {
+        return "";
+    }
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
     return date.toLocaleDateString(undefined, {
         day: "numeric",
         month: "short",
@@ -107,7 +115,7 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
     );
 
     return (
-        <Masonry columnCount={5} fallback={fallback} gap={8} linear>
+        <Masonry columnCount={5} fallback={fallback} gap={6} linear>
             {EMPTY_LIBRARY_PEEK_PLACEHOLDERS.map(({ aspect, id }, index) => {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
                 return (
@@ -146,7 +154,7 @@ export function ExtensionLibraryGrid({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -155,7 +163,7 @@ export function ExtensionLibraryGrid({
                     ))}
                 </div>
             }
-            gap={8}
+            gap={6}
             linear
         >
             {items.map((item) => {
@@ -163,12 +171,17 @@ export function ExtensionLibraryGrid({
                 const alt = (item.caption ?? "").trim() || "Saved item";
                 const source = sourceLabel(item.source);
                 const domain = itemDomain(item.url);
-                const dateLabel = itemDateLabel(item);
+                const addedLabel = itemDateLabel(
+                    item.scrapedAt ?? item.createdAt,
+                );
+                const postedLabel = itemDateLabel(item.postedAt);
+                const hasBothDates =
+                    postedLabel && addedLabel && postedLabel !== addedLabel;
 
                 return (
                     <MasonryItem asChild key={item.id}>
                         <a
-                            className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] duration-150 hover:border-border hover:shadow-lg/5 focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                            className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] hover:border-border hover:shadow-lg/5 focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                             href={href}
                             rel="noopener noreferrer"
                             target="_blank"
@@ -192,18 +205,29 @@ export function ExtensionLibraryGrid({
                                     <span className="rounded-full bg-black/65 px-2 py-1 font-medium text-[11px] text-white backdrop-blur-sm">
                                         {source}
                                     </span>
-                                    <span className="rounded-full bg-black/65 px-2 py-1 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
+                                    <span className="rounded-full bg-black/65 px-2 py-1 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                                         Open
                                     </span>
                                 </div>
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                                         <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
                                             {domain}
                                         </span>
-                                        <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
-                                            {dateLabel}
-                                        </span>
+                                        {hasBothDates ? (
+                                            <>
+                                                <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                                    Posted: {postedLabel}
+                                                </span>
+                                                <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                                    Added: {addedLabel}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                                {postedLabel || addedLabel}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
