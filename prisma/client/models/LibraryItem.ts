@@ -28,7 +28,12 @@ export type LibraryItemMinAggregateOutputType = {
   id: string | null
   userId: string | null
   source: $Enums.LibraryItemSource | null
+  kind: $Enums.LibraryItemKind | null
   externalId: string | null
+  browserProfileId: string | null
+  parentExternalId: string | null
+  sourceDeviceId: string | null
+  sourceDeviceName: string | null
   url: string | null
   caption: string | null
   thumbnailUrl: string | null
@@ -42,7 +47,12 @@ export type LibraryItemMaxAggregateOutputType = {
   id: string | null
   userId: string | null
   source: $Enums.LibraryItemSource | null
+  kind: $Enums.LibraryItemKind | null
   externalId: string | null
+  browserProfileId: string | null
+  parentExternalId: string | null
+  sourceDeviceId: string | null
+  sourceDeviceName: string | null
   url: string | null
   caption: string | null
   thumbnailUrl: string | null
@@ -56,10 +66,17 @@ export type LibraryItemCountAggregateOutputType = {
   id: number
   userId: number
   source: number
+  kind: number
   externalId: number
+  sourceAliasIds: number
+  browserProfileId: number
+  parentExternalId: number
+  sourceDeviceId: number
+  sourceDeviceName: number
   url: number
   caption: number
   thumbnailUrl: number
+  sourceMetadata: number
   postedAt: number
   scrapedAt: number
   createdAt: number
@@ -72,7 +89,12 @@ export type LibraryItemMinAggregateInputType = {
   id?: true
   userId?: true
   source?: true
+  kind?: true
   externalId?: true
+  browserProfileId?: true
+  parentExternalId?: true
+  sourceDeviceId?: true
+  sourceDeviceName?: true
   url?: true
   caption?: true
   thumbnailUrl?: true
@@ -86,7 +108,12 @@ export type LibraryItemMaxAggregateInputType = {
   id?: true
   userId?: true
   source?: true
+  kind?: true
   externalId?: true
+  browserProfileId?: true
+  parentExternalId?: true
+  sourceDeviceId?: true
+  sourceDeviceName?: true
   url?: true
   caption?: true
   thumbnailUrl?: true
@@ -100,10 +127,17 @@ export type LibraryItemCountAggregateInputType = {
   id?: true
   userId?: true
   source?: true
+  kind?: true
   externalId?: true
+  sourceAliasIds?: true
+  browserProfileId?: true
+  parentExternalId?: true
+  sourceDeviceId?: true
+  sourceDeviceName?: true
   url?: true
   caption?: true
   thumbnailUrl?: true
+  sourceMetadata?: true
   postedAt?: true
   scrapedAt?: true
   createdAt?: true
@@ -187,10 +221,17 @@ export type LibraryItemGroupByOutputType = {
   id: string
   userId: string
   source: $Enums.LibraryItemSource
+  kind: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds: string[]
+  browserProfileId: string
+  parentExternalId: string | null
+  sourceDeviceId: string | null
+  sourceDeviceName: string | null
   url: string
   caption: string | null
   thumbnailUrl: string | null
+  sourceMetadata: runtime.JsonValue | null
   postedAt: Date | null
   scrapedAt: Date | null
   createdAt: Date
@@ -222,10 +263,17 @@ export type LibraryItemWhereInput = {
   id?: Prisma.StringFilter<"LibraryItem"> | string
   userId?: Prisma.StringFilter<"LibraryItem"> | string
   source?: Prisma.EnumLibraryItemSourceFilter<"LibraryItem"> | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFilter<"LibraryItem"> | $Enums.LibraryItemKind
   externalId?: Prisma.StringFilter<"LibraryItem"> | string
+  sourceAliasIds?: Prisma.StringNullableListFilter<"LibraryItem">
+  browserProfileId?: Prisma.StringFilter<"LibraryItem"> | string
+  parentExternalId?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceDeviceId?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceDeviceName?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   url?: Prisma.StringFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceMetadata?: Prisma.JsonNullableFilter<"LibraryItem">
   postedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
@@ -237,10 +285,17 @@ export type LibraryItemOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   externalId?: Prisma.SortOrder
+  sourceAliasIds?: Prisma.SortOrder
+  browserProfileId?: Prisma.SortOrder
+  parentExternalId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceDeviceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceDeviceName?: Prisma.SortOrderInput | Prisma.SortOrder
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrderInput | Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceMetadata?: Prisma.SortOrderInput | Prisma.SortOrder
   postedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   scrapedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -250,31 +305,45 @@ export type LibraryItemOrderByWithRelationInput = {
 
 export type LibraryItemWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  userId_source_externalId?: Prisma.LibraryItemUserIdSourceExternalIdCompoundUniqueInput
+  userId_source_browserProfileId_externalId?: Prisma.LibraryItemUserIdSourceBrowserProfileIdExternalIdCompoundUniqueInput
   AND?: Prisma.LibraryItemWhereInput | Prisma.LibraryItemWhereInput[]
   OR?: Prisma.LibraryItemWhereInput[]
   NOT?: Prisma.LibraryItemWhereInput | Prisma.LibraryItemWhereInput[]
   userId?: Prisma.StringFilter<"LibraryItem"> | string
   source?: Prisma.EnumLibraryItemSourceFilter<"LibraryItem"> | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFilter<"LibraryItem"> | $Enums.LibraryItemKind
   externalId?: Prisma.StringFilter<"LibraryItem"> | string
+  sourceAliasIds?: Prisma.StringNullableListFilter<"LibraryItem">
+  browserProfileId?: Prisma.StringFilter<"LibraryItem"> | string
+  parentExternalId?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceDeviceId?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceDeviceName?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   url?: Prisma.StringFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceMetadata?: Prisma.JsonNullableFilter<"LibraryItem">
   postedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "userId_source_externalId">
+}, "id" | "userId_source_browserProfileId_externalId">
 
 export type LibraryItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   externalId?: Prisma.SortOrder
+  sourceAliasIds?: Prisma.SortOrder
+  browserProfileId?: Prisma.SortOrder
+  parentExternalId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceDeviceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceDeviceName?: Prisma.SortOrderInput | Prisma.SortOrder
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrderInput | Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceMetadata?: Prisma.SortOrderInput | Prisma.SortOrder
   postedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   scrapedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -291,10 +360,17 @@ export type LibraryItemScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"LibraryItem"> | string
   userId?: Prisma.StringWithAggregatesFilter<"LibraryItem"> | string
   source?: Prisma.EnumLibraryItemSourceWithAggregatesFilter<"LibraryItem"> | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindWithAggregatesFilter<"LibraryItem"> | $Enums.LibraryItemKind
   externalId?: Prisma.StringWithAggregatesFilter<"LibraryItem"> | string
+  sourceAliasIds?: Prisma.StringNullableListFilter<"LibraryItem">
+  browserProfileId?: Prisma.StringWithAggregatesFilter<"LibraryItem"> | string
+  parentExternalId?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
+  sourceDeviceId?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
+  sourceDeviceName?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
   url?: Prisma.StringWithAggregatesFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableWithAggregatesFilter<"LibraryItem"> | string | null
+  sourceMetadata?: Prisma.JsonNullableWithAggregatesFilter<"LibraryItem">
   postedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LibraryItem"> | Date | string
@@ -304,10 +380,17 @@ export type LibraryItemScalarWhereWithAggregatesInput = {
 export type LibraryItemCreateInput = {
   id?: string
   source: $Enums.LibraryItemSource
+  kind?: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds?: Prisma.LibraryItemCreatesourceAliasIdsInput | string[]
+  browserProfileId?: string
+  parentExternalId?: string | null
+  sourceDeviceId?: string | null
+  sourceDeviceName?: string | null
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
@@ -319,10 +402,17 @@ export type LibraryItemUncheckedCreateInput = {
   id?: string
   userId: string
   source: $Enums.LibraryItemSource
+  kind?: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds?: Prisma.LibraryItemCreatesourceAliasIdsInput | string[]
+  browserProfileId?: string
+  parentExternalId?: string | null
+  sourceDeviceId?: string | null
+  sourceDeviceName?: string | null
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
@@ -332,10 +422,17 @@ export type LibraryItemUncheckedCreateInput = {
 export type LibraryItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -347,10 +444,17 @@ export type LibraryItemUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -361,10 +465,17 @@ export type LibraryItemCreateManyInput = {
   id?: string
   userId: string
   source: $Enums.LibraryItemSource
+  kind?: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds?: Prisma.LibraryItemCreatesourceAliasIdsInput | string[]
+  browserProfileId?: string
+  parentExternalId?: string | null
+  sourceDeviceId?: string | null
+  sourceDeviceName?: string | null
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
@@ -374,10 +485,17 @@ export type LibraryItemCreateManyInput = {
 export type LibraryItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -388,10 +506,17 @@ export type LibraryItemUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -408,9 +533,18 @@ export type LibraryItemOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type LibraryItemUserIdSourceExternalIdCompoundUniqueInput = {
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
+export type LibraryItemUserIdSourceBrowserProfileIdExternalIdCompoundUniqueInput = {
   userId: string
   source: $Enums.LibraryItemSource
+  browserProfileId: string
   externalId: string
 }
 
@@ -418,10 +552,17 @@ export type LibraryItemCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   externalId?: Prisma.SortOrder
+  sourceAliasIds?: Prisma.SortOrder
+  browserProfileId?: Prisma.SortOrder
+  parentExternalId?: Prisma.SortOrder
+  sourceDeviceId?: Prisma.SortOrder
+  sourceDeviceName?: Prisma.SortOrder
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrder
+  sourceMetadata?: Prisma.SortOrder
   postedAt?: Prisma.SortOrder
   scrapedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -432,7 +573,12 @@ export type LibraryItemMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   externalId?: Prisma.SortOrder
+  browserProfileId?: Prisma.SortOrder
+  parentExternalId?: Prisma.SortOrder
+  sourceDeviceId?: Prisma.SortOrder
+  sourceDeviceName?: Prisma.SortOrder
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrder
@@ -446,7 +592,12 @@ export type LibraryItemMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   externalId?: Prisma.SortOrder
+  browserProfileId?: Prisma.SortOrder
+  parentExternalId?: Prisma.SortOrder
+  sourceDeviceId?: Prisma.SortOrder
+  sourceDeviceName?: Prisma.SortOrder
   url?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   thumbnailUrl?: Prisma.SortOrder
@@ -498,8 +649,21 @@ export type LibraryItemUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.LibraryItemScalarWhereInput | Prisma.LibraryItemScalarWhereInput[]
 }
 
+export type LibraryItemCreatesourceAliasIdsInput = {
+  set: string[]
+}
+
 export type EnumLibraryItemSourceFieldUpdateOperationsInput = {
   set?: $Enums.LibraryItemSource
+}
+
+export type EnumLibraryItemKindFieldUpdateOperationsInput = {
+  set?: $Enums.LibraryItemKind
+}
+
+export type LibraryItemUpdatesourceAliasIdsInput = {
+  set?: string[]
+  push?: string | string[]
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -509,10 +673,17 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 export type LibraryItemCreateWithoutUserInput = {
   id?: string
   source: $Enums.LibraryItemSource
+  kind?: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds?: Prisma.LibraryItemCreatesourceAliasIdsInput | string[]
+  browserProfileId?: string
+  parentExternalId?: string | null
+  sourceDeviceId?: string | null
+  sourceDeviceName?: string | null
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
@@ -522,10 +693,17 @@ export type LibraryItemCreateWithoutUserInput = {
 export type LibraryItemUncheckedCreateWithoutUserInput = {
   id?: string
   source: $Enums.LibraryItemSource
+  kind?: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds?: Prisma.LibraryItemCreatesourceAliasIdsInput | string[]
+  browserProfileId?: string
+  parentExternalId?: string | null
+  sourceDeviceId?: string | null
+  sourceDeviceName?: string | null
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
@@ -565,10 +743,17 @@ export type LibraryItemScalarWhereInput = {
   id?: Prisma.StringFilter<"LibraryItem"> | string
   userId?: Prisma.StringFilter<"LibraryItem"> | string
   source?: Prisma.EnumLibraryItemSourceFilter<"LibraryItem"> | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFilter<"LibraryItem"> | $Enums.LibraryItemKind
   externalId?: Prisma.StringFilter<"LibraryItem"> | string
+  sourceAliasIds?: Prisma.StringNullableListFilter<"LibraryItem">
+  browserProfileId?: Prisma.StringFilter<"LibraryItem"> | string
+  parentExternalId?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceDeviceId?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceDeviceName?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   url?: Prisma.StringFilter<"LibraryItem"> | string
   caption?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
   thumbnailUrl?: Prisma.StringNullableFilter<"LibraryItem"> | string | null
+  sourceMetadata?: Prisma.JsonNullableFilter<"LibraryItem">
   postedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   scrapedAt?: Prisma.DateTimeNullableFilter<"LibraryItem"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"LibraryItem"> | Date | string
@@ -578,10 +763,17 @@ export type LibraryItemScalarWhereInput = {
 export type LibraryItemCreateManyUserInput = {
   id?: string
   source: $Enums.LibraryItemSource
+  kind?: $Enums.LibraryItemKind
   externalId: string
+  sourceAliasIds?: Prisma.LibraryItemCreatesourceAliasIdsInput | string[]
+  browserProfileId?: string
+  parentExternalId?: string | null
+  sourceDeviceId?: string | null
+  sourceDeviceName?: string | null
   url: string
   caption?: string | null
   thumbnailUrl?: string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Date | string | null
   scrapedAt?: Date | string | null
   createdAt?: Date | string
@@ -591,10 +783,17 @@ export type LibraryItemCreateManyUserInput = {
 export type LibraryItemUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -604,10 +803,17 @@ export type LibraryItemUpdateWithoutUserInput = {
 export type LibraryItemUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -617,10 +823,17 @@ export type LibraryItemUncheckedUpdateWithoutUserInput = {
 export type LibraryItemUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.EnumLibraryItemSourceFieldUpdateOperationsInput | $Enums.LibraryItemSource
+  kind?: Prisma.EnumLibraryItemKindFieldUpdateOperationsInput | $Enums.LibraryItemKind
   externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceAliasIds?: Prisma.LibraryItemUpdatesourceAliasIdsInput | string[]
+  browserProfileId?: Prisma.StringFieldUpdateOperationsInput | string
+  parentExternalId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceDeviceName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   url?: Prisma.StringFieldUpdateOperationsInput | string
   caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   thumbnailUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceMetadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   postedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   scrapedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -633,10 +846,17 @@ export type LibraryItemSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   id?: boolean
   userId?: boolean
   source?: boolean
+  kind?: boolean
   externalId?: boolean
+  sourceAliasIds?: boolean
+  browserProfileId?: boolean
+  parentExternalId?: boolean
+  sourceDeviceId?: boolean
+  sourceDeviceName?: boolean
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  sourceMetadata?: boolean
   postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
@@ -648,10 +868,17 @@ export type LibraryItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   userId?: boolean
   source?: boolean
+  kind?: boolean
   externalId?: boolean
+  sourceAliasIds?: boolean
+  browserProfileId?: boolean
+  parentExternalId?: boolean
+  sourceDeviceId?: boolean
+  sourceDeviceName?: boolean
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  sourceMetadata?: boolean
   postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
@@ -663,10 +890,17 @@ export type LibraryItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   userId?: boolean
   source?: boolean
+  kind?: boolean
   externalId?: boolean
+  sourceAliasIds?: boolean
+  browserProfileId?: boolean
+  parentExternalId?: boolean
+  sourceDeviceId?: boolean
+  sourceDeviceName?: boolean
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  sourceMetadata?: boolean
   postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
@@ -678,17 +912,24 @@ export type LibraryItemSelectScalar = {
   id?: boolean
   userId?: boolean
   source?: boolean
+  kind?: boolean
   externalId?: boolean
+  sourceAliasIds?: boolean
+  browserProfileId?: boolean
+  parentExternalId?: boolean
+  sourceDeviceId?: boolean
+  sourceDeviceName?: boolean
   url?: boolean
   caption?: boolean
   thumbnailUrl?: boolean
+  sourceMetadata?: boolean
   postedAt?: boolean
   scrapedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LibraryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "source" | "externalId" | "url" | "caption" | "thumbnailUrl" | "postedAt" | "scrapedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["libraryItem"]>
+export type LibraryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "source" | "kind" | "externalId" | "sourceAliasIds" | "browserProfileId" | "parentExternalId" | "sourceDeviceId" | "sourceDeviceName" | "url" | "caption" | "thumbnailUrl" | "sourceMetadata" | "postedAt" | "scrapedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["libraryItem"]>
 export type LibraryItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -708,10 +949,17 @@ export type $LibraryItemPayload<ExtArgs extends runtime.Types.Extensions.Interna
     id: string
     userId: string
     source: $Enums.LibraryItemSource
+    kind: $Enums.LibraryItemKind
     externalId: string
+    sourceAliasIds: string[]
+    browserProfileId: string
+    parentExternalId: string | null
+    sourceDeviceId: string | null
+    sourceDeviceName: string | null
     url: string
     caption: string | null
     thumbnailUrl: string | null
+    sourceMetadata: runtime.JsonValue | null
     postedAt: Date | null
     scrapedAt: Date | null
     createdAt: Date
@@ -1143,10 +1391,17 @@ export interface LibraryItemFieldRefs {
   readonly id: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly userId: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly source: Prisma.FieldRef<"LibraryItem", 'LibraryItemSource'>
+  readonly kind: Prisma.FieldRef<"LibraryItem", 'LibraryItemKind'>
   readonly externalId: Prisma.FieldRef<"LibraryItem", 'String'>
+  readonly sourceAliasIds: Prisma.FieldRef<"LibraryItem", 'String[]'>
+  readonly browserProfileId: Prisma.FieldRef<"LibraryItem", 'String'>
+  readonly parentExternalId: Prisma.FieldRef<"LibraryItem", 'String'>
+  readonly sourceDeviceId: Prisma.FieldRef<"LibraryItem", 'String'>
+  readonly sourceDeviceName: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly url: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly caption: Prisma.FieldRef<"LibraryItem", 'String'>
   readonly thumbnailUrl: Prisma.FieldRef<"LibraryItem", 'String'>
+  readonly sourceMetadata: Prisma.FieldRef<"LibraryItem", 'Json'>
   readonly postedAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>
   readonly scrapedAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"LibraryItem", 'DateTime'>

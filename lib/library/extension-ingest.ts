@@ -94,15 +94,13 @@ function ingestItemKind(kind: IngestItemInput["kind"]): "bookmark" | "folder" {
     return "bookmark";
 }
 
-function buildIngestRow(
+function buildIngestUpdateRow(
     browserProfileId: string,
     externalId: string,
     item: IngestItemInput,
-    source: LibraryItemSource,
-    userId?: string
+    source: LibraryItemSource
 ) {
     return {
-        ...(userId ? { userId } : {}),
         browserProfileId,
         caption: item.caption ?? null,
         externalId,
@@ -116,6 +114,19 @@ function buildIngestRow(
         sourceMetadata: item.sourceMetadata ?? null,
         thumbnailUrl: item.thumbnailUrl ?? null,
         url: item.url,
+    };
+}
+
+function buildIngestCreateRow(
+    browserProfileId: string,
+    externalId: string,
+    item: IngestItemInput,
+    source: LibraryItemSource,
+    userId: string
+) {
+    return {
+        ...buildIngestUpdateRow(browserProfileId, externalId, item, source),
+        userId,
     };
 }
 
@@ -194,14 +205,14 @@ export async function upsertLibraryItemsFromIngest(
             const browserProfileId =
                 item.browserProfileId?.trim() || DEFAULT_BROWSER_PROFILE_ID;
             await libraryItemDelegate.upsert({
-                create: buildIngestRow(
+                create: buildIngestCreateRow(
                     browserProfileId,
                     externalId,
                     item,
                     source,
                     userId
                 ),
-                update: buildIngestRow(
+                update: buildIngestUpdateRow(
                     browserProfileId,
                     externalId,
                     item,

@@ -19,3 +19,11 @@ export const LibraryItemSource = {
 } as const
 
 export type LibraryItemSource = (typeof LibraryItemSource)[keyof typeof LibraryItemSource]
+
+
+export const LibraryItemKind = {
+  bookmark: 'bookmark',
+  folder: 'folder'
+} as const
+
+export type LibraryItemKind = (typeof LibraryItemKind)[keyof typeof LibraryItemKind]

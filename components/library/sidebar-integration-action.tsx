@@ -28,10 +28,10 @@ type OAuthIntegrationId = Extract<
     "google-photos" | "pinterest" | "soundcloud"
 >;
 
-const EXTENSION_TARGET_URL: Record<ExtensionIntegrationId, string> = {
+const EXTENSION_OPEN_URL: Record<ExtensionIntegrationId, string> = {
     chrome: CACHE_EXTENSION_DOWNLOAD_URL,
-    instagram: "https://www.instagram.com",
-    tiktok: "https://www.tiktok.com",
+    instagram: "https://www.instagram.com/explore/saved/",
+    tiktok: "https://www.tiktok.com/profile",
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -160,7 +160,7 @@ export function SidebarIntegrationAction({
 
         openExternal(
             extensionInstalled
-                ? EXTENSION_TARGET_URL[id]
+                ? EXTENSION_OPEN_URL[id]
                 : CACHE_EXTENSION_DOWNLOAD_URL
         );
     }, [extensionInstalled, id]);
