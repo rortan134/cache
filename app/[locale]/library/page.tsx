@@ -197,10 +197,12 @@ export default async function LibraryPage({
                                         className="inline-block size-4.5 shrink-0"
                                         focusable="false"
                                     />
-                                    Collections
+                                    <span className="select-none font-medium text-sm">
+                                        Collections
+                                    </span>
                                     <ChevronDown
                                         aria-hidden
-                                        className="ml-auto inline-block size-4 shrink-0"
+                                        className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-[panel-open]:rotate-180"
                                         focusable="false"
                                     />
                                 </CollapsibleTrigger>
