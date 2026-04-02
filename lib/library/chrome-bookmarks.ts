@@ -9,6 +9,7 @@ const log = createLogger("library:chrome-bookmarks");
 
 export const DEFAULT_BROWSER_PROFILE_ID = "default";
 const CHROME_FOLDER_URL_PREFIX = "cache://chrome-bookmarks/folder/";
+const CHROME_BOOKMARK_SYNC_BATCH_SIZE = 25;
 
 const chromeBookmarkNodeSchema = z.object({
     dateAdded: z.number().int().nonnegative().optional(),
@@ -172,6 +173,14 @@ interface ChromeSyncResult {
     readonly processed: number;
     readonly pruned: number;
     readonly upserted: number;
+}
+
+interface ChromeSyncAccumulator {
+    deduped: number;
+    deleted: number;
+    processed: number;
+    pruned: number;
+    upserted: number;
 }
 
 function normalizeChromeCaption(value: string | null | undefined): string {
@@ -539,40 +548,36 @@ async function pruneChromeSnapshot(
     return pruned;
 }
 
-export function applyChromeBookmarkSyncEvents(
-    userId: string,
-    body: ChromeBookmarkSyncBody
-): Promise<ChromeSyncResult> {
-    const browserProfileId =
-        body.browserProfileId || DEFAULT_BROWSER_PROFILE_ID;
+function chunkChromeEvents<T>(items: readonly T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let index = 0; index < items.length; index += chunkSize) {
+        chunks.push(items.slice(index, index + chunkSize));
+    }
+    return chunks;
+}
 
-    return prisma.$transaction(async (tx) => {
+function processChromeBookmarkEventBatch(args: {
+    readonly browserProfileId: string;
+    readonly device: ChromeBookmarkSyncBody["device"];
+    readonly events: readonly ChromeBookmarkSyncBody["events"][number][];
+    readonly userId: string;
+}): Promise<Omit<ChromeSyncResult, "processed" | "pruned">> {
+    return (async () => {
         let deleted = 0;
         let deduped = 0;
-        let pruned = 0;
         let upserted = 0;
 
-        for (const event of body.events) {
+        for (const event of args.events) {
             if (event.type === "delete") {
                 const removed = await deleteChromeBookmarkEvent(
-                    tx,
-                    userId,
-                    browserProfileId,
+                    prisma,
+                    args.userId,
+                    args.browserProfileId,
                     event.externalId ?? ""
                 );
                 if (removed) {
                     deleted += 1;
                 }
-                continue;
-            }
-
-            if (event.type === "import_complete") {
-                pruned += await pruneChromeSnapshot(
-                    tx,
-                    userId,
-                    browserProfileId,
-                    event.snapshotExternalIds ?? []
-                );
                 continue;
             }
 
@@ -582,12 +587,12 @@ export function applyChromeBookmarkSyncEvents(
             }
 
             const result = await upsertChromeBookmarkEvent(
-                tx,
-                userId,
-                browserProfileId,
+                prisma,
+                args.userId,
+                args.browserProfileId,
                 bookmark,
                 event.occurredAt,
-                body.device
+                args.device
             );
             upserted += 1;
             if (result.deduped) {
@@ -598,11 +603,60 @@ export function applyChromeBookmarkSyncEvents(
         return {
             deduped,
             deleted,
-            processed: body.events.length,
-            pruned,
             upserted,
         };
-    });
+    })();
+}
+
+export function applyChromeBookmarkSyncEvents(
+    userId: string,
+    body: ChromeBookmarkSyncBody
+): Promise<ChromeSyncResult> {
+    const browserProfileId =
+        body.browserProfileId || DEFAULT_BROWSER_PROFILE_ID;
+
+    return (async () => {
+        const accumulator: ChromeSyncAccumulator = {
+            deduped: 0,
+            deleted: 0,
+            processed: body.events.length,
+            pruned: 0,
+            upserted: 0,
+        };
+
+        const snapshotEvents = body.events.filter(
+            (event) => event.type === "import_complete"
+        );
+        const mutationEvents = body.events.filter(
+            (event) => event.type !== "import_complete"
+        );
+
+        for (const batch of chunkChromeEvents(
+            mutationEvents,
+            CHROME_BOOKMARK_SYNC_BATCH_SIZE
+        )) {
+            const result = await processChromeBookmarkEventBatch({
+                browserProfileId,
+                device: body.device,
+                events: batch,
+                userId,
+            });
+            accumulator.deduped += result.deduped;
+            accumulator.deleted += result.deleted;
+            accumulator.upserted += result.upserted;
+        }
+
+        for (const event of snapshotEvents) {
+            accumulator.pruned += await pruneChromeSnapshot(
+                prisma,
+                userId,
+                browserProfileId,
+                event.snapshotExternalIds ?? []
+            );
+        }
+
+        return accumulator;
+    })();
 }
 
 export async function purgeChromeBookmarksForUser(

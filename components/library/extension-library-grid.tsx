@@ -177,7 +177,7 @@ function LibraryGridCard({
                             </div>
                         </div>
                     </div>
-                    <p className="line-clamp-2 truncate p-3 text-foreground text-sm leading-snug">
+                    <p className="line-clamp-2 truncate px-3 py-2 text-foreground text-xs leading-tight">
                         {item.caption?.trim() || item.url}
                     </p>
                 </a>

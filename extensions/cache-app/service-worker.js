@@ -319,13 +319,12 @@ async function postToOptionalBackend(endpoint, apiKey, items, source) {
 
 async function postYouTubeSnapshot(endpoint, apiKey, payload) {
     if (!endpoint?.trim()) {
-        return;
+        throw new Error("Missing YouTube sync endpoint.");
     }
     if (!apiKey?.trim()) {
-        console.warn(
-            "[Cache App] Skipping YouTube server sync: no ingest token. Open any Cache page while signed in once.",
+        throw new Error(
+            "No ingest token found. Open Cache while signed in so the extension can link this browser.",
         );
-        return;
     }
     const res = await fetch(endpoint.trim(), {
         body: JSON.stringify(payload),
@@ -338,12 +337,10 @@ async function postYouTubeSnapshot(endpoint, apiKey, payload) {
         method: "POST",
     });
     if (!res.ok) {
-        console.warn(
-            "[Cache App] YouTube optional sync failed:",
-            res.status,
-            await res.text().catch(() => ""),
-        );
+        const body = await res.text().catch(() => "");
+        throw new Error(`YouTube Watch Later sync failed (${res.status}): ${body}`);
     }
+    return res.json().catch(() => null);
 }
 
 async function postChromeSyncBatch(endpoint, apiKey, payload) {
@@ -715,6 +712,62 @@ function mergeByYouTubeVideoId(incoming, existing) {
     return [...map.values()];
 }
 
+function sanitizeYouTubeSnapshotItem(item) {
+    const videoId = typeof item?.videoId === "string" ? item.videoId.trim() : "";
+    if (!videoId) {
+        return null;
+    }
+
+    const videoUrl =
+        typeof item?.videoUrl === "string" && item.videoUrl.trim()
+            ? item.videoUrl.trim()
+            : `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+    const thumbnailUrl =
+        typeof item?.thumbnailUrl === "string" && item.thumbnailUrl.trim()
+            ? item.thumbnailUrl.trim()
+            : undefined;
+
+    return {
+        availability:
+            typeof item?.availability === "string" && item.availability.trim()
+                ? item.availability.trim()
+                : "available",
+        channelId:
+            typeof item?.channelId === "string" && item.channelId.trim()
+                ? item.channelId.trim()
+                : undefined,
+        channelName:
+            typeof item?.channelName === "string" && item.channelName.trim()
+                ? item.channelName.trim()
+                : undefined,
+        duration:
+            typeof item?.duration === "string" && item.duration.trim()
+                ? item.duration.trim()
+                : undefined,
+        playlistItemId:
+            typeof item?.playlistItemId === "string" && item.playlistItemId.trim()
+                ? item.playlistItemId.trim()
+                : undefined,
+        position:
+            typeof item?.position === "number" ? item.position : undefined,
+        publishedAt:
+            typeof item?.publishedAt === "string" && item.publishedAt.trim()
+                ? item.publishedAt.trim()
+                : undefined,
+        scrapedAt:
+            typeof item?.scrapedAt === "string" && item.scrapedAt.trim()
+                ? item.scrapedAt.trim()
+                : new Date().toISOString(),
+        thumbnailUrl,
+        title:
+            typeof item?.title === "string" && item.title.trim()
+                ? item.title.trim()
+                : undefined,
+        videoId,
+        videoUrl,
+    };
+}
+
 async function persistInstagramItems(items, final) {
     const data = await chrome.storage.local.get([
         INSTAGRAM_KEYS.bookmarks,
@@ -824,7 +877,6 @@ async function persistYouTubeItems(items, final) {
     };
 
     if (final) {
-        patch[YOUTUBE_KEYS.lastSyncAt] = new Date().toISOString();
         await chrome.storage.local.set(patch);
 
         const identity = await ensureChromeIdentity();
@@ -838,18 +890,26 @@ async function persistYouTubeItems(items, final) {
                 : "";
 
         try {
+            const payloadItems = merged
+                .map((item) => sanitizeYouTubeSnapshotItem(item))
+                .filter(Boolean);
             await postYouTubeSnapshot(endpoint, apiKey, {
                 browserProfileId: identity.profileId || DEFAULT_BROWSER_PROFILE_ID,
-                items: merged,
+                items: payloadItems,
                 snapshotComplete: true,
                 sourceDeviceId: identity.deviceId,
                 sourceDeviceName: identity.deviceName,
             });
+            await chrome.storage.local.set({
+                [YOUTUBE_KEYS.lastSyncAt]: new Date().toISOString(),
+            });
+            await notifySyncDone("youtube");
         } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
             console.warn("[Cache App] YouTube optional sync error:", error);
+            await notifySyncError("YOUTUBE_SYNC_FAILED", message);
         }
-
-        await notifySyncDone("youtube");
     } else {
         await chrome.storage.local.set(patch);
         await notifySyncProgress("youtube");

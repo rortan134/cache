@@ -7,19 +7,32 @@ import { importLibraryItemSnapshot } from "@/lib/library/snapshot-import";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import * as z from "zod";
 
+const optionalStringField = z
+    .string()
+    .transform((value) => value.trim())
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined));
+
+const optionalUrlField = z
+    .string()
+    .transform((value) => value.trim())
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined))
+    .pipe(z.url().optional());
+
 const youtubeWatchLaterItemSchema = z.object({
-    availability: z.string().optional(),
-    channelId: z.string().optional(),
-    channelName: z.string().optional(),
-    duration: z.string().optional(),
-    playlistItemId: z.string().optional(),
+    availability: optionalStringField,
+    channelId: optionalStringField,
+    channelName: optionalStringField,
+    duration: optionalStringField,
+    playlistItemId: optionalStringField,
     position: z.number().int().nonnegative().optional(),
-    publishedAt: z.string().optional(),
-    scrapedAt: z.string().optional(),
-    thumbnailUrl: z.string().url().optional(),
-    title: z.string().optional(),
+    publishedAt: optionalStringField,
+    scrapedAt: optionalStringField,
+    thumbnailUrl: optionalUrlField,
+    title: optionalStringField,
     videoId: z.string().min(1),
-    videoUrl: z.string().url().optional(),
+    videoUrl: optionalUrlField,
 });
 
 const bodySchema = z.object({
