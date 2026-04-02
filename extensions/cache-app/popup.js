@@ -5,6 +5,7 @@ const chromeModeEl = document.getElementById("chromeMode");
 const chromeContinuousEl = document.getElementById("chromeContinuous");
 const instagramMetaEl = document.getElementById("instagramMeta");
 const tiktokMetaEl = document.getElementById("tiktokMeta");
+const youtubeMetaEl = document.getElementById("youtubeMeta");
 const chromeMetaEl = document.getElementById("chromeMeta");
 const openCacheBtnEl = document.getElementById("openCache");
 
@@ -93,10 +94,12 @@ function formatErrorMessage(code, message) {
         MERGE_FAILED: message || "Could not save data.",
         NO_ITEMS: "No items found. Scroll the grid, then sync again.",
         NOT_SAVED_PAGE: "Open your Saved collection on Instagram first.",
+        NOT_YOUTUBE_WATCH_LATER:
+            "Open YouTube Watch Later (/playlist?list=WL) first.",
         SCRAPE_FAILED: message || "Could not read the page.",
         UNKNOWN: message || "Something went wrong.",
         UNSUPPORTED_PAGE:
-            "Open instagram.com or tiktok.com (Saved or Favorites) in this tab.",
+            "Open Instagram Saved, TikTok Favorites, or YouTube Watch Later in this tab.",
     };
     return map[code] ?? message ?? "Sync failed.";
 }
@@ -109,6 +112,19 @@ function formatLastSync(iso) {
         return new Date(iso).toLocaleString();
     } catch {
         return "—";
+    }
+}
+
+function isYouTubeWatchLaterUrl(raw) {
+    try {
+        const url = new URL(raw);
+        return (
+            url.hostname.replace(/^www\./, "") === "youtube.com" &&
+            url.pathname === "/playlist" &&
+            url.searchParams.get("list") === "WL"
+        );
+    } catch {
+        return false;
     }
 }
 
@@ -125,6 +141,9 @@ async function refreshFromStorage() {
     }
     if (tiktokMetaEl) {
         tiktokMetaEl.textContent = `TikTok Favorites: ${meta.tiktokCount ?? 0} · last sync ${formatLastSync(meta.tiktokLastSyncAt)}`;
+    }
+    if (youtubeMetaEl) {
+        youtubeMetaEl.textContent = `YouTube Watch Later: ${meta.youtubeCount ?? 0} · last sync ${formatLastSync(meta.youtubeLastSyncAt)}`;
     }
     if (chromeMetaEl) {
         const pending = meta.chromePendingEvents ?? 0;
@@ -195,6 +214,7 @@ function handleProgressMessage(msg) {
         chrome: "Chrome bookmarks",
         instagram: "Instagram Saved",
         tiktok: "TikTok Favorites",
+        youtube: "YouTube Watch Later",
     };
     const active = activeMap[msg.activeSource] ?? "items";
     setStatus(`Syncing ${active}…`, "idle");
@@ -205,6 +225,7 @@ function handleDoneMessage(msg) {
         chrome: "Chrome bookmarks",
         instagram: "Instagram Saved",
         tiktok: "TikTok Favorites",
+        youtube: "YouTube Watch Later",
     };
     const src = sourceMap[msg.completedSource] ?? "items";
     setStatus(`Done. ${src} updated.`, "ok");
@@ -264,10 +285,11 @@ syncBtn?.addEventListener("click", async () => {
         const url = tab.url ?? "";
         if (
             !url.startsWith("https://www.instagram.com/") &&
-            !url.startsWith("https://www.tiktok.com/")
+            !url.startsWith("https://www.tiktok.com/") &&
+            !isYouTubeWatchLaterUrl(url)
         ) {
             throw new Error(
-                "Open Instagram or TikTok in this tab (Saved or Favorites).",
+                "Open Instagram Saved, TikTok Favorites, or YouTube Watch Later in this tab.",
             );
         }
 

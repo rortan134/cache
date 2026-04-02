@@ -6,6 +6,7 @@ const STABLE_ROUNDS_NO_NEW_AT_BOTTOM = 1;
 const STAGNANT_SCROLL_ROUNDS_STOP = 2;
 const SCROLL_BOTTOM_SLACK_PX = 56;
 const MAX_ITEMS = 2000;
+const MAX_YOUTUBE_ITEMS = 10000;
 const INNER_SCROLL_STEPS = 28;
 const INNER_SCROLL_STEP_PAUSE_MS = 72;
 
@@ -198,7 +199,7 @@ async function scrollFeedTowardBottom(anchor, feedScroller, opts = {}) {
 
 /**
  * @param {Map<string, unknown>} accumulated
- * @param {"instagram" | "tiktok"} source
+ * @param {"instagram" | "tiktok" | "youtube"} source
  */
 function flushChunkToExtension(accumulated, source) {
     if (accumulated.size === 0) {
@@ -214,6 +215,52 @@ function flushChunkToExtension(accumulated, source) {
         .catch(() => {
             /* service worker may be restarting */
         });
+}
+
+function textFromRuns(value) {
+    if (!value || typeof value !== "object") {
+        return "";
+    }
+    if (typeof value.simpleText === "string" && value.simpleText.trim()) {
+        return value.simpleText.trim();
+    }
+    if (Array.isArray(value.runs)) {
+        return value.runs
+            .map((run) =>
+                run && typeof run.text === "string" ? run.text : "",
+            )
+            .join("")
+            .trim();
+    }
+    return "";
+}
+
+function walkObjectTree(root, visitor) {
+    const stack = [root];
+    const seen = new WeakSet();
+
+    while (stack.length > 0) {
+        const value = stack.pop();
+        if (!value || typeof value !== "object") {
+            continue;
+        }
+        if (seen.has(value)) {
+            continue;
+        }
+        seen.add(value);
+        visitor(value);
+
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                stack.push(item);
+            }
+            continue;
+        }
+
+        for (const nested of Object.values(value)) {
+            stack.push(nested);
+        }
+    }
 }
 
 /**
@@ -1078,6 +1125,420 @@ async function runTikTokSync() {
     });
 }
 
+// --- YouTube Watch Later ---
+
+const YT_BOOTSTRAP_MESSAGE = "CACHE_YT_BOOTSTRAP";
+const YT_BROWSE_ENDPOINT = "https://www.youtube.com/youtubei/v1/browse";
+
+/** @typedef {{ availability: string, channelId: string, channelName: string, duration: string, playlistItemId: string, position: number | null, publishedAt: string | null, scrapedAt: string, thumbnailUrl: string, title: string, videoId: string, videoUrl: string }} YouTubeWatchLaterItem */
+
+function isYouTubeWatchLaterUrl(rawUrl) {
+    try {
+        const url = new URL(rawUrl, window.location.origin);
+        return (
+            url.hostname.replace(/^www\./, "") === "youtube.com" &&
+            url.pathname === "/playlist" &&
+            url.searchParams.get("list") === "WL"
+        );
+    } catch {
+        return false;
+    }
+}
+
+function isYouTubeWatchLaterPage() {
+    return isYouTubeWatchLaterUrl(window.location.href);
+}
+
+function readLastThumbnailUrl(thumbnails) {
+    if (!Array.isArray(thumbnails) || thumbnails.length === 0) {
+        return "";
+    }
+    const usable = thumbnails.filter(
+        (thumb) =>
+            thumb &&
+            typeof thumb.url === "string" &&
+            !thumb.url.startsWith("data:"),
+    );
+    return usable.length > 0 ? usable[usable.length - 1].url : "";
+}
+
+function normalizeYouTubeAvailability(renderer, title) {
+    const normalizedTitle = (title ?? "").trim().toLowerCase();
+    if (renderer?.upcomingEventData) {
+        return "upcoming";
+    }
+    if (renderer?.isPlayable === false) {
+        if (normalizedTitle.includes("private")) {
+            return "private";
+        }
+        if (normalizedTitle.includes("deleted")) {
+            return "deleted";
+        }
+        return "unavailable";
+    }
+
+    let isLive = false;
+    walkObjectTree(renderer, (node) => {
+        const style =
+            typeof node.style === "string" ? node.style.toLowerCase() : "";
+        const text = `${textFromRuns(node) || ""} ${
+            typeof node.label === "string" ? node.label : ""
+        }`
+            .trim()
+            .toLowerCase();
+        if (
+            style.includes("live") ||
+            text.includes("live") ||
+            text.includes("watching")
+        ) {
+            isLive = true;
+        }
+    });
+
+    return isLive ? "live" : "available";
+}
+
+function readYouTubeContinuationToken(value) {
+    if (!value || typeof value !== "object") {
+        return "";
+    }
+    if (
+        value.continuationEndpoint?.continuationCommand?.token &&
+        typeof value.continuationEndpoint.continuationCommand.token === "string"
+    ) {
+        return value.continuationEndpoint.continuationCommand.token;
+    }
+    if (
+        value.continuationItemRenderer?.continuationEndpoint?.continuationCommand
+            ?.token &&
+        typeof value.continuationItemRenderer.continuationEndpoint
+            .continuationCommand.token === "string"
+    ) {
+        return value.continuationItemRenderer.continuationEndpoint.continuationCommand.token;
+    }
+    if (
+        value.nextContinuationData?.continuation &&
+        typeof value.nextContinuationData.continuation === "string"
+    ) {
+        return value.nextContinuationData.continuation;
+    }
+    return "";
+}
+
+function extractYouTubePlaylistPosition(renderer, fallbackIndex) {
+    const indexText = textFromRuns(renderer?.index);
+    const parsed = Number.parseInt(indexText, 10);
+    if (Number.isFinite(parsed)) {
+        return parsed;
+    }
+    return Number.isFinite(fallbackIndex) ? fallbackIndex : null;
+}
+
+function parseYouTubePlaylistVideoRenderer(renderer, fallbackIndex) {
+    const videoId =
+        typeof renderer?.videoId === "string" ? renderer.videoId.trim() : "";
+    if (!videoId) {
+        return null;
+    }
+
+    const title =
+        textFromRuns(renderer?.title) ||
+        textFromRuns(renderer?.headline) ||
+        "";
+    const shortBylineRuns = Array.isArray(renderer?.shortBylineText?.runs)
+        ? renderer.shortBylineText.runs
+        : [];
+    const firstBylineRun = shortBylineRuns[0] ?? null;
+    const channelName =
+        typeof firstBylineRun?.text === "string" ? firstBylineRun.text.trim() : "";
+    const channelId =
+        typeof firstBylineRun?.navigationEndpoint?.browseEndpoint?.browseId ===
+        "string"
+            ? firstBylineRun.navigationEndpoint.browseEndpoint.browseId
+            : "";
+    const playlistItemId =
+        typeof renderer?.playlistSetVideoId === "string"
+            ? renderer.playlistSetVideoId
+            : typeof renderer?.setVideoId === "string"
+              ? renderer.setVideoId
+              : "";
+    const duration =
+        textFromRuns(renderer?.lengthText) ||
+        textFromRuns(
+            renderer?.thumbnailOverlays?.[0]?.thumbnailOverlayTimeStatusRenderer
+                ?.text,
+        ) ||
+        "";
+
+    return {
+        availability: normalizeYouTubeAvailability(renderer, title),
+        channelId,
+        channelName,
+        duration,
+        playlistItemId,
+        position: extractYouTubePlaylistPosition(renderer, fallbackIndex),
+        publishedAt: null,
+        scrapedAt: new Date().toISOString(),
+        thumbnailUrl: readLastThumbnailUrl(renderer?.thumbnail?.thumbnails),
+        title,
+        videoId,
+        videoUrl: `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
+    };
+}
+
+function extractYouTubeRowsAndTokens(root, offset = 0) {
+    const rows = [];
+    const tokens = new Set();
+
+    walkObjectTree(root, (node) => {
+        if (node.playlistVideoRenderer) {
+            const row = parseYouTubePlaylistVideoRenderer(
+                node.playlistVideoRenderer,
+                offset + rows.length + 1,
+            );
+            if (row) {
+                rows.push(row);
+            }
+        }
+
+        const token = readYouTubeContinuationToken(node);
+        if (token) {
+            tokens.add(token);
+        }
+    });
+
+    return {
+        rows,
+        tokens: [...tokens],
+    };
+}
+
+function mergeYouTubeRowsIntoAccumulated(accumulated, rows) {
+    for (const row of rows) {
+        if (accumulated.size >= MAX_YOUTUBE_ITEMS) {
+            break;
+        }
+
+        const prev = accumulated.get(row.videoId);
+        if (!prev) {
+            accumulated.set(row.videoId, row);
+            continue;
+        }
+
+        accumulated.set(row.videoId, {
+            ...prev,
+            ...row,
+            availability: row.availability || prev.availability || "available",
+            channelId: row.channelId || prev.channelId || "",
+            channelName: row.channelName || prev.channelName || "",
+            duration: row.duration || prev.duration || "",
+            playlistItemId: row.playlistItemId || prev.playlistItemId || "",
+            position:
+                typeof row.position === "number" ? row.position : prev.position,
+            publishedAt: row.publishedAt || prev.publishedAt || null,
+            scrapedAt: row.scrapedAt || prev.scrapedAt || new Date().toISOString(),
+            thumbnailUrl: row.thumbnailUrl || prev.thumbnailUrl || "",
+            title: row.title || prev.title || "",
+            videoUrl: row.videoUrl || prev.videoUrl || "",
+        });
+    }
+}
+
+async function getYouTubeBootstrapData() {
+    return new Promise((resolve) => {
+        const timeoutId = setTimeout(() => {
+            window.removeEventListener("message", onMessage);
+            resolve(null);
+        }, 1500);
+
+        function onMessage(event) {
+            if (event.source !== window) {
+                return;
+            }
+            const data = event.data;
+            if (
+                !data ||
+                typeof data !== "object" ||
+                data.type !== YT_BOOTSTRAP_MESSAGE
+            ) {
+                return;
+            }
+
+            clearTimeout(timeoutId);
+            window.removeEventListener("message", onMessage);
+            resolve(data.payload ?? null);
+        }
+
+        window.addEventListener("message", onMessage);
+        const script = document.createElement("script");
+        script.textContent = `(function(){try{var cfg=window.ytcfg||null;var get=function(key){try{return cfg&&typeof cfg.get==="function"?cfg.get(key):(cfg&&cfg.data_?cfg.data_[key]:null);}catch(e){return null;}};window.postMessage({type:${JSON.stringify(
+            YT_BOOTSTRAP_MESSAGE,
+        )},payload:{apiKey:get("INNERTUBE_API_KEY")||null,clientName:get("INNERTUBE_CONTEXT_CLIENT_NAME")||null,clientVersion:get("INNERTUBE_CONTEXT_CLIENT_VERSION")||null,context:get("INNERTUBE_CONTEXT")||null,initialData:window.ytInitialData||null}},window.location.origin);}catch(e){window.postMessage({type:${JSON.stringify(
+            YT_BOOTSTRAP_MESSAGE,
+        )},payload:null},window.location.origin);}})();`;
+        (document.documentElement || document.head || document.body).appendChild(
+            script,
+        );
+        script.remove();
+    });
+}
+
+async function fetchYouTubeContinuationPage(token, bootstrap) {
+    if (!bootstrap?.apiKey || !bootstrap?.context) {
+        throw new Error("YouTube page data is missing continuation configuration.");
+    }
+
+    const response = await fetch(
+        `${YT_BROWSE_ENDPOINT}?key=${encodeURIComponent(bootstrap.apiKey)}`,
+        {
+            body: JSON.stringify({
+                context: bootstrap.context,
+                continuation: token,
+            }),
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(bootstrap.clientName
+                    ? {
+                          "X-YouTube-Client-Name": String(bootstrap.clientName),
+                      }
+                    : {}),
+                ...(bootstrap.clientVersion
+                    ? {
+                          "X-YouTube-Client-Version": String(
+                              bootstrap.clientVersion,
+                          ),
+                      }
+                    : {}),
+            },
+            method: "POST",
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error(`YouTube continuation request failed (${response.status}).`);
+    }
+
+    return response.json();
+}
+
+async function scrollYouTubePlaylistTowardBottom() {
+    const main =
+        document.querySelector("ytd-app") ||
+        document.querySelector("ytd-browse") ||
+        document.querySelector("main");
+    const anchor =
+        main instanceof HTMLElement ? main : document.documentElement;
+    const scroller = findFeedScrollTarget(anchor, () =>
+        anchor instanceof HTMLElement ? anchor : document.documentElement,
+    );
+    await scrollFeedTowardBottom(anchor, scroller, { fullInnerSteps: true });
+    await sleep(SCROLL_SETTLE_MS);
+}
+
+async function runYouTubeWatchLaterSync() {
+    if (!isYouTubeWatchLaterPage()) {
+        const titleText = (document.title || "").trim();
+        const titleHint = /watch later/i.test(titleText)
+            ? " The active page looks like Watch Later, but the URL must be /playlist?list=WL."
+            : "";
+        await chrome.runtime.sendMessage({
+            code: "NOT_YOUTUBE_WATCH_LATER",
+            message: `Open YouTube Watch Later (/playlist?list=WL) first.${titleHint}`,
+            source: "youtube",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    const bootstrap = await getYouTubeBootstrapData();
+    if (!bootstrap?.initialData) {
+        await chrome.runtime.sendMessage({
+            code: "SCRAPE_FAILED",
+            message:
+                "Could not read YouTube playlist data from the page. Reload Watch Later and try again.",
+            source: "youtube",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    /** @type {Map<string, YouTubeWatchLaterItem>} */
+    const accumulated = new Map();
+    const seenTokens = new Set();
+    let positionOffset = 0;
+    let noNewRounds = 0;
+
+    const initial = extractYouTubeRowsAndTokens(
+        bootstrap.initialData,
+        positionOffset,
+    );
+    mergeYouTubeRowsIntoAccumulated(accumulated, initial.rows);
+    positionOffset = accumulated.size;
+    flushChunkToExtension(accumulated, "youtube");
+
+    const queue = initial.tokens.filter(Boolean);
+    initial.tokens.forEach((token) => seenTokens.add(token));
+
+    while (queue.length > 0 && accumulated.size < MAX_YOUTUBE_ITEMS) {
+        const token = queue.shift();
+        if (!token || seenTokens.has(`done:${token}`)) {
+            continue;
+        }
+
+        const sizeBefore = accumulated.size;
+        const payload = await fetchYouTubeContinuationPage(token, bootstrap);
+        const page = extractYouTubeRowsAndTokens(payload, positionOffset);
+        mergeYouTubeRowsIntoAccumulated(accumulated, page.rows);
+        positionOffset = accumulated.size;
+        flushChunkToExtension(accumulated, "youtube");
+
+        seenTokens.add(`done:${token}`);
+        for (const nextToken of page.tokens) {
+            if (
+                nextToken &&
+                !seenTokens.has(nextToken) &&
+                !queue.includes(nextToken)
+            ) {
+                seenTokens.add(nextToken);
+                queue.push(nextToken);
+            }
+        }
+
+        if (accumulated.size === sizeBefore) {
+            noNewRounds += 1;
+            await scrollYouTubePlaylistTowardBottom();
+        } else {
+            noNewRounds = 0;
+        }
+
+        if (
+            noNewRounds >= STABLE_ROUNDS_NO_NEW_HARD_STOP &&
+            queue.length === 0
+        ) {
+            break;
+        }
+    }
+
+    if (accumulated.size === 0) {
+        await chrome.runtime.sendMessage({
+            code: "NO_ITEMS",
+            message:
+                "No Watch Later videos were found. Let the playlist load, then try again.",
+            source: "youtube",
+            type: "SYNC_ERROR",
+        });
+        return;
+    }
+
+    await chrome.runtime.sendMessage({
+        items: [...accumulated.values()],
+        source: "youtube",
+        type: "BOOKMARKS_COMPLETE",
+    });
+}
+
 // --- Router ---
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -1094,11 +1555,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                 await runInstagramSync();
             } else if (host === "tiktok.com") {
                 await runTikTokSync();
+            } else if (host === "youtube.com") {
+                await runYouTubeWatchLaterSync();
             } else {
                 await chrome.runtime.sendMessage({
                     code: "UNSUPPORTED_PAGE",
                     message:
-                        "Open instagram.com or tiktok.com in this tab, on Saved or Favorites.",
+                        "Open Instagram Saved, TikTok Favorites, or YouTube Watch Later in this tab.",
                     type: "SYNC_ERROR",
                 });
             }

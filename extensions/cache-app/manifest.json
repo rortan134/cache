@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Cache App",
     "version": "0.3.0",
-    "description": "Sync Instagram Saved, TikTok Favorites, and Chrome bookmarks into Cache. Sign in on the Cache site once to link this browser; imported data is stored locally and sent to your account when you sync.",
+    "description": "Sync Instagram Saved, TikTok Favorites, YouTube Watch Later, and Chrome bookmarks into Cache. Sign in on the Cache site once to link this browser; imported data is stored locally and sent to your account when you sync.",
     "icons": {
         "16": "icons/icon.png",
         "48": "icons/icon.png",
@@ -24,6 +24,7 @@
     "host_permissions": [
         "https://www.instagram.com/*",
         "https://www.tiktok.com/*",
+        "https://www.youtube.com/*",
         "http://localhost:3000/*",
         "https://cachd.app/*",
         "https://*.cachd.app/*"
@@ -32,7 +33,8 @@
         {
             "matches": [
                 "https://www.instagram.com/*",
-                "https://www.tiktok.com/*"
+                "https://www.tiktok.com/*",
+                "https://www.youtube.com/*"
             ],
             "js": ["content.js"],
             "run_at": "document_idle"

@@ -2,9 +2,11 @@ importScripts("cache-config.js");
 
 /** @typedef {{ shortcode: string, url: string, thumbnailUrl: string, caption: string, postedAt: string, scrapedAt: string }} InstagramSavedItem */
 /** @typedef {{ id: string, url: string, thumbnailUrl: string, caption: string, postedAt: string, scrapedAt: string }} TikTokFavoriteItem */
+/** @typedef {{ videoId: string, videoUrl: string, title: string, thumbnailUrl: string, channelName: string, channelId: string, duration: string, playlistItemId: string, position: number | null, publishedAt: string | null, availability: string, scrapedAt: string }} YouTubeWatchLaterItem */
 
 const INSTAGRAM_STORAGE_VERSION = 1;
 const TIKTOK_STORAGE_VERSION = 1;
+const YOUTUBE_STORAGE_VERSION = 1;
 const CHROME_SYNC_BATCH_SIZE = 200;
 const DEFAULT_BROWSER_PROFILE_ID = "default";
 
@@ -20,6 +22,13 @@ const TIKTOK_KEYS = {
     lastSyncAt: "tiktokLastSyncAt",
     storageVersion: "tiktokStorageVersion",
     videos: "tiktokFavoriteVideos",
+};
+
+const YOUTUBE_KEYS = {
+    items: "youtubeWatchLaterItems",
+    lastSyncAt: "youtubeWatchLaterLastSyncAt",
+    storageVersion: "youtubeWatchLaterStorageVersion",
+    videoCount: "youtubeWatchLaterVideoCount",
 };
 
 const CHROME_KEYS = {
@@ -50,14 +59,41 @@ function defaultIngestEndpoint() {
     return `${origin}${path}`;
 }
 
+function defaultYouTubeSyncEndpoint() {
+    const origin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
+    return origin ? `${origin}/api/integrations/youtube/watch-later` : "";
+}
+
 function defaultChromeSyncEndpoint() {
     const origin = String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
     return origin ? `${origin}/api/sync/bookmarks/chrome` : "";
 }
 
+function cacheOriginFromEndpoint(raw) {
+    const endpoint = typeof raw === "string" ? raw.trim() : "";
+    if (endpoint) {
+        try {
+            return new URL(endpoint).origin;
+        } catch {}
+    }
+
+    return String(globalThis.CACHE_APP_ORIGIN ?? "").replace(/\/$/, "");
+}
+
+function ingestEndpointForSource(storedEndpoint, source) {
+    const stored = typeof storedEndpoint === "string" ? storedEndpoint.trim() : "";
+    if (source === "youtube") {
+        return cacheOriginFromEndpoint(stored)
+            ? `${cacheOriginFromEndpoint(stored)}/api/integrations/youtube/watch-later`
+            : defaultYouTubeSyncEndpoint();
+    }
+    return stored || defaultIngestEndpoint();
+}
+
 function messageSource(msg) {
     if (msg && typeof msg === "object") {
         if (msg.source === "tiktok") return "tiktok";
+        if (msg.source === "youtube") return "youtube";
         if (msg.source === "chrome_bookmarks" || msg.source === "chrome")
             return "chrome_bookmarks";
     }
@@ -162,6 +198,8 @@ async function readSyncMetaForUi() {
         INSTAGRAM_KEYS.lastSyncAt,
         TIKTOK_KEYS.favoriteCount,
         TIKTOK_KEYS.lastSyncAt,
+        YOUTUBE_KEYS.lastSyncAt,
+        YOUTUBE_KEYS.videoCount,
         CHROME_KEYS.bookmarkCount,
         CHROME_KEYS.lastError,
         CHROME_KEYS.lastSyncAt,
@@ -201,6 +239,14 @@ async function readSyncMetaForUi() {
         tiktokLastSyncAt:
             typeof data[TIKTOK_KEYS.lastSyncAt] === "string"
                 ? data[TIKTOK_KEYS.lastSyncAt]
+                : undefined,
+        youtubeCount:
+            typeof data[YOUTUBE_KEYS.videoCount] === "number"
+                ? data[YOUTUBE_KEYS.videoCount]
+                : 0,
+        youtubeLastSyncAt:
+            typeof data[YOUTUBE_KEYS.lastSyncAt] === "string"
+                ? data[YOUTUBE_KEYS.lastSyncAt]
                 : undefined,
     };
 }
@@ -265,6 +311,35 @@ async function postToOptionalBackend(endpoint, apiKey, items, source) {
         console.warn(
             "[Cache App] Optional sync failed:",
             source,
+            res.status,
+            await res.text().catch(() => ""),
+        );
+    }
+}
+
+async function postYouTubeSnapshot(endpoint, apiKey, payload) {
+    if (!endpoint?.trim()) {
+        return;
+    }
+    if (!apiKey?.trim()) {
+        console.warn(
+            "[Cache App] Skipping YouTube server sync: no ingest token. Open any Cache page while signed in once.",
+        );
+        return;
+    }
+    const res = await fetch(endpoint.trim(), {
+        body: JSON.stringify(payload),
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${apiKey.trim()}`,
+            "Content-Type": "application/json",
+        },
+        method: "POST",
+    });
+    if (!res.ok) {
+        console.warn(
+            "[Cache App] YouTube optional sync failed:",
             res.status,
             await res.text().catch(() => ""),
         );
@@ -536,6 +611,29 @@ async function migrateTikTokIfNeeded(data) {
     return videos;
 }
 
+async function migrateYouTubeIfNeeded(data) {
+    const version =
+        typeof data[YOUTUBE_KEYS.storageVersion] === "number"
+            ? data[YOUTUBE_KEYS.storageVersion]
+            : 0;
+    const raw = data[YOUTUBE_KEYS.items];
+    let items = Array.isArray(raw) ? raw : [];
+
+    if (version < YOUTUBE_STORAGE_VERSION) {
+        items = items
+            .map((row) =>
+                row && typeof row === "object" && !Array.isArray(row) ? row : null,
+            )
+            .filter(Boolean);
+        await chrome.storage.local.set({
+            [YOUTUBE_KEYS.items]: items,
+            [YOUTUBE_KEYS.storageVersion]: YOUTUBE_STORAGE_VERSION,
+        });
+    }
+
+    return items;
+}
+
 function mergeByShortcode(incoming, existing) {
     const map = new Map();
     for (const item of existing) {
@@ -574,6 +672,43 @@ function mergeByVideoId(incoming, existing) {
                 postedAt: item.postedAt || prev?.postedAt,
                 scrapedAt:
                     item.scrapedAt || prev?.scrapedAt || new Date().toISOString(),
+            });
+        }
+    }
+    return [...map.values()];
+}
+
+function mergeByYouTubeVideoId(incoming, existing) {
+    const map = new Map();
+    for (const item of existing) {
+        if (item?.videoId) {
+            map.set(item.videoId, item);
+        }
+    }
+    for (const item of incoming) {
+        if (item?.videoId) {
+            const prev = map.get(item.videoId);
+            map.set(item.videoId, {
+                ...prev,
+                ...item,
+                availability: item.availability || prev?.availability || "available",
+                channelId: item.channelId || prev?.channelId || "",
+                channelName: item.channelName || prev?.channelName || "",
+                duration: item.duration || prev?.duration || "",
+                playlistItemId: item.playlistItemId || prev?.playlistItemId || "",
+                position:
+                    typeof item.position === "number"
+                        ? item.position
+                        : prev?.position ?? null,
+                publishedAt: item.publishedAt || prev?.publishedAt || null,
+                scrapedAt:
+                    item.scrapedAt || prev?.scrapedAt || new Date().toISOString(),
+                thumbnailUrl: item.thumbnailUrl || prev?.thumbnailUrl || "",
+                title: item.title || prev?.title || "",
+                videoUrl:
+                    item.videoUrl ||
+                    prev?.videoUrl ||
+                    `https://www.youtube.com/watch?v=${encodeURIComponent(item.videoId)}`,
             });
         }
     }
@@ -670,8 +805,61 @@ async function persistTikTokItems(items, final) {
     }
 }
 
+async function persistYouTubeItems(items, final) {
+    const data = await chrome.storage.local.get([
+        YOUTUBE_KEYS.items,
+        YOUTUBE_KEYS.storageVersion,
+        SYNC_KEYS.syncEndpoint,
+        SYNC_KEYS.syncApiKey,
+    ]);
+
+    const existing = await migrateYouTubeIfNeeded(data);
+    const incoming = Array.isArray(items) ? items : [];
+    const merged = mergeByYouTubeVideoId(incoming, existing);
+
+    const patch = {
+        [YOUTUBE_KEYS.items]: merged,
+        [YOUTUBE_KEYS.storageVersion]: YOUTUBE_STORAGE_VERSION,
+        [YOUTUBE_KEYS.videoCount]: merged.length,
+    };
+
+    if (final) {
+        patch[YOUTUBE_KEYS.lastSyncAt] = new Date().toISOString();
+        await chrome.storage.local.set(patch);
+
+        const identity = await ensureChromeIdentity();
+        const endpoint = ingestEndpointForSource(
+            data[SYNC_KEYS.syncEndpoint],
+            "youtube",
+        );
+        const apiKey =
+            typeof data[SYNC_KEYS.syncApiKey] === "string"
+                ? data[SYNC_KEYS.syncApiKey]
+                : "";
+
+        try {
+            await postYouTubeSnapshot(endpoint, apiKey, {
+                browserProfileId: identity.profileId || DEFAULT_BROWSER_PROFILE_ID,
+                items: merged,
+                snapshotComplete: true,
+                sourceDeviceId: identity.deviceId,
+                sourceDeviceName: identity.deviceName,
+            });
+        } catch (error) {
+            console.warn("[Cache App] YouTube optional sync error:", error);
+        }
+
+        await notifySyncDone("youtube");
+    } else {
+        await chrome.storage.local.set(patch);
+        await notifySyncProgress("youtube");
+    }
+}
+
 async function persistBookmarkItems(items, options) {
-    if (options.source === "tiktok") {
+    if (options.source === "youtube") {
+        await persistYouTubeItems(items, options.final);
+    } else if (options.source === "tiktok") {
         await persistTikTokItems(items, options.final);
     } else {
         await persistInstagramItems(items, options.final);
