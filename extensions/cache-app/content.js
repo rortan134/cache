@@ -1348,8 +1348,22 @@ async function getYouTubeBootstrapData() {
     return new Promise((resolve) => {
         const timeoutId = setTimeout(() => {
             window.removeEventListener("message", onMessage);
+            cleanup();
             resolve(null);
         }, 1500);
+
+        let cleaned = false;
+        let injectedScript = null;
+
+        function cleanup() {
+            if (cleaned) {
+                return;
+            }
+            cleaned = true;
+            if (injectedScript) {
+                injectedScript.remove();
+            }
+        }
 
         function onMessage(event) {
             if (event.source !== window) {
@@ -1366,20 +1380,19 @@ async function getYouTubeBootstrapData() {
 
             clearTimeout(timeoutId);
             window.removeEventListener("message", onMessage);
+            cleanup();
             resolve(data.payload ?? null);
         }
 
         window.addEventListener("message", onMessage);
-        const script = document.createElement("script");
-        script.textContent = `(function(){try{var cfg=window.ytcfg||null;var get=function(key){try{return cfg&&typeof cfg.get==="function"?cfg.get(key):(cfg&&cfg.data_?cfg.data_[key]:null);}catch(e){return null;}};window.postMessage({type:${JSON.stringify(
-            YT_BOOTSTRAP_MESSAGE,
-        )},payload:{apiKey:get("INNERTUBE_API_KEY")||null,clientName:get("INNERTUBE_CONTEXT_CLIENT_NAME")||null,clientVersion:get("INNERTUBE_CONTEXT_CLIENT_VERSION")||null,context:get("INNERTUBE_CONTEXT")||null,initialData:window.ytInitialData||null}},window.location.origin);}catch(e){window.postMessage({type:${JSON.stringify(
-            YT_BOOTSTRAP_MESSAGE,
-        )},payload:null},window.location.origin);}})();`;
-        (document.documentElement || document.head || document.body).appendChild(
-            script,
-        );
-        script.remove();
+        injectedScript = document.createElement("script");
+        injectedScript.src = chrome.runtime.getURL("youtube-page-bootstrap.js");
+        injectedScript.async = false;
+        (
+            document.documentElement ??
+            document.head ??
+            document.body
+        )?.appendChild(injectedScript);
     });
 }
 

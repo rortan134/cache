@@ -191,13 +191,13 @@ export default async function LibraryPage({
                                 }
                             />
                             <Collapsible>
-                                <CollapsibleTrigger className="flex items-center gap-2 rounded-full bg-muted/94 py-1.5 pr-3 pl-2.5 text-left">
+                                <CollapsibleTrigger className="flex items-center gap-2 rounded-full bg-muted/94 py-2 pr-3 pl-2.5 text-left">
                                     <Component
                                         aria-hidden
                                         className="inline-block size-4.5 shrink-0"
                                         focusable="false"
                                     />
-                                    <span className="select-none font-medium text-sm">
+                                    <span className="select-none font-medium text-sm leading-tight">
                                         Collections
                                     </span>
                                     <ChevronDown

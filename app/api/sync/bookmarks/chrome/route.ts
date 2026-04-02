@@ -57,8 +57,35 @@ export async function POST(request: Request) {
         );
     }
 
-    const result = await applyChromeBookmarkSyncEvents(userId, parsed.data);
-    return Response.json({ ok: true, ...result }, { headers: cors });
+    try {
+        const result = await applyChromeBookmarkSyncEvents(userId, parsed.data);
+        return Response.json({ ok: true, ...result }, { headers: cors });
+    } catch (error) {
+        const message =
+            error instanceof Error
+                ? error.message
+                : "Unknown Chrome sync error";
+        log.error("Chrome bookmark sync failed", {
+            error,
+            userId,
+        });
+
+        const missingSchemaHint =
+            message.includes("LibraryItemSource") ||
+            message.includes("chrome_bookmarks") ||
+            message.includes("browserProfileId") ||
+            message.includes("sourceAliasIds") ||
+            message.includes("postedAt");
+
+        return Response.json(
+            {
+                error: missingSchemaHint
+                    ? "Chrome bookmark sync requires the latest database migrations. Run Prisma migrations, then try again."
+                    : message,
+            },
+            { headers: cors, status: 500 }
+        );
+    }
 }
 
 export async function DELETE() {

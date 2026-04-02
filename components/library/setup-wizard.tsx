@@ -117,7 +117,7 @@ export function IntegrationSetupWizard({
         <button
             {...props}
             className={cn(
-                "flex items-center gap-2 rounded-full bg-muted/94 py-1.5 pr-3 pl-2.5 text-left",
+                "flex items-center gap-2 rounded-full bg-muted/94 py-1.5 pr-3 pl-2.5 text-left leading-tight",
                 className
             )}
             type="button"

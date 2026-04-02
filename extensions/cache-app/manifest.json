@@ -48,5 +48,11 @@
             "js": ["cache-site-bootstrap.js"],
             "run_at": "document_idle"
         }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["youtube-page-bootstrap.js"],
+            "matches": ["https://www.youtube.com/*"]
+        }
     ]
 }
