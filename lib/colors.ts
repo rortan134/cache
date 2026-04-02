@@ -212,10 +212,10 @@ export function getSubtleColorGradientFromName(name: string): string {
     const rgb = hexToRgb(getColorFromName(name));
     const hue = rgb ? rgbToHue(rgb[0], rgb[1], rgb[2]) : 272;
     const chromaBias = rgb
-        ? clamp((Math.max(...rgb) - Math.min(...rgb)) / 255, 0.35, 1.6)
-        : 0.75;
-    const start = `lch(9.6 ${Number((4.8 + chromaBias).toFixed(3))} ${Number(hue.toFixed(3))})`;
-    const end = `lch(7.8 ${Number((0.9 + chromaBias * 0.15).toFixed(3))} ${Number(((hue + 10) % 360).toFixed(3))})`;
+        ? clamp((Math.max(...rgb) - Math.min(...rgb)) / 255, 0.6, 2.2)
+        : 1;
+    const start = `lch(97 ${Number((2.4 + chromaBias * 0.7).toFixed(3))} ${Number(hue.toFixed(3))})`;
+    const end = `lch(94.8 ${Number((0.8 + chromaBias * 0.2).toFixed(3))} ${Number(((hue + 10) % 360).toFixed(3))})`;
 
     return `linear-gradient(90deg, ${start} 0%, ${end} 100%), ${end}`;
 }

@@ -2,7 +2,6 @@ import { UserMenu } from "@/components/auth/user-menu";
 import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import { LibrarySidebarIntegrations } from "@/components/library/integrations";
 import { LibraryBrowser } from "@/components/library/library-browser";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Collapsible,
@@ -17,7 +16,7 @@ import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import { prisma } from "@/prisma";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
-import { ChevronDown, Component, PlusIcon, Sparkles } from "lucide-react";
+import { ChevronDown, Component, PlusIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getLatestSoundcloudLikes } from "./actions";
@@ -193,13 +192,13 @@ export default async function LibraryPage({
                                         <span className="select-none font-medium text-sm leading-tight">
                                             Collections
                                         </span>
-                                        <Badge size="sm" variant="outline">
+                                        {/* <Badge size="sm" variant="outline">
                                             <Sparkles className="size-3" />
                                             AI Powered
-                                        </Badge>
+                                        </Badge> */}
                                         <ChevronDown
                                             aria-hidden
-                                            className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-[panel-open]:rotate-180"
+                                            className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
                                             focusable="false"
                                         />
                                     </CollapsibleTrigger>
