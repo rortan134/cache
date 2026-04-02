@@ -134,6 +134,45 @@ export const SoundCloud = (props: SVGProps<SVGSVGElement>) => {
     );
 };
 
+export const XSocial = (props: SVGProps<SVGSVGElement>) => {
+    const { className, ...rest } = props;
+
+    return (
+        <svg
+            aria-label="X"
+            className={cn("size-6 shrink-0", className)}
+            role="img"
+            viewBox="0 0 24 24"
+            {...rest}
+        >
+            <path
+                d="M18.901 2H21.98l-6.725 7.686L23.168 22h-6.196l-4.852-6.956L6.03 22H2.95l7.194-8.222L.832 2h6.353l4.386 6.285L18.901 2Zm-1.086 18.13h1.706L6.262 3.773H4.431Z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+};
+
+export const YouTube = (props: SVGProps<SVGSVGElement>) => {
+    const { className, ...rest } = props;
+
+    return (
+        <svg
+            aria-label="YouTube"
+            className={cn("size-6 shrink-0", className)}
+            role="img"
+            viewBox="0 0 24 24"
+            {...rest}
+        >
+            <path
+                d="M23.5 6.2a3 3 0 0 0-2.11-2.12C19.53 3.5 12 3.5 12 3.5s-7.53 0-9.39.58A3 3 0 0 0 .5 6.2 31.51 31.51 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.11 2.12c1.86.58 9.39.58 9.39.58s7.53 0 9.39-.58a3 3 0 0 0 2.11-2.12A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8Z"
+                fill="#FF0033"
+            />
+            <path d="m9.75 15.52 6.27-3.52-6.27-3.52v7.04Z" fill="#FFF" />
+        </svg>
+    );
+};
+
 const Chrome = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
     <svg
         aria-label="Chrome"

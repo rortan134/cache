@@ -1,8 +1,6 @@
 import { UserMenu } from "@/components/auth/user-menu";
+import { LibrarySidebarIntegrations } from "@/components/library/library-sidebar-integrations";
 import { LibraryBrowser } from "@/components/library/library-browser";
-import { IntegrationSetupWizard } from "@/components/library/setup-wizard";
-import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     Collapsible,
     CollapsiblePanel,
@@ -33,7 +31,7 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "library.metadata.description",
-            "Posts synced from the extension appear below by source."
+            "Saved items from your connected accounts and extension imports appear below by source."
         ),
         title: gtPublicString(locale, "library.metadata.title", "My library"),
     };
@@ -48,6 +46,7 @@ export default async function LibraryPage({
     const soundcloudParked = !(
         process.env.SOUNDCLOUD_CLIENT_ID && process.env.SOUNDCLOUD_CLIENT_SECRET
     );
+    const xParked = !(process.env.X_CLIENT_ID && process.env.X_CLIENT_SECRET);
     const session = await getServerSession();
     const userId = session?.user?.id;
 
@@ -62,7 +61,7 @@ export default async function LibraryPage({
                 select: { providerId: true },
                 where: {
                     providerId: {
-                        in: ["google", "pinterest", "soundcloud"],
+                        in: ["google", "pinterest", "soundcloud", "x"],
                     },
                     userId,
                 },
@@ -112,11 +111,31 @@ export default async function LibraryPage({
                 (item) => item.source === LibraryItemSource.chrome_bookmarks
             );
         }
+        if (id === "x") {
+            return linkedProviderIds.has("x");
+        }
+        if (id === "youtube") {
+            return items.some(
+                (item) => item.source === LibraryItemSource.youtube_watch_later
+            );
+        }
         if (id === "soundcloud") {
             return soundcloudConnected;
         }
         return false;
     };
+    const serverConnectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
+        isIntegrationConnected(id) ? [id] : []
+    );
+    const parkedIntegrationIds = INTEGRATIONS.flatMap(({ id }) => {
+        if (id === "soundcloud" && soundcloudParked) {
+            return [id];
+        }
+        if (id === "x" && xParked) {
+            return [id];
+        }
+        return [];
+    });
 
     return (
         <PageShell>
@@ -163,67 +182,14 @@ export default async function LibraryPage({
                                     width={200}
                                 />
                             </Link>
-                            <Collapsible defaultOpen>
-                                <div className="flex flex-col gap-3 text-balance">
-                                    <CollapsibleTrigger
-                                        render={
-                                            <IntegrationSetupWizard
-                                                items={items}
-                                            />
-                                        }
-                                    />
-                                    <CollapsiblePanel>
-                                        <ul className="flex flex-col gap-1">
-                                            {INTEGRATIONS.map(
-                                                ({
-                                                    id,
-                                                    label,
-                                                    description,
-                                                    Icon,
-                                                }) => (
-                                                    <li key={id}>
-                                                        <div className="flex items-center gap-2 rounded-xl py-2 pr-2">
-                                                            <Avatar
-                                                                aria-label={
-                                                                    label
-                                                                }
-                                                                className="size-10 rounded-lg ring-1 ring-border/60"
-                                                            >
-                                                                <AvatarFallback className="rounded-lg bg-card text-foreground">
-                                                                    <Icon
-                                                                        aria-hidden
-                                                                        className="size-5 shrink-0"
-                                                                    />
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                                                <span className="font-medium text-sm">
-                                                                    {label}
-                                                                </span>
-                                                                <span className="text-[11px] text-muted-foreground leading-snug">
-                                                                    {
-                                                                        description
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                            <SidebarIntegrationAction
-                                                                connected={isIntegrationConnected(
-                                                                    id
-                                                                )}
-                                                                id={id}
-                                                                locale={locale}
-                                                                soundcloudParked={
-                                                                    soundcloudParked
-                                                                }
-                                                            />
-                                                        </div>
-                                                    </li>
-                                                )
-                                            )}
-                                        </ul>
-                                    </CollapsiblePanel>
-                                </div>
-                            </Collapsible>
+                            <LibrarySidebarIntegrations
+                                items={items}
+                                locale={locale}
+                                parkedIntegrationIds={parkedIntegrationIds}
+                                serverConnectedIntegrationIds={
+                                    serverConnectedIntegrationIds
+                                }
+                            />
                             <Collapsible>
                                 <CollapsibleTrigger className="flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5">
                                     <Component

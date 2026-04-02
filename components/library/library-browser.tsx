@@ -169,6 +169,12 @@ function sourceLabel(source: LibraryItemSource): string {
     if (source === LibraryItemSource.tiktok) {
         return "TikTok";
     }
+    if (source === LibraryItemSource.x_bookmarks) {
+        return "X";
+    }
+    if (source === LibraryItemSource.youtube_watch_later) {
+        return "YouTube";
+    }
     return "Other";
 }
 
@@ -889,6 +895,14 @@ export function LibraryBrowser({ items }: Props) {
             {
                 label: sourceLabel(LibraryItemSource.tiktok),
                 value: LibraryItemSource.tiktok,
+            },
+            {
+                label: sourceLabel(LibraryItemSource.x_bookmarks),
+                value: LibraryItemSource.x_bookmarks,
+            },
+            {
+                label: sourceLabel(LibraryItemSource.youtube_watch_later),
+                value: LibraryItemSource.youtube_watch_later,
             },
             { label: sourceLabel(LibraryItemSource.other), value: "other" },
         ],

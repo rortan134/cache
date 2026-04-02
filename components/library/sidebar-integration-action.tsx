@@ -3,46 +3,45 @@
 import { GooglePhotosImportButton } from "@/components/library/google-photos-import-button";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
-import {
-    CACHE_EXTENSION_DOWNLOAD_URL,
-    CACHE_EXTENSION_READY_EVENT,
-} from "@/lib/constants";
+import { CACHE_EXTENSION_DOWNLOAD_URL } from "@/lib/constants";
 import type { IntegrationId } from "@/lib/integrations/supports";
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 type SidebarIntegrationActionProps = Readonly<{
     connected: boolean;
+    extensionInstalled?: boolean;
     id: IntegrationId;
     locale: string;
-    soundcloudParked?: boolean;
+    parked?: boolean;
 }>;
 
 type ExtensionIntegrationId = Extract<
     IntegrationId,
-    "chrome" | "instagram" | "tiktok"
+    "chrome" | "instagram" | "tiktok" | "youtube"
 >;
 type OAuthIntegrationId = Extract<
     IntegrationId,
-    "google-photos" | "pinterest" | "soundcloud"
+    "google-photos" | "pinterest" | "soundcloud" | "x"
 >;
 
 const EXTENSION_OPEN_URL: Record<ExtensionIntegrationId, string> = {
     chrome: CACHE_EXTENSION_DOWNLOAD_URL,
     instagram: "https://www.instagram.com/explore/saved/",
     tiktok: "https://www.tiktok.com/profile",
+    youtube: "https://www.youtube.com/playlist?list=WL",
 };
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-    return typeof value === "object" && value !== null
-        ? (value as Record<string, unknown>)
-        : null;
-}
-
 function readRedirectUrl(response: unknown): string | null {
-    const root = asRecord(response);
-    const payload = asRecord(root?.data) ?? root;
+    const root =
+        typeof response === "object" && response !== null
+            ? (response as Record<string, unknown>)
+            : null;
+    const payload =
+        typeof root?.data === "object" && root.data !== null
+            ? (root.data as Record<string, unknown>)
+            : root;
     const url = payload?.url;
     return typeof url === "string" && url.length > 0 ? url : null;
 }
@@ -60,18 +59,24 @@ function openExternal(url: string) {
     window.location.assign(url);
 }
 
-function isExtensionInstalled() {
-    return document.documentElement.dataset.cacheExtensionInstalled === "true";
-}
-
 function isExtensionIntegration(
     id: IntegrationId
 ): id is ExtensionIntegrationId {
-    return id === "chrome" || id === "instagram" || id === "tiktok";
+    return (
+        id === "chrome" ||
+        id === "instagram" ||
+        id === "tiktok" ||
+        id === "youtube"
+    );
 }
 
 function isOAuthIntegration(id: IntegrationId): id is OAuthIntegrationId {
-    return id === "google-photos" || id === "pinterest" || id === "soundcloud";
+    return (
+        id === "google-photos" ||
+        id === "pinterest" ||
+        id === "soundcloud" ||
+        id === "x"
+    );
 }
 
 function providerIdForIntegration(id: OAuthIntegrationId) {
@@ -97,51 +102,21 @@ function chromeExtensionLabel(extensionInstalled: boolean) {
 
 export function SidebarIntegrationAction({
     connected,
+    extensionInstalled = false,
     id,
     locale,
-    soundcloudParked = false,
+    parked = false,
 }: SidebarIntegrationActionProps) {
     const router = useRouter();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isImportingX, setIsImportingX] = useState(false);
     const [isImportingPinterest, setIsImportingPinterest] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [extensionInstalled, setExtensionInstalled] = useState(false);
     const isChromeIntegration = id === "chrome";
     const isGooglePhotosIntegration = id === "google-photos";
     const isPinterestIntegration = id === "pinterest";
-
-    useEffect(() => {
-        const handleReady = () => {
-            setExtensionInstalled(true);
-        };
-
-        const handleMessage = (event: MessageEvent) => {
-            if (event.source !== window) {
-                return;
-            }
-
-            const payload = asRecord(event.data);
-            if (payload?.type === CACHE_EXTENSION_READY_EVENT) {
-                handleReady();
-            }
-        };
-
-        setExtensionInstalled(isExtensionInstalled());
-        window.addEventListener(
-            CACHE_EXTENSION_READY_EVENT,
-            handleReady as EventListener
-        );
-        window.addEventListener("message", handleMessage);
-
-        return () => {
-            window.removeEventListener(
-                CACHE_EXTENSION_READY_EVENT,
-                handleReady as EventListener
-            );
-            window.removeEventListener("message", handleMessage);
-        };
-    }, []);
+    const isXIntegration = id === "x";
 
     const handleExtensionClick = useCallback(() => {
         if (!isExtensionIntegration(id)) {
@@ -308,6 +283,46 @@ export function SidebarIntegrationAction({
         }
     }, [router]);
 
+    const handleXImport = useCallback(async () => {
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        setIsImportingX(true);
+
+        try {
+            const response = await fetch("/api/integrations/x/import", {
+                method: "POST",
+            });
+            const payload = (await response.json()) as
+                | {
+                      error?: string;
+                      importedCount: number;
+                      prunedCount: number;
+                      updatedCount: number;
+                  }
+                | { error: string };
+
+            if (!(response.ok && "importedCount" in payload)) {
+                throw new Error(
+                    payload.error ??
+                        "Could not import bookmarks from X right now."
+                );
+            }
+
+            setSuccessMessage(
+                `Synced ${payload.importedCount + payload.updatedCount} X bookmark${payload.importedCount + payload.updatedCount === 1 ? "" : "s"}${payload.prunedCount > 0 ? ` and pruned ${payload.prunedCount}` : ""}.`
+            );
+            router.refresh();
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Could not import bookmarks from X right now."
+            );
+        } finally {
+            setIsImportingX(false);
+        }
+    }, [router]);
+
     if (isExtensionIntegration(id)) {
         const extensionLabel = isChromeIntegration
             ? chromeExtensionLabel(extensionInstalled)
@@ -343,13 +358,12 @@ export function SidebarIntegrationAction({
     }
 
     const connectLabel = connected ? "Reconnect" : "Connect";
-    const isParkedSoundcloud = id === "soundcloud" && soundcloudParked;
 
     return (
         <div className="ml-auto flex flex-col items-start gap-1">
             <div className="flex flex-wrap items-center gap-2">
                 <Button
-                    disabled={isParkedSoundcloud}
+                    disabled={parked}
                     loading={isConnecting}
                     onClick={
                         isGooglePhotosIntegration
@@ -360,13 +374,24 @@ export function SidebarIntegrationAction({
                     type="button"
                     variant="ghost"
                 >
-                    {isParkedSoundcloud ? "Pending" : connectLabel}
+                    {parked ? "Pending" : connectLabel}
                 </Button>
                 {isGooglePhotosIntegration && connected ? (
                     <GooglePhotosImportButton
                         locale={locale}
                         variant="outline"
                     />
+                ) : null}
+                {isXIntegration && connected ? (
+                    <Button
+                        loading={isImportingX}
+                        onClick={handleXImport}
+                        size="icon"
+                        type="button"
+                        variant="outline"
+                    >
+                        <RefreshCw className="size-4" />
+                    </Button>
                 ) : null}
                 {isPinterestIntegration && connected ? (
                     <Button

@@ -5,6 +5,8 @@ import {
     Pinterest,
     SoundCloud,
     TikTok,
+    XSocial,
+    YouTube,
 } from "@/components/ui/integration-icons";
 import type { ComponentType, SVGProps } from "react";
 
@@ -18,14 +20,17 @@ export type IntegrationId =
     | "instagram"
     | "pinterest"
     | "soundcloud"
-    | "tiktok";
+    | "tiktok"
+    | "x"
+    | "youtube";
 
 /**
- * Integrations that correspond to `LibraryItem.source` for extension bookmark sync.
- * Extend when Prisma adds a matching `LibraryItemSource` value.
+ * Bookmark-capable integrations that contribute items to the unified library.
  */
 export const LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS = [
     "chrome",
+    "x",
+    "youtube",
     "instagram",
     "pinterest",
     "tiktok",
@@ -66,6 +71,22 @@ export const INTEGRATIONS = [
         Icon: TikTok,
         id: "tiktok",
         label: "TikTok",
+    },
+    {
+        capabilities: { bookmarks: true },
+        category: "social",
+        description: "Posts you save to Bookmarks",
+        Icon: XSocial,
+        id: "x",
+        label: "X",
+    },
+    {
+        capabilities: { bookmarks: true },
+        category: "media",
+        description: "Videos in your Watch Later playlist",
+        Icon: YouTube,
+        id: "youtube",
+        label: "YouTube",
     },
     {
         capabilities: { bookmarks: true },

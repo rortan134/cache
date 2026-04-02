@@ -1,0 +1,119 @@
+import {
+    extensionIngestCorsHeaders,
+    parseBearerToken,
+    resolveExtensionIngestUserId,
+} from "@/lib/library/extension-ingest";
+import { importLibraryItemSnapshot } from "@/lib/library/snapshot-import";
+import { LibraryItemSource } from "@/prisma/client/enums";
+import * as z from "zod";
+
+const youtubeWatchLaterItemSchema = z.object({
+    availability: z.string().optional(),
+    channelId: z.string().optional(),
+    channelName: z.string().optional(),
+    duration: z.string().optional(),
+    playlistItemId: z.string().optional(),
+    position: z.number().int().nonnegative().optional(),
+    publishedAt: z.string().optional(),
+    scrapedAt: z.string().optional(),
+    thumbnailUrl: z.string().url().optional(),
+    title: z.string().optional(),
+    videoId: z.string().min(1),
+    videoUrl: z.string().url().optional(),
+});
+
+const bodySchema = z.object({
+    browserProfileId: z.string().min(1).optional(),
+    items: z.array(youtubeWatchLaterItemSchema),
+    snapshotComplete: z.boolean().default(false),
+    sourceDeviceId: z.string().optional(),
+    sourceDeviceName: z.string().optional(),
+});
+
+function parseDate(value: string | undefined): Date | null {
+    if (!value) {
+        return null;
+    }
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function OPTIONS() {
+    return new Response(null, {
+        headers: extensionIngestCorsHeaders(),
+        status: 204,
+    });
+}
+
+export async function POST(request: Request) {
+    const cors = extensionIngestCorsHeaders();
+    const bearer = parseBearerToken(request);
+    if (!bearer) {
+        return Response.json(
+            { error: "Missing Authorization: Bearer <extension ingest token>" },
+            { headers: cors, status: 401 }
+        );
+    }
+
+    const userId = await resolveExtensionIngestUserId(bearer);
+    if (!userId) {
+        return Response.json(
+            { error: "Unauthorized" },
+            { headers: cors, status: 401 }
+        );
+    }
+
+    const json = await request.json().catch(() => null);
+    const parsed = bodySchema.safeParse(json);
+    if (!parsed.success) {
+        return Response.json(
+            { error: parsed.error.flatten() },
+            { headers: cors, status: 400 }
+        );
+    }
+
+    const syncedAt = new Date();
+    const result = await importLibraryItemSnapshot({
+        browserProfileIdsToSync: [parsed.data.browserProfileId ?? "default"],
+        items: parsed.data.items.map((item) => ({
+            browserProfileId: parsed.data.browserProfileId,
+            caption: item.title ?? null,
+            externalId: item.videoId,
+            postedAt: parseDate(item.publishedAt),
+            scrapedAt: parseDate(item.scrapedAt) ?? syncedAt,
+            sourceDeviceId: parsed.data.sourceDeviceId ?? null,
+            sourceDeviceName: parsed.data.sourceDeviceName ?? null,
+            sourceMetadata: {
+                youtube: {
+                    availability: item.availability ?? null,
+                    channelId: item.channelId ?? null,
+                    channelName: item.channelName ?? null,
+                    duration: item.duration ?? null,
+                    importTimestamp: syncedAt.toISOString(),
+                    isLive: item.availability === "live",
+                    isUpcoming: item.availability === "upcoming",
+                    playlistItemId: item.playlistItemId ?? null,
+                    position: item.position ?? null,
+                    videoId: item.videoId,
+                },
+            },
+            thumbnailUrl: item.thumbnailUrl ?? null,
+            url:
+                item.videoUrl ??
+                `https://www.youtube.com/watch?v=${encodeURIComponent(item.videoId)}`,
+        })),
+        snapshotComplete: parsed.data.snapshotComplete,
+        source: LibraryItemSource.youtube_watch_later,
+        userId,
+    });
+
+    return Response.json(
+        {
+            ...result,
+            ok: true,
+            received: parsed.data.items.length,
+            snapshotComplete: parsed.data.snapshotComplete,
+        },
+        { headers: cors }
+    );
+}

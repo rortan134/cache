@@ -1,6 +1,7 @@
 import { RadialChart } from "@/components/ui/radial-chart";
 import {
     getIntegration,
+    type IntegrationId,
     LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS,
 } from "@/lib/integrations/supports";
 import { cn } from "@/lib/utils";
@@ -27,19 +28,35 @@ function syncableLibrarySourceTotal(): number {
     return LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS.length;
 }
 
+function integrationMatchesSource(
+    id: IntegrationId,
+    source: LibraryItemSource
+): boolean {
+    if (id === "chrome") {
+        return source === "chrome_bookmarks";
+    }
+    if (id === "x") {
+        return source === "x_bookmarks";
+    }
+    if (id === "youtube") {
+        return source === "youtube_watch_later";
+    }
+    return source === id;
+}
+
 function partitionLibrarySyncLabels(
-    items: readonly { readonly source: LibraryItemSource }[]
+    items: readonly { readonly source: LibraryItemSource }[],
+    connectedIntegrationIds: readonly IntegrationId[] = []
 ): { connectedLabels: string[]; missingLabels: string[] } {
     const connectedLabels: string[] = [];
     const missingLabels: string[] = [];
+    const connectedIntegrationIdSet = new Set(connectedIntegrationIds);
     for (const id of LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS) {
         const count = items.filter((item) =>
-            id === "chrome"
-                ? item.source === "chrome_bookmarks"
-                : item.source === id
+            integrationMatchesSource(id, item.source)
         ).length;
         const label = getIntegration(id).label;
-        if (count > 0) {
+        if (count > 0 || connectedIntegrationIdSet.has(id)) {
             connectedLabels.push(label);
         } else {
             missingLabels.push(label);
@@ -64,22 +81,26 @@ function integrationSetupHeadingText(args: {
     if (connectedCount < syncable) {
         return "Connect more platforms to unify your saved posts in one library";
     }
-    return `You're all set — sync from the extension to stay up to date`;
+    return "You're all set — keep your library in sync";
 }
 
 export interface IntegrationSetupHeadingProps
     extends React.ComponentProps<"button"> {
+    readonly connectedIntegrationIds?: readonly IntegrationId[];
     readonly items: readonly { readonly source: LibraryItemSource }[];
 }
 
 export function IntegrationSetupWizard({
+    connectedIntegrationIds,
     items,
     className,
     ...props
 }: IntegrationSetupHeadingProps) {
     const syncable = syncableLibrarySourceTotal();
-    const { connectedLabels, missingLabels } =
-        partitionLibrarySyncLabels(items);
+    const { connectedLabels, missingLabels } = partitionLibrarySyncLabels(
+        items,
+        connectedIntegrationIds
+    );
     const connectedCount = connectedLabels.length;
     const text = integrationSetupHeadingText({
         connectedCount,
