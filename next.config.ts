@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
         optimizePackageImports: [
             "@base-ui/react",
             "zod",
+            "culori",
             "better-auth",
             "recharts",
         ],

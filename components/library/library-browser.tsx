@@ -504,6 +504,7 @@ function renderLibraryGridBody({
     return sections.map((section) =>
         enableSectionCollapse ? (
             <ExtensionLibrarySection
+                accentKey={section.key}
                 collapsed={collapsedSectionKeys.has(section.key)}
                 collapsible
                 columnCount={columnCount}
@@ -1852,7 +1853,7 @@ export function LibraryBrowser({ items }: Props) {
                 </AlertDialogPopup>
             </AlertDialog>
             <div
-                className="sticky top-3 z-20 w-full max-w-md pl-3"
+                className="sticky top-3 z-20 w-full max-w-md pl-2"
                 onPointerDownCapture={handlePaletteShellPointerDownCapture}
                 ref={commandPanelContainerRef}
             >
@@ -1968,7 +1969,7 @@ export function LibraryBrowser({ items }: Props) {
                     </Command>
                 </CommandPanel>
             </div>
-            <div className="flex flex-col gap-2 pl-3">
+            <div className="flex flex-col gap-2 pl-2">
                 {actionFeedback ? (
                     <div
                         className={cn(

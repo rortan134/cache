@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/context-menu";
 import { Masonry, MasonryItem } from "@/components/ui/masonry";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getSubtleColorGradientFromName } from "@/lib/colors";
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
@@ -54,6 +55,7 @@ interface GridProps {
 }
 
 interface SectionProps extends GridProps {
+    readonly accentKey?: string;
     readonly collapsed?: boolean;
     readonly collapsible?: boolean;
     readonly emptyHint: string;
@@ -325,6 +327,7 @@ export function ExtensionLibraryGrid({
 }
 
 export function ExtensionLibrarySection({
+    accentKey,
     collapsed = false,
     collapsible = false,
     columnCount,
@@ -342,6 +345,9 @@ export function ExtensionLibrarySection({
 }: SectionProps): ReactElement {
     const canToggle = collapsible && onToggle;
     const stickyHeader = collapsible;
+    const headerGradient = stickyHeader
+        ? getSubtleColorGradientFromName(accentKey ?? title)
+        : undefined;
     let body: ReactElement | null;
 
     if (collapsed) {
@@ -379,8 +385,15 @@ export function ExtensionLibrarySection({
                     className={cn(
                         "flex items-center justify-between gap-3",
                         stickyHeader &&
-                            "rounded-2xl border border-border/70 bg-background/92 px-2 py-2 shadow-xs/5 backdrop-blur-md supports-[backdrop-filter]:bg-background/80"
+                            "rounded-xl bg-background/92 backdrop-blur-md supports-backdrop-filter:bg-background/80"
                     )}
+                    style={
+                        stickyHeader
+                            ? ({
+                                  background: headerGradient,
+                              } as CSSProperties)
+                            : undefined
+                    }
                 >
                     {canToggle ? (
                         <Button
