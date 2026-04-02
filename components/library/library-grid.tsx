@@ -341,6 +341,7 @@ export function ExtensionLibrarySection({
     title,
 }: SectionProps): ReactElement {
     const canToggle = collapsible && onToggle;
+    const stickyHeader = collapsible;
     let body: ReactElement | null;
 
     if (collapsed) {
@@ -364,34 +365,51 @@ export function ExtensionLibrarySection({
 
     return (
         <section className="flex w-full flex-col gap-3">
-            <div className="flex items-center justify-between gap-3">
-                {canToggle ? (
-                    <Button
-                        className="min-w-0 flex-1 justify-start rounded-xl px-3"
-                        onClick={onToggle}
-                        variant="ghost"
-                    >
-                        {collapsed ? (
-                            <ChevronRightIcon className="size-4" />
-                        ) : (
-                            <ChevronDownIcon className="size-4" />
-                        )}
-                        <span className="ml-1 truncate font-medium">
-                            {title}
+            <div
+                className={cn(stickyHeader && "sticky z-10")}
+                style={
+                    stickyHeader
+                        ? ({
+                              top: "var(--library-section-sticky-top)",
+                          } as CSSProperties)
+                        : undefined
+                }
+            >
+                <div
+                    className={cn(
+                        "flex items-center justify-between gap-3",
+                        stickyHeader &&
+                            "rounded-2xl border border-border/70 bg-background/92 px-2 py-2 shadow-xs/5 backdrop-blur-md supports-[backdrop-filter]:bg-background/80"
+                    )}
+                >
+                    {canToggle ? (
+                        <Button
+                            className="min-w-0 flex-1 justify-start rounded-xl px-3"
+                            onClick={onToggle}
+                            variant="ghost"
+                        >
+                            {collapsed ? (
+                                <ChevronRightIcon className="size-4" />
+                            ) : (
+                                <ChevronDownIcon className="size-4" />
+                            )}
+                            <span className="ml-1 truncate font-medium">
+                                {title}
+                            </span>
+                        </Button>
+                    ) : (
+                        <h2 className="font-medium text-lg">{title}</h2>
+                    )}
+                    <div className="flex items-center gap-2">
+                        {summaryLabel ? (
+                            <span className="rounded-full bg-card/60 px-2 py-1 text-muted-foreground text-xs">
+                                {summaryLabel}
+                            </span>
+                        ) : null}
+                        <span className="font-medium text-muted-foreground text-xs tabular-nums">
+                            {items.length}
                         </span>
-                    </Button>
-                ) : (
-                    <h2 className="font-medium text-lg">{title}</h2>
-                )}
-                <div className="flex items-center gap-2">
-                    {summaryLabel ? (
-                        <span className="rounded-full bg-card/60 px-2 py-1 text-muted-foreground text-xs">
-                            {summaryLabel}
-                        </span>
-                    ) : null}
-                    <span className="font-medium text-muted-foreground text-xs tabular-nums">
-                        {items.length}
-                    </span>
+                    </div>
                 </div>
             </div>
             {body}

@@ -184,7 +184,7 @@ body {
     }
     html,
     body {
-        overscroll-behavior-x: contain;
+        overscroll-behavior: contain;
     }
     body {
         @apply bg-background text-foreground;

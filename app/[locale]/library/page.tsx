@@ -1,4 +1,5 @@
 import { UserMenu } from "@/components/auth/user-menu";
+import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import { LibrarySidebarIntegrations } from "@/components/library/integrations";
 import { LibraryBrowser } from "@/components/library/library-browser";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +19,6 @@ import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { ChevronDown, Component, PlusIcon, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getLatestSoundcloudLikes } from "./actions";
 
@@ -171,19 +170,10 @@ export default async function LibraryPage({
                     }
                     top={
                         <>
-                            <Link draggable={false} href="/library">
-                                <Image
-                                    alt="App Icon"
-                                    className="block select-none"
-                                    draggable={false}
-                                    fetchPriority="high"
-                                    height={50}
-                                    loading="eager"
-                                    priority
-                                    src={LogoIconImage}
-                                    width={200}
-                                />
-                            </Link>
+                            <LogoContextMenu
+                                href="/library"
+                                src={LogoIconImage}
+                            />
                             <LibrarySidebarIntegrations
                                 items={items}
                                 locale={locale}

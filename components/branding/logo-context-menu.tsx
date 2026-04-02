@@ -1,0 +1,79 @@
+"use client";
+
+import {
+    ContextMenu,
+    ContextMenuItem,
+    ContextMenuPopup,
+    ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { saveFile } from "@/lib/file";
+import { createLogger } from "@/lib/logs/console/logger";
+import { DownloadIcon } from "lucide-react";
+import type { StaticImageData } from "next/image";
+import Image from "next/image";
+import Link from "next/link";
+import type * as React from "react";
+
+const log = createLogger("logo-context-menu");
+
+interface LogoContextMenuProps {
+    href: string;
+    src: StaticImageData;
+}
+
+export function LogoContextMenu({
+    href,
+    src,
+}: LogoContextMenuProps): React.ReactElement {
+    const handleSaveLogo = async () => {
+        try {
+            await saveFile(
+                fetch(src.src).then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Failed to fetch logo image (${response.status})`
+                        );
+                    }
+                    return response.blob();
+                }),
+                {
+                    description: "PNG image",
+                    extension: "png",
+                    name: "cache-logo",
+                }
+            );
+        } catch (error) {
+            log.error("Failed to save logo image", error);
+        }
+    };
+
+    return (
+        <ContextMenu>
+            <ContextMenuTrigger render={<div className="contents" />}>
+                <Link
+                    className="group inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                    draggable={false}
+                    href={href}
+                >
+                    <Image
+                        alt="App Icon"
+                        className="block select-none transition-transform duration-200 group-hover:scale-[1.02] group-focus-visible:scale-[1.02]"
+                        draggable={false}
+                        fetchPriority="high"
+                        height={50}
+                        loading="eager"
+                        priority
+                        src={src}
+                        width={200}
+                    />
+                </Link>
+            </ContextMenuTrigger>
+            <ContextMenuPopup className="min-w-44">
+                <ContextMenuItem onClick={handleSaveLogo}>
+                    <DownloadIcon className="size-4 text-muted-foreground" />
+                    Save logo as PNG
+                </ContextMenuItem>
+            </ContextMenuPopup>
+        </ContextMenu>
+    );
+}

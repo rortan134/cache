@@ -39,7 +39,11 @@ import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import { SearchIcon, SparklesIcon, XIcon } from "lucide-react";
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import type {
+    CSSProperties,
+    KeyboardEvent as ReactKeyboardEvent,
+    ReactNode,
+} from "react";
 import {
     useCallback,
     useEffect,
@@ -71,6 +75,8 @@ const SEARCH_HOTKEYS = [
     "Meta+f",
 ] as const;
 const SEARCH_CANCEL_KEYS = ["esc", "tab"] as const;
+const LIBRARY_COMMAND_PANEL_TOP_PX = 12;
+const LIBRARY_SECTION_STICKY_GAP_PX = 8;
 
 type GroupByMode =
     | "none"
@@ -1044,6 +1050,7 @@ export function LibraryBrowser({ items }: Props) {
         useState<PaletteSection>("search");
     const [commandListOpen, setCommandListOpen] = useState(false);
     const [isPaletteFocused, setIsPaletteFocused] = useState(false);
+    const [commandPanelShellHeight, setCommandPanelShellHeight] = useState(0);
     const commandPanelContainerRef = useRef<HTMLDivElement>(null);
     const paletteInputRef = useRef<HTMLInputElement>(null);
     /** Skips one combobox-driven close right after entering a drill-down section. */
@@ -1242,6 +1249,31 @@ export function LibraryBrowser({ items }: Props) {
         return () => {
             el.removeEventListener("focusin", handleFocusIn);
             el.removeEventListener("focusout", handleFocusOut);
+        };
+    }, []);
+
+    useLayoutEffect(() => {
+        const el = commandPanelContainerRef.current;
+        if (!el) {
+            return;
+        }
+
+        const updateHeight = () => {
+            const nextHeight = Math.ceil(el.getBoundingClientRect().height);
+            setCommandPanelShellHeight((current) =>
+                current === nextHeight ? current : nextHeight
+            );
+        };
+
+        updateHeight();
+
+        const resizeObserver = new ResizeObserver(updateHeight);
+        resizeObserver.observe(el);
+        window.addEventListener("resize", updateHeight);
+
+        return () => {
+            resizeObserver.disconnect();
+            window.removeEventListener("resize", updateHeight);
         };
     }, []);
 
@@ -1755,6 +1787,13 @@ export function LibraryBrowser({ items }: Props) {
         filteredItems.length === visibleItems.length
             ? `${visibleItems.length} item${visibleItems.length === 1 ? "" : "s"}`
             : `${filteredItems.length} of ${visibleItems.length} items`;
+    const libraryBrowserStyle = useMemo(
+        () =>
+            ({
+                "--library-section-sticky-top": `${commandPanelShellHeight + LIBRARY_COMMAND_PANEL_TOP_PX + LIBRARY_SECTION_STICKY_GAP_PX}px`,
+            }) as CSSProperties,
+        [commandPanelShellHeight]
+    );
 
     const libraryGridBody = renderLibraryGridBody({
         clearLibraryPalette,
@@ -1774,7 +1813,10 @@ export function LibraryBrowser({ items }: Props) {
     });
 
     return (
-        <div className="relative z-0 flex w-full flex-col gap-6">
+        <div
+            className="relative z-0 flex w-full flex-col gap-6"
+            style={libraryBrowserStyle}
+        >
             <AlertDialog
                 onOpenChange={handleDeleteDialogOpenChange}
                 open={pendingDeleteItem !== null}

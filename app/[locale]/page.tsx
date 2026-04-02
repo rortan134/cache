@@ -1,4 +1,5 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import {
     SessionHint,
     SignedInOnly,
@@ -80,19 +81,10 @@ export default async function Home({
                     }
                     top={
                         <>
-                            <Link draggable={false} href="/library">
-                                <Image
-                                    alt="App Icon"
-                                    className="block select-none"
-                                    draggable={false}
-                                    fetchPriority="high"
-                                    height={50}
-                                    loading="eager"
-                                    priority
-                                    src={LogoIconImage}
-                                    width={200}
-                                />
-                            </Link>
+                            <LogoContextMenu
+                                href="/library"
+                                src={LogoIconImage}
+                            />
                             <div className="flex flex-col gap-3 text-balance">
                                 <T context="'Cache' is the product's name">
                                     <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">

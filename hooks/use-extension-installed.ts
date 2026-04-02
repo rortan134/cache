@@ -1,5 +1,3 @@
-"use client";
-
 import { CACHE_EXTENSION_READY_EVENT } from "@/lib/constants";
 import { useEffect, useState } from "react";
 
