@@ -3,7 +3,7 @@
 import copy from "copy-to-clipboard";
 import * as React from "react";
 
-export function useCopyToClipboard({
+function useCopyToClipboard({
     timeout = 2000,
     onCopy,
 }: {
@@ -53,3 +53,5 @@ export function useCopyToClipboard({
 
     return { copyToClipboard, isCopied };
 }
+
+export { useCopyToClipboard };

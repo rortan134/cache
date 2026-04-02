@@ -1,5 +1,7 @@
 import { parseAsString, useQueryState } from "nuqs";
 
-export function useSearchQuery() {
+function useSearchQuery() {
     return useQueryState("search", parseAsString.withDefault(""));
 }
+
+export { useSearchQuery };

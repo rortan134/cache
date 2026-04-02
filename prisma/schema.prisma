@@ -36,10 +36,26 @@ model User {
     sessions             Session[]
     accounts             Account[]
     libraryItems         LibraryItem[]
+    collections          Collection[]
     feedbackEntries      Feedback[]
 
     @@unique([email])
     @@map("user")
+}
+
+model Collection {
+    id        String        @id @default(cuid())
+    userId    String
+    user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    name      String
+    nameKey   String
+    items     LibraryItem[]
+    createdAt DateTime      @default(now())
+    updatedAt DateTime      @updatedAt
+
+    @@index([userId])
+    @@unique([userId, nameKey])
+    @@map("collection")
 }
 
 model LibraryItem {
@@ -60,6 +76,7 @@ model LibraryItem {
     sourceMetadata Json?
     postedAt     DateTime?
     scrapedAt    DateTime?
+    collections  Collection[]
     createdAt    DateTime          @default(now())
     updatedAt    DateTime          @updatedAt
 

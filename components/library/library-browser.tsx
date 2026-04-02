@@ -34,9 +34,12 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { TruncateAfter } from "@/components/ui/truncate-after";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import type {
+    LibraryCollectionSummary,
+    LibraryItemWithCollections,
+} from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
-import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import { SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import type {
@@ -77,18 +80,15 @@ const SEARCH_HOTKEYS = [
 const SEARCH_CANCEL_KEYS = ["esc", "tab"] as const;
 const LIBRARY_COMMAND_PANEL_TOP_PX = 12;
 const LIBRARY_SECTION_STICKY_GAP_PX = 8;
+type LibraryItem = LibraryItemWithCollections;
 
-type GroupByMode =
-    | "none"
-    | "source"
-    | "domain"
-    | "month-added"
-    | "month-created";
+type GroupByMode = "none" | "domain" | "month-added" | "month-created";
 type SortMode =
     | "added-newest"
     | "added-oldest"
     | "created-newest"
     | "created-oldest"
+    | "count-desc"
     | "caption-asc"
     | "caption-desc"
     | "source"
@@ -128,7 +128,7 @@ interface CommandPaletteGroup {
 }
 
 interface LibraryBrowserSection {
-    readonly items: LibraryItem[];
+    readonly items: LibraryItemWithCollections[];
     readonly key: string;
     readonly title: string | null;
 }
@@ -209,9 +209,6 @@ function sourceLabel(source: LibraryItemSource): string {
 }
 
 function formatGroupHeading(mode: GroupByMode, key: string): string {
-    if (mode === "source") {
-        return sourceLabel(key as LibraryItemSource);
-    }
     if (mode === "month-added" || mode === "month-created") {
         const [ys, ms] = key.split("-");
         const y = Number(ys);
@@ -293,12 +290,6 @@ function compareSectionKeys(
             sortMode === "added-oldest" || sortMode === "created-oldest";
         return isOldest ? a.localeCompare(b) : b.localeCompare(a);
     }
-    if (groupBy === "source") {
-        return TEXT_COLLATOR.compare(
-            formatGroupHeading(groupBy, a),
-            formatGroupHeading(groupBy, b)
-        );
-    }
     return TEXT_COLLATOR.compare(a, b);
 }
 
@@ -374,6 +365,9 @@ function sortModeLabel(mode: SortMode): string {
     if (mode === "created-oldest") {
         return "Created: Oldest first";
     }
+    if (mode === "count-desc") {
+        return "Count: Most items first";
+    }
     if (mode === "caption-asc") {
         return "Caption A-Z";
     }
@@ -390,11 +384,8 @@ function sortModeLabel(mode: SortMode): string {
 }
 
 function groupByLabel(mode: GroupByMode): string {
-    if (mode === "source") {
-        return "Source";
-    }
     if (mode === "domain") {
-        return "Domain";
+        return "Source";
     }
     if (mode === "month-added") {
         return "Month Added";
@@ -451,30 +442,41 @@ function PaletteChip({
 
 function renderLibraryGridBody({
     collapsedSectionKeys,
+    collections,
     clearLibraryPalette,
     columnCount,
     enableSectionCollapse,
     layoutRefreshToken,
     onCopyLink,
+    onCreateCollectionRequest,
     onDelete,
     onOpenHere,
     onOpenInNewTab,
+    onUpdateItemCollections,
     onToggleSection,
+    pendingCollectionItemIds,
     pendingDeleteItemId,
     sections,
     showEmptyLibraryPeek,
     showNoFilteredResults,
 }: {
     readonly collapsedSectionKeys: ReadonlySet<string>;
+    readonly collections: readonly LibraryCollectionSummary[];
     readonly clearLibraryPalette: () => void;
     readonly columnCount?: number;
     readonly enableSectionCollapse: boolean;
     readonly layoutRefreshToken: number;
     readonly onCopyLink: (item: LibraryItem) => void;
+    readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onDelete: (item: LibraryItem) => void;
     readonly onOpenHere: (item: LibraryItem) => void;
     readonly onOpenInNewTab: (item: LibraryItem) => void;
+    readonly onUpdateItemCollections: (
+        itemId: string,
+        collectionIds: string[]
+    ) => void;
     readonly onToggleSection: (key: string) => void;
+    readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId: string | null;
     readonly sections: readonly LibraryBrowserSection[];
     readonly showEmptyLibraryPeek: boolean;
@@ -507,16 +509,20 @@ function renderLibraryGridBody({
                 accentKey={section.key}
                 collapsed={collapsedSectionKeys.has(section.key)}
                 collapsible
+                collections={collections}
                 columnCount={columnCount}
                 emptyHint="No saved items in this section."
                 items={section.items}
                 key={section.key}
                 layoutToken={layoutRefreshToken}
                 onCopyLink={onCopyLink}
+                onCreateCollectionRequest={onCreateCollectionRequest}
                 onDelete={onDelete}
                 onOpenHere={onOpenHere}
                 onOpenInNewTab={onOpenInNewTab}
                 onToggle={() => onToggleSection(section.key)}
+                onUpdateItemCollections={onUpdateItemCollections}
+                pendingCollectionItemIds={pendingCollectionItemIds}
                 pendingDeleteItemId={pendingDeleteItemId}
                 summaryLabel={section.title ? undefined : "Filtered view"}
                 title={section.title ?? "Results"}
@@ -535,13 +541,17 @@ function renderLibraryGridBody({
                     </div>
                 ) : null}
                 <ExtensionLibraryGrid
+                    collections={collections}
                     columnCount={columnCount}
                     items={section.items}
                     layoutToken={layoutRefreshToken}
                     onCopyLink={onCopyLink}
+                    onCreateCollectionRequest={onCreateCollectionRequest}
                     onDelete={onDelete}
                     onOpenHere={onOpenHere}
                     onOpenInNewTab={onOpenInNewTab}
+                    onUpdateItemCollections={onUpdateItemCollections}
+                    pendingCollectionItemIds={pendingCollectionItemIds}
                     pendingDeleteItemId={pendingDeleteItemId}
                 />
             </section>
@@ -896,7 +906,23 @@ function LibraryPaletteTrailing({
 }
 
 interface Props {
-    readonly items: LibraryItem[];
+    readonly collections: readonly LibraryCollectionSummary[];
+    readonly items: LibraryItemWithCollections[];
+    readonly onClearCollectionFilters: () => void;
+    readonly onCreateCollectionRequest: (itemId?: string) => void;
+    readonly onItemsChange: (
+        value:
+            | LibraryItemWithCollections[]
+            | ((
+                  current: LibraryItemWithCollections[]
+              ) => LibraryItemWithCollections[])
+    ) => void;
+    readonly onUpdateItemCollections: (
+        itemId: string,
+        collectionIds: string[]
+    ) => void;
+    readonly pendingCollectionItemIds: readonly string[];
+    readonly selectedCollectionIds: readonly string[];
 }
 
 interface LibraryActionFeedback {
@@ -931,7 +957,11 @@ function openSavedItemInNewTab(url: string) {
 
 function useLibraryItemActions(
     setVisibleItems: (
-        value: LibraryItem[] | ((current: LibraryItem[]) => LibraryItem[])
+        value:
+            | LibraryItemWithCollections[]
+            | ((
+                  current: LibraryItemWithCollections[]
+              ) => LibraryItemWithCollections[])
     ) => void
 ): UseLibraryItemActionsResult {
     const [pendingDeleteItem, setPendingDeleteItem] =
@@ -1030,8 +1060,16 @@ function useLibraryItemActions(
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this client entry intentionally coordinates search, filters, grouping, layout, and item actions together.
-export function LibraryBrowser({ items }: Props) {
-    const [visibleItems, setVisibleItems] = useState<LibraryItem[]>(items);
+export function LibraryBrowser({
+    collections,
+    items,
+    onClearCollectionFilters,
+    onCreateCollectionRequest,
+    onItemsChange,
+    onUpdateItemCollections,
+    pendingCollectionItemIds,
+    selectedCollectionIds,
+}: Props) {
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const [paletteInput, setPaletteInput] = useState("");
     const [sourceFilters, setSourceFilters] = useState<SourceFilterValue[]>([]);
@@ -1066,11 +1104,7 @@ export function LibraryBrowser({ items }: Props) {
         handleRequestDelete,
         isDeletePending,
         pendingDeleteItem,
-    } = useLibraryItemActions(setVisibleItems);
-
-    useEffect(() => {
-        setVisibleItems(items);
-    }, [items]);
+    } = useLibraryItemActions(onItemsChange);
 
     const sourceOptions = useMemo(
         () => [
@@ -1099,6 +1133,7 @@ export function LibraryBrowser({ items }: Props) {
             { label: "Added: Oldest first", value: "added-oldest" },
             { label: "Created: Newest first", value: "created-newest" },
             { label: "Created: Oldest first", value: "created-oldest" },
+            { label: "Count: Most items first", value: "count-desc" },
             { label: "Caption A-Z", value: "caption-asc" },
             { label: "Caption Z-A", value: "caption-desc" },
             { label: "Source", value: "source" },
@@ -1110,8 +1145,7 @@ export function LibraryBrowser({ items }: Props) {
     const groupOptions = useMemo(
         () => [
             { label: "No grouping", value: "none" },
-            { label: "Source", value: "source" },
-            { label: "Domain", value: "domain" },
+            { label: "Source", value: "domain" },
             { label: "Month Added", value: "month-added" },
             { label: "Month Created", value: "month-created" },
         ],
@@ -1132,7 +1166,7 @@ export function LibraryBrowser({ items }: Props) {
 
     const domainOptions = useMemo(() => {
         const counts = new Map<string, number>();
-        for (const item of visibleItems) {
+        for (const item of items) {
             const domain = itemDomain(item.url);
             counts.set(domain, (counts.get(domain) ?? 0) + 1);
         }
@@ -1151,7 +1185,7 @@ export function LibraryBrowser({ items }: Props) {
             { label: "All domains", value: ALL_DOMAIN_FILTER },
             ...dynamicDomains,
         ];
-    }, [visibleItems]);
+    }, [items]);
 
     const focusPaletteInput = useCallback((select = false) => {
         setCommandListOpen(true);
@@ -1342,12 +1376,13 @@ export function LibraryBrowser({ items }: Props) {
         setThumbFilters([]);
         setCaptionFilters([]);
         setDomainFilters([]);
+        onClearCollectionFilters();
         setGroupBy("none");
         setSortMode(DEFAULT_SORT_MODE);
         setColumnCountMode(DEFAULT_COLUMN_COUNT_MODE);
         setPaletteSection("search");
         setCommandListOpen(false);
-    }, []);
+    }, [onClearCollectionFilters]);
 
     const handlePaletteInputKeyDown = useCallback(
         (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -1439,6 +1474,7 @@ export function LibraryBrowser({ items }: Props) {
         };
         const hasAnyRefinements =
             searchTerms.length > 0 ||
+            selectedCollectionIds.length > 0 ||
             sourceFilters.length > 0 ||
             thumbFilters.length > 0 ||
             captionFilters.length > 0 ||
@@ -1629,6 +1665,7 @@ export function LibraryBrowser({ items }: Props) {
         thumbFilters,
         captionFilters,
         captionOptions,
+        selectedCollectionIds.length,
     ]);
 
     let inputPlaceholder = "Change the layout…";
@@ -1643,10 +1680,18 @@ export function LibraryBrowser({ items }: Props) {
     }
 
     const filteredItems = useMemo(() => {
-        let list = visibleItems;
+        let list = items;
         const normalizedSearchTerms = searchTerms.map((term) =>
             term.trim().toLowerCase()
         );
+
+        if (selectedCollectionIds.length > 0) {
+            list = list.filter((item) =>
+                item.collections.some((collection) =>
+                    selectedCollectionIds.includes(collection.id)
+                )
+            );
+        }
 
         if (normalizedSearchTerms.length > 0) {
             list = list.filter((item) => {
@@ -1691,13 +1736,17 @@ export function LibraryBrowser({ items }: Props) {
         searchTerms,
         sourceFilters,
         thumbFilters,
-        visibleItems,
+        items,
+        selectedCollectionIds,
     ]);
 
-    const sortedItems = useMemo(
-        () => [...filteredItems].sort((a, b) => compareItems(a, b, sortMode)),
-        [filteredItems, sortMode]
-    );
+    const sortedItems = useMemo(() => {
+        const itemSortMode =
+            sortMode === "count-desc" ? DEFAULT_SORT_MODE : sortMode;
+        return [...filteredItems].sort((a, b) =>
+            compareItems(a, b, itemSortMode)
+        );
+    }, [filteredItems, sortMode]);
 
     const sections = useMemo(() => {
         if (groupBy === "none") {
@@ -1710,12 +1759,10 @@ export function LibraryBrowser({ items }: Props) {
             ];
         }
 
-        const buckets = new Map<string, LibraryItem[]>();
+        const buckets = new Map<string, LibraryItemWithCollections[]>();
         for (const item of sortedItems) {
             let key = "Other";
-            if (groupBy === "source") {
-                key = item.source;
-            } else if (groupBy === "domain") {
+            if (groupBy === "domain") {
                 key = itemDomain(item.url);
             } else if (groupBy === "month-added") {
                 key = itemMonthKey(item, "added");
@@ -1729,7 +1776,16 @@ export function LibraryBrowser({ items }: Props) {
         }
 
         return Array.from(buckets.entries())
-            .sort(([a], [b]) => compareSectionKeys(a, b, groupBy, sortMode))
+            .sort(([a, aItems], [b, bItems]) => {
+                if (sortMode === "count-desc") {
+                    return (
+                        bItems.length - aItems.length ||
+                        compareSectionKeys(a, b, groupBy, sortMode)
+                    );
+                }
+
+                return compareSectionKeys(a, b, groupBy, sortMode);
+            })
             .map(([key, sectionItems]) => ({
                 items: sectionItems,
                 key,
@@ -1740,6 +1796,7 @@ export function LibraryBrowser({ items }: Props) {
     const hasActiveFilters = useMemo(
         () =>
             searchTerms.length > 0 ||
+            selectedCollectionIds.length > 0 ||
             sourceFilters.length > 0 ||
             thumbFilters.length > 0 ||
             captionFilters.length > 0 ||
@@ -1747,6 +1804,7 @@ export function LibraryBrowser({ items }: Props) {
         [
             captionFilters,
             domainFilters,
+            selectedCollectionIds,
             searchTerms,
             sourceFilters,
             thumbFilters,
@@ -1759,9 +1817,7 @@ export function LibraryBrowser({ items }: Props) {
         columnCountMode !== DEFAULT_COLUMN_COUNT_MODE;
 
     const showEmptyLibraryPeek =
-        visibleItems.length === 0 &&
-        filteredItems.length === 0 &&
-        !hasActiveFilters;
+        items.length === 0 && filteredItems.length === 0 && !hasActiveFilters;
 
     const showNoFilteredResults =
         filteredItems.length === 0 && !showEmptyLibraryPeek;
@@ -1785,9 +1841,9 @@ export function LibraryBrowser({ items }: Props) {
         columnCountMode === "auto" ? undefined : Number(columnCountMode);
 
     const resultsSummary =
-        filteredItems.length === visibleItems.length
-            ? `${visibleItems.length} item${visibleItems.length === 1 ? "" : "s"}`
-            : `${filteredItems.length} of ${visibleItems.length} items`;
+        filteredItems.length === items.length
+            ? `${items.length} item${items.length === 1 ? "" : "s"}`
+            : `${filteredItems.length} of ${items.length} items`;
     const libraryBrowserStyle = useMemo(
         () =>
             ({
@@ -1799,14 +1855,18 @@ export function LibraryBrowser({ items }: Props) {
     const libraryGridBody = renderLibraryGridBody({
         clearLibraryPalette,
         collapsedSectionKeys: new Set(collapsedSectionKeys),
+        collections,
         columnCount: resolvedColumnCount,
         enableSectionCollapse,
         layoutRefreshToken,
         onCopyLink: handleCopyLink,
+        onCreateCollectionRequest,
         onDelete: handleRequestDelete,
         onOpenHere: handleOpenHere,
         onOpenInNewTab: handleOpenInNewTab,
         onToggleSection: toggleSection,
+        onUpdateItemCollections,
+        pendingCollectionItemIds,
         pendingDeleteItemId: pendingDeleteItem?.id ?? null,
         sections,
         showEmptyLibraryPeek,

@@ -11,7 +11,7 @@ function isExtensionInstalled() {
     return document.documentElement.dataset.cacheExtensionInstalled === "true";
 }
 
-export function useExtensionInstalled() {
+function useExtensionInstalled() {
     const [extensionInstalled, setExtensionInstalled] = useState(false);
 
     useEffect(() => {
@@ -48,3 +48,5 @@ export function useExtensionInstalled() {
 
     return extensionInstalled;
 }
+
+export { useExtensionInstalled };

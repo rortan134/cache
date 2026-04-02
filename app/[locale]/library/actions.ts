@@ -2,13 +2,38 @@
 
 import { AccountError } from "@/lib/auth/error";
 import { auth } from "@/lib/auth/server";
+import { extractNamedErrorMessage } from "@/lib/error";
+import { LibraryCollectionError } from "@/lib/library/error";
+import type {
+    LibraryCollectionSummary,
+    LibraryCollectionTag,
+} from "@/lib/library/types";
 import { createLogger } from "@/lib/logs/console/logger";
 import { prisma } from "@/prisma";
 import { headers } from "next/headers";
+import { z } from "zod";
 
 const log = createLogger("library:actions");
 const SOUNDCLOUD_PROVIDER_ID = "soundcloud";
 const SOUNDCLOUD_LIKES_LIMIT = 6;
+const COLLECTION_NAME_MAX_LENGTH = 64;
+
+const CreateCollectionInputSchema = z.object({
+    assignToItemId: z.string().trim().min(1).optional(),
+    name: z
+        .string()
+        .trim()
+        .min(1, "Enter a collection name.")
+        .max(
+            COLLECTION_NAME_MAX_LENGTH,
+            `Collection names can be up to ${COLLECTION_NAME_MAX_LENGTH} characters.`
+        ),
+});
+
+const UpdateLibraryItemCollectionsInputSchema = z.object({
+    collectionIds: z.array(z.string().trim().min(1)).max(100),
+    itemId: z.string().trim().min(1),
+});
 
 export interface SoundcloudLikeTrack {
     artist: string | null;
@@ -41,6 +66,33 @@ export type DeleteLibraryItemResult =
     | {
           message: string;
           status: "ERROR" | "NOT_FOUND" | "UNAUTHORIZED";
+      };
+
+export type CreateCollectionResult =
+    | {
+          assignedItemId: string | null;
+          collection: LibraryCollectionSummary;
+          status: "CREATED";
+      }
+    | {
+          message: string;
+          status:
+              | "DUPLICATE"
+              | "ERROR"
+              | "INVALID"
+              | "NOT_FOUND"
+              | "UNAUTHORIZED";
+      };
+
+export type UpdateLibraryItemCollectionsResult =
+    | {
+          collections: LibraryCollectionTag[];
+          itemId: string;
+          status: "UPDATED";
+      }
+    | {
+          message: string;
+          status: "ERROR" | "INVALID" | "NOT_FOUND" | "UNAUTHORIZED";
       };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -106,6 +158,17 @@ function normalizeLikesResponse(payload: unknown): SoundcloudLikeTrack[] {
     }
 
     return tracks;
+}
+
+function normalizeCollectionName(name: string): {
+    name: string;
+    nameKey: string;
+} {
+    const normalizedName = name.trim().replace(/\s+/g, " ");
+    return {
+        name: normalizedName,
+        nameKey: normalizedName.toLocaleLowerCase(),
+    };
 }
 
 async function resolveSoundcloudUserId(
@@ -293,6 +356,248 @@ export async function deleteLibraryItem(
         log.error("Unexpected library item delete failure", error);
         return {
             message: "We couldn't delete this saved item right now.",
+            status: "ERROR",
+        };
+    }
+}
+
+export async function createCollection(input: {
+    assignToItemId?: string;
+    name: string;
+}): Promise<CreateCollectionResult> {
+    const parsed = CreateCollectionInputSchema.safeParse(input);
+    if (!parsed.success) {
+        return {
+            message:
+                parsed.error.issues[0]?.message ??
+                "Enter a valid collection name.",
+            status: "INVALID",
+        };
+    }
+
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    if (!session?.user?.id) {
+        return {
+            message: "Sign in again to create collections.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    const { assignToItemId } = parsed.data;
+    const normalized = normalizeCollectionName(parsed.data.name);
+
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            if (assignToItemId) {
+                const item = await tx.libraryItem.findFirst({
+                    select: {
+                        id: true,
+                    },
+                    where: {
+                        id: assignToItemId,
+                        userId: session.user.id,
+                    },
+                });
+
+                if (!item) {
+                    throw new LibraryCollectionError({
+                        code: "not_found",
+                        message: "We couldn't find that saved item to tag it.",
+                        operation: "createCollection",
+                    });
+                }
+            }
+
+            const existingCollection = await tx.collection.findFirst({
+                select: {
+                    id: true,
+                },
+                where: {
+                    nameKey: normalized.nameKey,
+                    userId: session.user.id,
+                },
+            });
+
+            if (existingCollection) {
+                throw new LibraryCollectionError({
+                    code: "duplicate_name",
+                    message: "A collection with that name already exists.",
+                    operation: "createCollection",
+                });
+            }
+
+            const collection = await tx.collection.create({
+                data: {
+                    items: assignToItemId
+                        ? {
+                              connect: {
+                                  id: assignToItemId,
+                              },
+                          }
+                        : undefined,
+                    name: normalized.name,
+                    nameKey: normalized.nameKey,
+                    userId: session.user.id,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                },
+            });
+
+            return {
+                assignedItemId: assignToItemId ?? null,
+                collection: {
+                    id: collection.id,
+                    itemCount: assignToItemId ? 1 : 0,
+                    name: collection.name,
+                } satisfies LibraryCollectionSummary,
+            };
+        });
+
+        return {
+            assignedItemId: result.assignedItemId,
+            collection: result.collection,
+            status: "CREATED",
+        };
+    } catch (error) {
+        const named = extractNamedErrorMessage(error);
+        if (
+            LibraryCollectionError.isInstance(error) &&
+            error.data.code === "duplicate_name"
+        ) {
+            return {
+                message: named.message,
+                status: "DUPLICATE",
+            };
+        }
+        if (
+            LibraryCollectionError.isInstance(error) &&
+            error.data.code === "not_found"
+        ) {
+            return {
+                message: named.message,
+                status: "NOT_FOUND",
+            };
+        }
+
+        log.error("Unexpected collection create failure", error);
+        return {
+            message: "We couldn't create this collection right now.",
+            status: "ERROR",
+        };
+    }
+}
+
+export async function updateLibraryItemCollections(input: {
+    collectionIds: string[];
+    itemId: string;
+}): Promise<UpdateLibraryItemCollectionsResult> {
+    const parsed = UpdateLibraryItemCollectionsInputSchema.safeParse({
+        collectionIds: Array.from(new Set(input.collectionIds)),
+        itemId: input.itemId,
+    });
+
+    if (!parsed.success) {
+        return {
+            message: "Pick valid collections before saving.",
+            status: "INVALID",
+        };
+    }
+
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    if (!session?.user?.id) {
+        return {
+            message: "Sign in again to manage collections.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    try {
+        const item = await prisma.libraryItem.findFirst({
+            select: {
+                id: true,
+            },
+            where: {
+                id: parsed.data.itemId,
+                userId: session.user.id,
+            },
+        });
+
+        if (!item) {
+            return {
+                message: "We couldn't find that saved item.",
+                status: "NOT_FOUND",
+            };
+        }
+
+        const ownedCollections = parsed.data.collectionIds.length
+            ? await prisma.collection.findMany({
+                  orderBy: {
+                      name: "asc",
+                  },
+                  select: {
+                      id: true,
+                      name: true,
+                  },
+                  where: {
+                      id: {
+                          in: parsed.data.collectionIds,
+                      },
+                      userId: session.user.id,
+                  },
+              })
+            : [];
+
+        if (ownedCollections.length !== parsed.data.collectionIds.length) {
+            return {
+                message: "One of those collections is no longer available.",
+                status: "NOT_FOUND",
+            };
+        }
+
+        const updatedItem = await prisma.libraryItem.update({
+            data: {
+                collections: {
+                    set: ownedCollections.map((collection) => ({
+                        id: collection.id,
+                    })),
+                },
+            },
+            select: {
+                collections: {
+                    orderBy: {
+                        name: "asc",
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                id: true,
+            },
+            where: {
+                id: parsed.data.itemId,
+            },
+        });
+
+        return {
+            collections: updatedItem.collections,
+            itemId: updatedItem.id,
+            status: "UPDATED",
+        };
+    } catch (error) {
+        log.error("Unexpected library collection update failure", error);
+        return {
+            message: "We couldn't update collections for this item.",
             status: "ERROR",
         };
     }

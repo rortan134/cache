@@ -1,29 +1,58 @@
 import "server-only";
 
-import type { LibraryItem } from "@/prisma/client/client";
 import { prisma } from "@/prisma";
+import type {
+    LibraryCollectionSummary,
+    LibraryItemWithCollections,
+} from "@/lib/library/types";
 
 export async function getLibraryItemsForUser(userId: string) {
-    const libraryItemDelegate = prisma.libraryItem as unknown as {
-        findMany(args: {
-            orderBy: readonly {
-                readonly scrapedAt?: "asc" | "desc";
-                readonly updatedAt?: "asc" | "desc";
-            }[];
+    const [items, collections] = await Promise.all([
+        prisma.libraryItem.findMany({
+            include: {
+                collections: {
+                    orderBy: {
+                        name: "asc",
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+            orderBy: [{ scrapedAt: "desc" }, { updatedAt: "desc" }],
             where: {
-                kind: "bookmark";
-                userId: string;
-            };
-        }): Promise<LibraryItem[]>;
+                kind: "bookmark",
+                userId,
+            },
+        }) as Promise<LibraryItemWithCollections[]>,
+        prisma.collection.findMany({
+            orderBy: {
+                name: "asc",
+            },
+            select: {
+                _count: {
+                    select: {
+                        items: true,
+                    },
+                },
+                id: true,
+                name: true,
+            },
+            where: {
+                userId,
+            },
+        }),
+    ]);
+
+    return {
+        collections: collections.map(
+            (collection): LibraryCollectionSummary => ({
+                id: collection.id,
+                itemCount: collection._count.items,
+                name: collection.name,
+            })
+        ),
+        items,
     };
-
-    const items = await libraryItemDelegate.findMany({
-        orderBy: [{ scrapedAt: "desc" }, { updatedAt: "desc" }],
-        where: {
-            kind: "bookmark",
-            userId,
-        },
-    });
-
-    return { items };
 }
