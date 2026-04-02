@@ -1,4 +1,4 @@
-import { converter, formatCss, formatHex, parse } from "culori";
+import { converter, formatHex, parse } from "culori";
 import * as z from "zod";
 
 export const colors: readonly string[] = [
@@ -180,29 +180,42 @@ export function getRandomColor(): string {
     return color;
 }
 
-const toLch = converter("lch");
-
 function clamp(value: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, value));
 }
 
+function rgbToHue(r: number, g: number, b: number): number {
+    const rn = r / 255;
+    const gn = g / 255;
+    const bn = b / 255;
+    const max = Math.max(rn, gn, bn);
+    const min = Math.min(rn, gn, bn);
+    const delta = max - min;
+
+    if (delta === 0) {
+        return 272;
+    }
+
+    let hue = 0;
+    if (max === rn) {
+        hue = ((gn - bn) / delta) % 6;
+    } else if (max === gn) {
+        hue = (bn - rn) / delta + 2;
+    } else {
+        hue = (rn - gn) / delta + 4;
+    }
+
+    return (hue * 60 + 360) % 360;
+}
+
 export function getSubtleColorGradientFromName(name: string): string {
-    const fallbackHue = 272;
-    const seed = toLch(parseValidColor(getColorFromName(name)));
-    const hue = Number.isFinite(seed.h) ? (seed.h ?? fallbackHue) : fallbackHue;
-    const chromaBias = clamp((seed.c ?? 0) * 0.1, 0.35, 1.6);
-    const start = formatCss({
-        c: 4.8 + chromaBias,
-        h: hue,
-        l: 9.6,
-        mode: "lch",
-    });
-    const end = formatCss({
-        c: 0.9 + chromaBias * 0.15,
-        h: (hue + 10) % 360,
-        l: 7.8,
-        mode: "lch",
-    });
+    const rgb = hexToRgb(getColorFromName(name));
+    const hue = rgb ? rgbToHue(rgb[0], rgb[1], rgb[2]) : 272;
+    const chromaBias = rgb
+        ? clamp((Math.max(...rgb) - Math.min(...rgb)) / 255, 0.35, 1.6)
+        : 0.75;
+    const start = `lch(9.6 ${Number((4.8 + chromaBias).toFixed(3))} ${Number(hue.toFixed(3))})`;
+    const end = `lch(7.8 ${Number((0.9 + chromaBias * 0.15).toFixed(3))} ${Number(((hue + 10) % 360).toFixed(3))})`;
 
     return `linear-gradient(90deg, ${start} 0%, ${end} 100%), ${end}`;
 }

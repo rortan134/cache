@@ -184,7 +184,7 @@ export default async function LibraryPage({
                             />
                             <div className="flex w-full items-center gap-1.5">
                                 <Collapsible className="w-full flex-1">
-                                    <CollapsibleTrigger className="flex items-center gap-2.5 rounded-full bg-muted/94 px-3 py-2.5 text-left">
+                                    <CollapsibleTrigger className="flex items-center gap-2.5 rounded-full bg-muted/94 py-2.5 pr-3 pl-3.5 text-left">
                                         <Component
                                             aria-hidden
                                             className="inline-block size-5 shrink-0"
