@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
-import { LibraryItemSource } from "@/prisma/client/enums";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import type { CSSProperties, ReactElement } from "react";
 
@@ -36,25 +35,6 @@ interface SectionProps extends GridProps {
     readonly onToggle?: () => void;
     readonly summaryLabel?: string;
     readonly title: string;
-}
-
-function sourceLabel(source: LibraryItemSource): string {
-    if (source === LibraryItemSource.chrome_bookmarks) {
-        return "Chrome";
-    }
-    if (source === LibraryItemSource.google_photos) {
-        return "Google Photos";
-    }
-    if (source === LibraryItemSource.instagram) {
-        return "Instagram";
-    }
-    if (source === LibraryItemSource.pinterest) {
-        return "Pinterest";
-    }
-    if (source === LibraryItemSource.tiktok) {
-        return "TikTok";
-    }
-    return "Other";
 }
 
 function itemDomain(url: string): string {
@@ -169,7 +149,6 @@ export function ExtensionLibraryGrid({
             {items.map((item) => {
                 const href = normalizeURL(item.url);
                 const alt = (item.caption ?? "").trim() || "Saved item";
-                const source = sourceLabel(item.source);
                 const domain = itemDomain(item.url);
                 const addedLabel = itemDateLabel(
                     item.scrapedAt ?? item.createdAt
@@ -201,14 +180,6 @@ export function ExtensionLibraryGrid({
                                         No preview
                                     </div>
                                 )}
-                                <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-2">
-                                    <span className="rounded-full bg-black/65 px-2 py-1 font-medium text-[11px] text-white backdrop-blur-sm">
-                                        {source}
-                                    </span>
-                                    <span className="rounded-full bg-black/65 px-2 py-1 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                                        Open
-                                    </span>
-                                </div>
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                                         <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
