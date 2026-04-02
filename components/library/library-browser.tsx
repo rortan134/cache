@@ -1320,19 +1320,9 @@ export function LibraryBrowser({ items }: Props) {
         (event: ReactKeyboardEvent<HTMLInputElement>) => {
             if (event.key === "Escape") {
                 event.preventDefault();
-                const hasPaletteStateToClear =
-                    paletteInput.trim() !== "" ||
-                    searchTerms.length > 0 ||
-                    sourceFilters.length > 0 ||
-                    thumbFilters.length > 0 ||
-                    captionFilters.length > 0 ||
-                    domainFilters.length > 0 ||
-                    groupBy !== "none" ||
-                    sortMode !== DEFAULT_SORT_MODE ||
-                    columnCountMode !== DEFAULT_COLUMN_COUNT_MODE;
-
-                if (commandListOpen && hasPaletteStateToClear) {
-                    clearLibraryPalette();
+                if (paletteInput.trim() !== "") {
+                    setPaletteInput("");
+                    setCommandListOpen(true);
                     return;
                 }
                 if (paletteSection !== "search") {
@@ -1363,21 +1353,7 @@ export function LibraryBrowser({ items }: Props) {
                 setCommandListOpen(true);
             }
         },
-        [
-            captionFilters.length,
-            clearLibraryPalette,
-            columnCountMode,
-            commandListOpen,
-            domainFilters.length,
-            groupBy,
-            paletteInput,
-            paletteSection,
-            returnToSearchSection,
-            searchTerms.length,
-            sortMode,
-            sourceFilters.length,
-            thumbFilters.length,
-        ]
+        [commandListOpen, paletteInput, paletteSection, returnToSearchSection]
     );
 
     const paletteGroups = useMemo<CommandPaletteGroup[]>(() => {
@@ -1950,7 +1926,7 @@ export function LibraryBrowser({ items }: Props) {
                     </Command>
                 </CommandPanel>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 pl-3">
                 {actionFeedback ? (
                     <div
                         className={cn(

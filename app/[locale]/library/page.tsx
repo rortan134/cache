@@ -16,7 +16,7 @@ import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import { prisma } from "@/prisma";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
-import { ChevronDown, Component, PlusIcon } from "lucide-react";
+import { ChevronDown, Component, PlusIcon, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -192,9 +192,9 @@ export default async function LibraryPage({
                                     serverConnectedIntegrationIds
                                 }
                             />
-                            <div className="flex w-full gap-2">
-                                <Collapsible>
-                                    <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded-full bg-muted/94 py-2.5 pr-3 pl-2.5 text-left">
+                            <div className="flex w-full items-center gap-2">
+                                <Collapsible className="w-full flex-1">
+                                    <CollapsibleTrigger className="flex items-center gap-2 rounded-full bg-muted/94 py-2.5 pr-3 pl-2.5 text-left">
                                         <Component
                                             aria-hidden
                                             className="inline-block size-4.5 shrink-0"
@@ -204,6 +204,7 @@ export default async function LibraryPage({
                                             Collections
                                         </span>
                                         <Badge size="sm" variant="outline">
+                                            <Sparkles className="size-3" />
                                             AI Powered
                                         </Badge>
                                         <ChevronDown
@@ -216,6 +217,7 @@ export default async function LibraryPage({
                                 </Collapsible>
                                 <Button
                                     aria-label="Create new collection"
+                                    className="rounded-full"
                                     size="icon"
                                     variant="secondary"
                                 >
