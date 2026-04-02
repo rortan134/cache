@@ -51,7 +51,7 @@ export default async function Home({
                 <PageSidebarShell
                     bottom={
                         <>
-                            <div className="hidden items-center gap-4 lg:flex">
+                            <div className="hidden items-center gap-3 lg:flex">
                                 <Image
                                     alt="Download QR Code"
                                     className="size-20"
@@ -59,13 +59,13 @@ export default async function Home({
                                     src={QRCodeDownloadImage}
                                     width={80}
                                 />
-                                <div className="flex flex-col gap-[6px] pb-[2px]">
+                                <div className="flex flex-col gap-1.5 pb-[2px]">
                                     <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
                                         <T context="Chrome web store browser extension">
                                             Install the extension
                                         </T>
                                     </p>
-                                    <p className="flex shrink-0 flex-row items-center gap-[6px] truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
+                                    <p className="flex shrink-0 flex-row items-center gap-1.5 truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
                                         <span>
                                             <Chrome className="size-4" />
                                         </span>

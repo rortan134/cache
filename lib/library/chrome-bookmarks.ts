@@ -105,6 +105,13 @@ interface ChromeLibraryRow extends ChromeBookmarkRecord {
     readonly sourceAliasIds: string[];
 }
 
+interface ChromeBatchLookupState {
+    readonly aliasToPrimaryId: Map<string, string>;
+    readonly duplicateToPrimaryId: Map<string, string>;
+    readonly rowsById: Map<string, ChromeLibraryRow>;
+    readonly rowsByPrimaryExternalId: Map<string, ChromeLibraryRow>;
+}
+
 interface ChromeLibraryItemDelegate {
     create(args: {
         data: ChromeBookmarkRecord & {
@@ -189,6 +196,18 @@ function normalizeChromeCaption(value: string | null | undefined): string {
         .toLocaleLowerCase()
         .replace(/[^\p{L}\p{N}\s]/gu, " ")
         .replace(/\s+/g, " ");
+}
+
+function chromeDuplicateKey(
+    kind: ChromeItemKind,
+    url: string,
+    caption: string | null
+): string | null {
+    if (kind !== "bookmark") {
+        return null;
+    }
+
+    return `${url}\u0000${normalizeChromeCaption(caption)}`;
 }
 
 function chromeFolderUrl(browserProfileId: string, externalId: string): string {
@@ -289,67 +308,128 @@ function promoteAliasToPrimary(
     });
 }
 
-async function findChromeLogicalDuplicate(
-    tx: { libraryItem: unknown },
-    userId: string,
-    browserProfileId: string,
-    record: ReturnType<typeof normalizeChromeBookmarkRecord>
-) {
-    if (record.kind !== "bookmark") {
-        return null;
+function removeChromeLookupRow(
+    state: ChromeBatchLookupState,
+    row: ChromeLibraryRow
+): void {
+    state.rowsById.delete(row.id);
+    state.rowsByPrimaryExternalId.delete(row.externalId);
+
+    for (const aliasId of row.sourceAliasIds) {
+        state.aliasToPrimaryId.delete(aliasId);
     }
 
-    const candidates = await chromeLibraryItemDelegate(tx).findMany({
-        orderBy: { updatedAt: "desc" },
-        take: 12,
-        where: {
-            browserProfileId,
-            kind: "bookmark",
-            source: LibraryItemSource.chrome_bookmarks,
-            url: record.url,
-            userId,
-        },
-    });
-
-    const normalizedIncomingCaption = normalizeChromeCaption(record.caption);
-    return (
-        candidates.find(
-            (candidate) =>
-                normalizeChromeCaption(candidate.caption) ===
-                normalizedIncomingCaption
-        ) ?? null
-    );
+    const duplicateKey = chromeDuplicateKey(row.kind, row.url, row.caption);
+    if (duplicateKey) {
+        state.duplicateToPrimaryId.delete(duplicateKey);
+    }
 }
 
-async function upsertChromeBookmarkEvent(
-    tx: { libraryItem: unknown },
-    userId: string,
-    browserProfileId: string,
-    bookmark: z.infer<typeof chromeBookmarkNodeSchema>,
-    occurredAt: string | undefined,
-    device: ChromeBookmarkSyncBody["device"]
-): Promise<{ deduped: boolean }> {
-    const record = normalizeChromeBookmarkRecord(
-        browserProfileId,
-        bookmark,
-        occurredAt,
-        device
-    );
+function upsertChromeLookupRow(
+    state: ChromeBatchLookupState,
+    row: ChromeLibraryRow
+): void {
+    state.rowsById.set(row.id, row);
+    state.rowsByPrimaryExternalId.set(row.externalId, row);
 
-    const delegate = chromeLibraryItemDelegate(tx);
-    const exact = await delegate.findUnique({
-        where: {
-            userId_source_browserProfileId_externalId: {
-                browserProfileId,
-                externalId: record.externalId,
-                source: LibraryItemSource.chrome_bookmarks,
-                userId,
-            },
-        },
-    });
+    for (const aliasId of row.sourceAliasIds) {
+        state.aliasToPrimaryId.set(aliasId, row.id);
+    }
 
+    const duplicateKey = chromeDuplicateKey(row.kind, row.url, row.caption);
+    if (duplicateKey && !state.duplicateToPrimaryId.has(duplicateKey)) {
+        state.duplicateToPrimaryId.set(duplicateKey, row.id);
+    }
+}
+
+function buildChromeLookupState(rows: readonly ChromeLibraryRow[]) {
+    const state: ChromeBatchLookupState = {
+        aliasToPrimaryId: new Map(),
+        duplicateToPrimaryId: new Map(),
+        rowsById: new Map(),
+        rowsByPrimaryExternalId: new Map(),
+    };
+
+    for (const row of rows) {
+        upsertChromeLookupRow(state, row);
+    }
+
+    return state;
+}
+
+function replaceChromeLookupRow(
+    state: ChromeBatchLookupState,
+    previous: ChromeLibraryRow,
+    next: ChromeLibraryRow
+): void {
+    removeChromeLookupRow(state, previous);
+    upsertChromeLookupRow(state, next);
+}
+
+async function handleChromeDeleteEvent(args: {
+    readonly delegate: ChromeLibraryItemDelegate;
+    readonly externalId: string;
+    readonly lookup: ChromeBatchLookupState;
+}): Promise<boolean> {
+    const exact = args.lookup.rowsByPrimaryExternalId.get(args.externalId);
     if (exact) {
-        await delegate.update({
+        if (exact.sourceAliasIds.length > 0) {
+            const [nextPrimary, ...remainingAliases] = exact.sourceAliasIds;
+            const updated = await args.delegate.update({
+                data: {
+                    externalId: nextPrimary,
+                    sourceAliasIds: remainingAliases,
+                },
+                where: { id: exact.id },
+            });
+            replaceChromeLookupRow(args.lookup, exact, updated);
+        } else {
+            await args.delegate.delete({
+                where: { id: exact.id },
+            });
+            removeChromeLookupRow(args.lookup, exact);
+        }
+        return true;
+    }
+
+    const aliasOwnerId = args.lookup.aliasToPrimaryId.get(args.externalId);
+    const aliasOwner = aliasOwnerId
+        ? args.lookup.rowsById.get(aliasOwnerId)
+        : null;
+    if (!aliasOwner) {
+        return false;
+    }
+
+    const updated = await args.delegate.update({
+        data: {
+            sourceAliasIds: aliasOwner.sourceAliasIds.filter(
+                (value) => value !== args.externalId
+            ),
+        },
+        where: { id: aliasOwner.id },
+    });
+    replaceChromeLookupRow(args.lookup, aliasOwner, updated);
+    return true;
+}
+
+async function handleChromeBookmarkWriteEvent(args: {
+    readonly bookmark: z.infer<typeof chromeBookmarkNodeSchema>;
+    readonly browserProfileId: string;
+    readonly delegate: ChromeLibraryItemDelegate;
+    readonly device: ChromeBookmarkSyncBody["device"];
+    readonly lookup: ChromeBatchLookupState;
+    readonly occurredAt: string | undefined;
+    readonly userId: string;
+}): Promise<{ deduped: boolean }> {
+    const record = normalizeChromeBookmarkRecord(
+        args.browserProfileId,
+        args.bookmark,
+        args.occurredAt,
+        args.device
+    );
+    const exact = args.lookup.rowsByPrimaryExternalId.get(record.externalId);
+    if (exact) {
+        const updated = await args.delegate.update({
             data: {
                 caption: record.caption,
                 kind: record.kind,
@@ -363,23 +443,22 @@ async function upsertChromeBookmarkEvent(
             },
             where: { id: exact.id },
         });
+        replaceChromeLookupRow(args.lookup, exact, updated);
         return { deduped: false };
     }
 
-    const aliasMatch = await findChromeByAlias(
-        tx,
-        userId,
-        browserProfileId,
-        record.externalId
-    );
-    if (aliasMatch) {
+    const aliasOwnerId = args.lookup.aliasToPrimaryId.get(record.externalId);
+    const aliasOwner = aliasOwnerId
+        ? args.lookup.rowsById.get(aliasOwnerId)
+        : null;
+    if (aliasOwner) {
         const promoted = await promoteAliasToPrimary(
-            tx,
-            aliasMatch,
+            prisma,
+            aliasOwner,
             record.externalId
         );
         if (promoted) {
-            await delegate.update({
+            const updated = await args.delegate.update({
                 data: {
                     caption: record.caption,
                     kind: record.kind,
@@ -393,22 +472,28 @@ async function upsertChromeBookmarkEvent(
                 },
                 where: { id: promoted.id },
             });
+            replaceChromeLookupRow(args.lookup, aliasOwner, updated);
         }
         return { deduped: false };
     }
 
-    const duplicate = await findChromeLogicalDuplicate(
-        tx,
-        userId,
-        browserProfileId,
-        record
+    const duplicateKey = chromeDuplicateKey(
+        record.kind,
+        record.url,
+        record.caption
     );
+    const duplicateId = duplicateKey
+        ? args.lookup.duplicateToPrimaryId.get(duplicateKey)
+        : null;
+    const duplicate = duplicateId
+        ? args.lookup.rowsById.get(duplicateId)
+        : null;
     if (duplicate) {
         const aliasIds = new Set(duplicate.sourceAliasIds);
         if (duplicate.externalId !== record.externalId) {
             aliasIds.add(record.externalId);
         }
-        await delegate.update({
+        const updated = await args.delegate.update({
             data: {
                 caption: record.caption,
                 parentExternalId: record.parentExternalId,
@@ -422,75 +507,20 @@ async function upsertChromeBookmarkEvent(
             },
             where: { id: duplicate.id },
         });
+        replaceChromeLookupRow(args.lookup, duplicate, updated);
         return { deduped: true };
     }
 
-    await delegate.create({
+    const created = (await args.delegate.create({
         data: {
             ...record,
             user: {
-                connect: { id: userId },
+                connect: { id: args.userId },
             },
         },
-    });
+    })) as ChromeLibraryRow;
+    upsertChromeLookupRow(args.lookup, created);
     return { deduped: false };
-}
-
-async function deleteChromeBookmarkEvent(
-    tx: { libraryItem: unknown },
-    userId: string,
-    browserProfileId: string,
-    externalId: string
-): Promise<boolean> {
-    const delegate = chromeLibraryItemDelegate(tx);
-    const exact = await delegate.findUnique({
-        where: {
-            userId_source_browserProfileId_externalId: {
-                browserProfileId,
-                externalId,
-                source: LibraryItemSource.chrome_bookmarks,
-                userId,
-            },
-        },
-    });
-
-    if (exact) {
-        if (exact.sourceAliasIds.length > 0) {
-            const [nextPrimary, ...remainingAliases] = exact.sourceAliasIds;
-            await delegate.update({
-                data: {
-                    externalId: nextPrimary,
-                    sourceAliasIds: remainingAliases,
-                },
-                where: { id: exact.id },
-            });
-        } else {
-            await delegate.delete({
-                where: { id: exact.id },
-            });
-        }
-        return true;
-    }
-
-    const aliasMatch = await findChromeByAlias(
-        tx,
-        userId,
-        browserProfileId,
-        externalId
-    );
-    if (!aliasMatch) {
-        return false;
-    }
-
-    await delegate.update({
-        data: {
-            sourceAliasIds: aliasMatch.sourceAliasIds.filter(
-                (value) => value !== externalId
-            ),
-        },
-        where: { id: aliasMatch.id },
-    });
-    return true;
 }
 
 async function pruneChromeSnapshot(
@@ -563,19 +593,28 @@ function processChromeBookmarkEventBatch(args: {
     readonly userId: string;
 }): Promise<Omit<ChromeSyncResult, "processed" | "pruned">> {
     return (async () => {
+        const delegate = chromeLibraryItemDelegate(prisma);
+        const existingRows = await delegate.findMany({
+            where: {
+                browserProfileId: args.browserProfileId,
+                source: LibraryItemSource.chrome_bookmarks,
+                userId: args.userId,
+            },
+        });
+        const lookup = buildChromeLookupState(existingRows);
         let deleted = 0;
         let deduped = 0;
         let upserted = 0;
 
         for (const event of args.events) {
             if (event.type === "delete") {
-                const removed = await deleteChromeBookmarkEvent(
-                    prisma,
-                    args.userId,
-                    args.browserProfileId,
-                    event.externalId ?? ""
-                );
-                if (removed) {
+                if (
+                    await handleChromeDeleteEvent({
+                        delegate,
+                        externalId: event.externalId ?? "",
+                        lookup,
+                    })
+                ) {
                     deleted += 1;
                 }
                 continue;
@@ -586,14 +625,16 @@ function processChromeBookmarkEventBatch(args: {
                 continue;
             }
 
-            const result = await upsertChromeBookmarkEvent(
-                prisma,
-                args.userId,
-                args.browserProfileId,
+            const result = await handleChromeBookmarkWriteEvent({
                 bookmark,
-                event.occurredAt,
-                args.device
-            );
+                browserProfileId: args.browserProfileId,
+                delegate,
+                device: args.device,
+                lookup,
+                occurredAt: event.occurredAt,
+                userId: args.userId,
+            });
+
             upserted += 1;
             if (result.deduped) {
                 deduped += 1;

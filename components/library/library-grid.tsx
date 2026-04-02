@@ -197,7 +197,7 @@ function LibraryGridCard({
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
-                    className="text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                    className="text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive"
                     disabled={isDeletePending}
                     onClick={() => onDelete?.(item)}
                 >
@@ -341,7 +341,6 @@ export function ExtensionLibrarySection({
     title,
 }: SectionProps): ReactElement {
     const canToggle = collapsible && onToggle;
-    const countLabel = `${items.length} item${items.length === 1 ? "" : "s"}`;
     let body: ReactElement | null;
 
     if (collapsed) {
@@ -370,7 +369,6 @@ export function ExtensionLibrarySection({
                     <Button
                         className="min-w-0 flex-1 justify-start rounded-xl px-3"
                         onClick={onToggle}
-                        size="sm"
                         variant="ghost"
                     >
                         {collapsed ? (
@@ -378,7 +376,7 @@ export function ExtensionLibrarySection({
                         ) : (
                             <ChevronDownIcon className="size-4" />
                         )}
-                        <span className="truncate font-medium text-base sm:text-sm">
+                        <span className="ml-1 truncate font-medium">
                             {title}
                         </span>
                     </Button>
@@ -391,8 +389,8 @@ export function ExtensionLibrarySection({
                             {summaryLabel}
                         </span>
                     ) : null}
-                    <span className="text-muted-foreground text-xs">
-                        {countLabel}
+                    <span className="font-medium text-muted-foreground text-xs tabular-nums">
+                        {items.length}
                     </span>
                 </div>
             </div>

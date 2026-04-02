@@ -7,7 +7,6 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { EllipsisIcon } from "lucide-react";
 import * as React from "react";
 
 interface TruncateAfterProps {
@@ -45,14 +44,16 @@ const TruncateAfter = ({
             {displayed}
             {numTruncated > 0 && (
                 <Popover>
-                    <PopoverTrigger className="inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-muted">
-                        <Badge
-                            className="h-6 cursor-pointer px-1.5"
-                            variant="outline"
-                        >
-                            <EllipsisIcon className="size-4" />
-                            <span className="ms-1">+{numTruncated}</span>
-                        </Badge>
+                    <PopoverTrigger
+                        render={
+                            <Badge
+                                className="cursor-pointer tabular-nums"
+                                render={<button type="button" />}
+                                variant="outline"
+                            />
+                        }
+                    >
+                        +{numTruncated}
                     </PopoverTrigger>
                     <PopoverContent
                         align="end"

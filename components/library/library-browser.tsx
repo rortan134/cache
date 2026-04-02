@@ -8,7 +8,7 @@ import {
     ExtensionLibraryEmptyMasonryPeek,
     ExtensionLibraryGrid,
     ExtensionLibrarySection,
-} from "@/components/library/extension-library-grid";
+} from "@/components/library/library-grid";
 import {
     AlertDialog,
     AlertDialogClose,
@@ -54,7 +54,6 @@ import {
 /** Base UI combobox close reason when an item is activated (inline mode still emits this). */
 const COMBOBOX_ITEM_PRESS_REASON = "item-press";
 const ALL_DOMAIN_FILTER = "__all_domains__";
-const COLUMN_COUNT_STORAGE_KEY = "cache-library-column-count";
 const TEXT_COLLATOR = new Intl.Collator(undefined, {
     numeric: true,
     sensitivity: "base",
@@ -96,6 +95,15 @@ type PaletteSection = "search" | "filter" | "group" | "sort" | "layout";
 
 const DEFAULT_SORT_MODE: SortMode = "added-newest";
 const DEFAULT_COLUMN_COUNT_MODE: ColumnCountMode = "auto";
+const FILTERABLE_LIBRARY_SOURCES = [
+    LibraryItemSource.chrome_bookmarks,
+    LibraryItemSource.google_photos,
+    LibraryItemSource.instagram,
+    LibraryItemSource.pinterest,
+    LibraryItemSource.tiktok,
+    LibraryItemSource.x_bookmarks,
+    LibraryItemSource.youtube_watch_later,
+] as const satisfies readonly LibraryItemSource[];
 
 const getSystemControlKey = () => (IS_MAC ? "⌘" : "Ctrl");
 
@@ -1059,34 +1067,10 @@ export function LibraryBrowser({ items }: Props) {
     const sourceOptions = useMemo(
         () => [
             { label: "All sources", value: "all" },
-            {
-                label: sourceLabel(LibraryItemSource.chrome_bookmarks),
-                value: LibraryItemSource.chrome_bookmarks,
-            },
-            {
-                label: sourceLabel(LibraryItemSource.google_photos),
-                value: LibraryItemSource.google_photos,
-            },
-            {
-                label: sourceLabel(LibraryItemSource.instagram),
-                value: LibraryItemSource.instagram,
-            },
-            {
-                label: sourceLabel(LibraryItemSource.pinterest),
-                value: LibraryItemSource.pinterest,
-            },
-            {
-                label: sourceLabel(LibraryItemSource.tiktok),
-                value: LibraryItemSource.tiktok,
-            },
-            {
-                label: sourceLabel(LibraryItemSource.x_bookmarks),
-                value: LibraryItemSource.x_bookmarks,
-            },
-            {
-                label: sourceLabel(LibraryItemSource.youtube_watch_later),
-                value: LibraryItemSource.youtube_watch_later,
-            },
+            ...FILTERABLE_LIBRARY_SOURCES.map((source) => ({
+                label: sourceLabel(source),
+                value: source,
+            })),
             { label: sourceLabel(LibraryItemSource.other), value: "other" },
         ],
         []
@@ -1160,33 +1144,6 @@ export function LibraryBrowser({ items }: Props) {
             ...dynamicDomains,
         ];
     }, [visibleItems]);
-
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-
-        const storedValue = window.localStorage.getItem(
-            COLUMN_COUNT_STORAGE_KEY
-        );
-        if (
-            storedValue === "auto" ||
-            storedValue === "2" ||
-            storedValue === "3" ||
-            storedValue === "4" ||
-            storedValue === "5" ||
-            storedValue === "6"
-        ) {
-            setColumnCountMode(storedValue);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-        window.localStorage.setItem(COLUMN_COUNT_STORAGE_KEY, columnCountMode);
-    }, [columnCountMode]);
 
     const focusPaletteInput = useCallback((select = false) => {
         setCommandListOpen(true);
@@ -1345,13 +1302,37 @@ export function LibraryBrowser({ items }: Props) {
         setCommandListOpen(true);
     }, []);
 
+    const clearLibraryPalette = useCallback(() => {
+        setPaletteInput("");
+        setSearchTerms([]);
+        setSourceFilters([]);
+        setThumbFilters([]);
+        setCaptionFilters([]);
+        setDomainFilters([]);
+        setGroupBy("none");
+        setSortMode(DEFAULT_SORT_MODE);
+        setColumnCountMode(DEFAULT_COLUMN_COUNT_MODE);
+        setPaletteSection("search");
+        setCommandListOpen(false);
+    }, []);
+
     const handlePaletteInputKeyDown = useCallback(
         (event: ReactKeyboardEvent<HTMLInputElement>) => {
             if (event.key === "Escape") {
                 event.preventDefault();
-                if (paletteInput.trim() !== "") {
-                    setPaletteInput("");
-                    setCommandListOpen(true);
+                const hasPaletteStateToClear =
+                    paletteInput.trim() !== "" ||
+                    searchTerms.length > 0 ||
+                    sourceFilters.length > 0 ||
+                    thumbFilters.length > 0 ||
+                    captionFilters.length > 0 ||
+                    domainFilters.length > 0 ||
+                    groupBy !== "none" ||
+                    sortMode !== DEFAULT_SORT_MODE ||
+                    columnCountMode !== DEFAULT_COLUMN_COUNT_MODE;
+
+                if (commandListOpen && hasPaletteStateToClear) {
+                    clearLibraryPalette();
                     return;
                 }
                 if (paletteSection !== "search") {
@@ -1382,22 +1363,22 @@ export function LibraryBrowser({ items }: Props) {
                 setCommandListOpen(true);
             }
         },
-        [commandListOpen, paletteInput, paletteSection, returnToSearchSection]
+        [
+            captionFilters.length,
+            clearLibraryPalette,
+            columnCountMode,
+            commandListOpen,
+            domainFilters.length,
+            groupBy,
+            paletteInput,
+            paletteSection,
+            returnToSearchSection,
+            searchTerms.length,
+            sortMode,
+            sourceFilters.length,
+            thumbFilters.length,
+        ]
     );
-
-    const clearLibraryPalette = useCallback(() => {
-        setPaletteInput("");
-        setSearchTerms([]);
-        setSourceFilters([]);
-        setThumbFilters([]);
-        setCaptionFilters([]);
-        setDomainFilters([]);
-        setGroupBy("none");
-        setSortMode(DEFAULT_SORT_MODE);
-        setColumnCountMode(DEFAULT_COLUMN_COUNT_MODE);
-        setPaletteSection("search");
-        setCommandListOpen(false);
-    }, []);
 
     const paletteGroups = useMemo<CommandPaletteGroup[]>(() => {
         const draft = paletteInput.trim();
@@ -1817,7 +1798,7 @@ export function LibraryBrowser({ items }: Props) {
     });
 
     return (
-        <div className="flex w-full flex-col gap-6">
+        <div className="relative z-0 flex w-full flex-col gap-6">
             <AlertDialog
                 onOpenChange={handleDeleteDialogOpenChange}
                 open={pendingDeleteItem !== null}
@@ -1852,9 +1833,8 @@ export function LibraryBrowser({ items }: Props) {
                     </AlertDialogFooter>
                 </AlertDialogPopup>
             </AlertDialog>
-
             <div
-                className="sticky top-3 z-20 w-full max-w-md"
+                className="sticky top-3 z-20 w-full max-w-md pl-3"
                 onPointerDownCapture={handlePaletteShellPointerDownCapture}
                 ref={commandPanelContainerRef}
             >
@@ -1920,7 +1900,7 @@ export function LibraryBrowser({ items }: Props) {
                             <CommandEmpty>
                                 No matching commands found.
                             </CommandEmpty>
-                            <CommandList>
+                            <CommandList className="max-h-[min(26rem,70vh)] overflow-y-auto">
                                 {paletteGroups.map((group) => (
                                     <CommandGroup
                                         items={group.items}
@@ -1970,7 +1950,6 @@ export function LibraryBrowser({ items }: Props) {
                     </Command>
                 </CommandPanel>
             </div>
-
             <div className="flex flex-col gap-2">
                 {actionFeedback ? (
                     <div
@@ -2026,9 +2005,7 @@ export function LibraryBrowser({ items }: Props) {
                     ) : null}
                 </div>
             </div>
-            <div className="relative z-0 flex w-full flex-col gap-10">
-                {libraryGridBody}
-            </div>
+            {libraryGridBody}
         </div>
     );
 }

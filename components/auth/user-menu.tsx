@@ -210,7 +210,7 @@ export function UserMenu({
                 render={<Button size="xl" variant="ghost" />}
             >
                 <span className="flex min-w-0 items-center gap-3">
-                    <Avatar className="size-9 ring-1 ring-border/60">
+                    <Avatar className="size-8 ring-1 ring-border/50">
                         <AvatarImage
                             alt={user.name ?? user.email}
                             src={user.image ?? undefined}

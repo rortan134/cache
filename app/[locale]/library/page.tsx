@@ -1,6 +1,8 @@
 import { UserMenu } from "@/components/auth/user-menu";
 import { LibrarySidebarIntegrations } from "@/components/library/integrations";
 import { LibraryBrowser } from "@/components/library/library-browser";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Collapsible,
     CollapsiblePanel,
@@ -14,7 +16,7 @@ import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
 import { prisma } from "@/prisma";
 import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
-import { ChevronDown, Component } from "lucide-react";
+import { ChevronDown, Component, PlusIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -190,24 +192,43 @@ export default async function LibraryPage({
                                     serverConnectedIntegrationIds
                                 }
                             />
-                            <Collapsible>
-                                <CollapsibleTrigger className="flex items-center gap-2 rounded-full bg-muted/94 py-2 pr-3 pl-2.5 text-left">
-                                    <Component
-                                        aria-hidden
-                                        className="inline-block size-4.5 shrink-0"
-                                        focusable="false"
-                                    />
-                                    <span className="select-none font-medium text-sm leading-tight">
-                                        Collections
+                            <div className="flex w-full gap-2">
+                                <Collapsible>
+                                    <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded-full bg-muted/94 py-2.5 pr-3 pl-2.5 text-left">
+                                        <Component
+                                            aria-hidden
+                                            className="inline-block size-4.5 shrink-0"
+                                            focusable="false"
+                                        />
+                                        <span className="select-none font-medium text-sm leading-tight">
+                                            Collections
+                                        </span>
+                                        <Badge size="sm" variant="outline">
+                                            AI Powered
+                                        </Badge>
+                                        <ChevronDown
+                                            aria-hidden
+                                            className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-[panel-open]:rotate-180"
+                                            focusable="false"
+                                        />
+                                    </CollapsibleTrigger>
+                                    <CollapsiblePanel />
+                                </Collapsible>
+                                <Button
+                                    aria-label="Create new collection"
+                                    size="icon"
+                                    variant="secondary"
+                                >
+                                    <span className="sr-only">
+                                        Create new collection
                                     </span>
-                                    <ChevronDown
+                                    <PlusIcon
                                         aria-hidden
-                                        className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-[panel-open]:rotate-180"
+                                        className="inline-block size-4 shrink-0"
                                         focusable="false"
                                     />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel />
-                            </Collapsible>
+                                </Button>
+                            </div>
                         </>
                     }
                 />
