@@ -96,18 +96,21 @@ export function IntegrationSetupWizard({
         <button
             {...props}
             className={cn(
-                "flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5",
+                "flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5 text-left",
                 className
             )}
             type="button"
         >
-            <span aria-hidden="true" className="shrink-0 leading-none">
+            <span
+                aria-hidden="true"
+                className="shrink-0 text-left leading-none"
+            >
                 <RadialChart size={36} value={progressPercent} />
             </span>
             <span className="select-none font-medium text-sm">{text}</span>
             <ChevronDown
                 aria-hidden
-                className="inline-block size-4 shrink-0 group-data-panel-open:[&_svg]:rotate-180"
+                className="inline-block size-4 shrink-0 group-aria-expanded:[&_svg]:rotate-180"
                 focusable="false"
             />
         </button>

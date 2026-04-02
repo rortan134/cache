@@ -334,16 +334,10 @@ export function SidebarIntegrationAction({
                             type="button"
                             variant="outline"
                         >
-                            Disconnect + purge
+                            Disconnect
                         </Button>
                     ) : null}
                 </div>
-                {isChromeIntegration ? (
-                    <p className="max-w-52 text-muted-foreground text-xs">
-                        Sync runs from the Cache extension after you grant
-                        access to your browser bookmarks.
-                    </p>
-                ) : null}
             </div>
         );
     }

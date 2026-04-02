@@ -1,7 +1,7 @@
+import { UserMenu } from "@/components/auth/user-menu";
 import { LibraryBrowser } from "@/components/library/library-browser";
 import { IntegrationSetupWizard } from "@/components/library/setup-wizard";
 import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
-import { UserMenu } from "@/components/auth/user-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     Collapsible,
@@ -13,8 +13,8 @@ import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import { getLibraryItemsForUser } from "@/lib/library/get-library-items";
-import { LibraryItemSource } from "@/prisma/client/enums";
 import { prisma } from "@/prisma";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { ChevronDown, Component } from "lucide-react";
 import type { Metadata } from "next";
@@ -163,7 +163,7 @@ export default async function LibraryPage({
                                     width={200}
                                 />
                             </Link>
-                            <Collapsible>
+                            <Collapsible defaultOpen>
                                 <div className="flex flex-col gap-3 text-balance">
                                     <CollapsibleTrigger
                                         render={

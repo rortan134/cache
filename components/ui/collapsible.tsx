@@ -16,7 +16,7 @@ export function CollapsibleTrigger({
 }: CollapsiblePrimitive.Trigger.Props): React.ReactElement {
     return (
         <CollapsiblePrimitive.Trigger
-            className={cn("group cursor-pointer", className)}
+            className={cn("group w-full cursor-pointer", className)}
             data-slot="collapsible-trigger"
             {...props}
         />

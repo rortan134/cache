@@ -206,8 +206,8 @@ export function UserMenu({
     return (
         <Popover>
             <PopoverTrigger
-                className="w-full"
-                render={<Button variant="ghost" />}
+                className="w-full justify-between"
+                render={<Button size="xl" variant="ghost" />}
             >
                 <span className="flex min-w-0 items-center gap-3">
                     <Avatar className="size-9 ring-1 ring-border/60">
