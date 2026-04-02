@@ -110,7 +110,7 @@ export function IntegrationSetupWizard({
             <span className="select-none font-medium text-sm">{text}</span>
             <ChevronDown
                 aria-hidden
-                className="inline-block size-4 shrink-0 group-[data-panel-open]:rotate-180"
+                className="pointer-events-none inline-block size-4 shrink-0 transition-transform group-data-[panel-open]:rotate-180"
                 focusable="false"
             />
         </button>
