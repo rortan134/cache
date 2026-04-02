@@ -1,11 +1,31 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import {
+    ContextMenu,
+    ContextMenuItem,
+    ContextMenuPopup,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Masonry, MasonryItem } from "@/components/ui/masonry";
 import { Skeleton } from "@/components/ui/skeleton";
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import type { CSSProperties, ReactElement } from "react";
+import {
+    ArrowUpRightIcon,
+    ChevronDownIcon,
+    ChevronRightIcon,
+    CopyIcon,
+    ExternalLinkIcon,
+    Trash2Icon,
+} from "lucide-react";
+import type {
+    CSSProperties,
+    ReactElement,
+    MouseEvent as ReactMouseEvent,
+} from "react";
 
 /** Stable placeholders for empty-library masonry sneak peek (opacity fades by order). */
 const EMPTY_LIBRARY_PEEK_PLACEHOLDERS = [
@@ -26,6 +46,11 @@ interface GridProps {
     readonly columnCount?: number;
     readonly items: LibraryItem[];
     readonly layoutToken?: number;
+    readonly onCopyLink?: (item: LibraryItem) => void;
+    readonly onDelete?: (item: LibraryItem) => void;
+    readonly onOpenHere?: (item: LibraryItem) => void;
+    readonly onOpenInNewTab?: (item: LibraryItem) => void;
+    readonly pendingDeleteItemId?: string | null;
 }
 
 interface SectionProps extends GridProps {
@@ -35,6 +60,21 @@ interface SectionProps extends GridProps {
     readonly onToggle?: () => void;
     readonly summaryLabel?: string;
     readonly title: string;
+}
+
+interface LibraryGridCardProps {
+    readonly addedLabel: string;
+    readonly alt: string;
+    readonly domain: string;
+    readonly hasBothDates: boolean;
+    readonly href: string;
+    readonly item: LibraryItem;
+    readonly onCopyLink?: (item: LibraryItem) => void;
+    readonly onDelete?: (item: LibraryItem) => void;
+    readonly onOpenHere?: (item: LibraryItem) => void;
+    readonly onOpenInNewTab?: (item: LibraryItem) => void;
+    readonly pendingDeleteItemId?: string | null;
+    readonly postedLabel: string;
 }
 
 function itemDomain(url: string): string {
@@ -64,10 +104,109 @@ function fallbackGridStyle(columnCount?: number): CSSProperties | undefined {
     if (!columnCount) {
         return undefined;
     }
-
     return {
         gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
     };
+}
+
+function LibraryGridCard({
+    addedLabel,
+    alt,
+    domain,
+    hasBothDates,
+    href,
+    item,
+    onCopyLink,
+    onDelete,
+    onOpenHere,
+    onOpenInNewTab,
+    pendingDeleteItemId,
+    postedLabel,
+}: LibraryGridCardProps): ReactElement {
+    const isDeletePending = pendingDeleteItemId === item.id;
+
+    const handlePrimaryClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        onOpenInNewTab?.(item);
+    };
+
+    return (
+        <ContextMenu>
+            <ContextMenuTrigger render={<div className="contents" />}>
+                <a
+                    className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] hover:border-border hover:shadow-lg/5 focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                    href={href}
+                    onClick={handlePrimaryClick}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                >
+                    <div className="relative aspect-3/4 w-full overflow-hidden bg-muted">
+                        {item.thumbnailUrl ? (
+                            <img
+                                alt={alt}
+                                className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
+                                height={400}
+                                loading="lazy"
+                                src={item.thumbnailUrl}
+                                width={300}
+                            />
+                        ) : (
+                            <div className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/40 text-muted-foreground text-xs">
+                                No preview
+                            </div>
+                        )}
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                    {domain}
+                                </span>
+                                {hasBothDates ? (
+                                    <>
+                                        <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                            Posted: {postedLabel}
+                                        </span>
+                                        <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                            Added: {addedLabel}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                        {postedLabel || addedLabel}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <p className="line-clamp-2 truncate p-3 text-foreground text-sm leading-snug">
+                        {item.caption?.trim() || item.url}
+                    </p>
+                </a>
+            </ContextMenuTrigger>
+            <ContextMenuPopup>
+                <ContextMenuItem onClick={() => onOpenInNewTab?.(item)}>
+                    <ExternalLinkIcon className="size-4 text-muted-foreground" />
+                    Open in new tab
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => onOpenHere?.(item)}>
+                    <ArrowUpRightIcon className="size-4 text-muted-foreground" />
+                    Open here
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => onCopyLink?.(item)}>
+                    <CopyIcon className="size-4 text-muted-foreground" />
+                    Copy link
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                    className="text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                    disabled={isDeletePending}
+                    onClick={() => onDelete?.(item)}
+                >
+                    <Trash2Icon className="size-4" />
+                    {isDeletePending ? "Deleting..." : "Delete"}
+                </ContextMenuItem>
+            </ContextMenuPopup>
+        </ContextMenu>
+    );
 }
 
 export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
@@ -120,6 +259,11 @@ export function ExtensionLibraryGrid({
     columnCount,
     items,
     layoutToken,
+    onCopyLink,
+    onDelete,
+    onOpenHere,
+    onOpenInNewTab,
+    pendingDeleteItemId,
 }: GridProps): ReactElement | null {
     if (items.length === 0) {
         return null;
@@ -128,7 +272,7 @@ export function ExtensionLibraryGrid({
     return (
         <Masonry
             columnCount={columnCount}
-            deps={[layoutToken, items]}
+            deps={[layoutToken, items, pendingDeleteItemId]}
             fallback={
                 <div
                     className={cn(
@@ -155,57 +299,24 @@ export function ExtensionLibraryGrid({
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
-                    postedLabel && addedLabel && postedLabel !== addedLabel;
+                    !!postedLabel && !!addedLabel && postedLabel !== addedLabel;
 
                 return (
-                    <MasonryItem asChild key={item.id}>
-                        <a
-                            className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] hover:border-border hover:shadow-lg/5 focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                    <MasonryItem key={item.id}>
+                        <LibraryGridCard
+                            addedLabel={addedLabel}
+                            alt={alt}
+                            domain={domain}
+                            hasBothDates={hasBothDates}
                             href={href}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                        >
-                            <div className="relative aspect-3/4 w-full overflow-hidden bg-muted">
-                                {item.thumbnailUrl ? (
-                                    <img
-                                        alt={alt}
-                                        className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
-                                        height={400}
-                                        loading="lazy"
-                                        src={item.thumbnailUrl}
-                                        width={300}
-                                    />
-                                ) : (
-                                    <div className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/40 text-muted-foreground text-xs">
-                                        No preview
-                                    </div>
-                                )}
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                        <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
-                                            {domain}
-                                        </span>
-                                        {hasBothDates ? (
-                                            <>
-                                                <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
-                                                    Posted: {postedLabel}
-                                                </span>
-                                                <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
-                                                    Added: {addedLabel}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
-                                                {postedLabel || addedLabel}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <p className="line-clamp-2 truncate p-3 text-foreground text-sm leading-snug">
-                                {item.caption?.trim() || item.url}
-                            </p>
-                        </a>
+                            item={item}
+                            onCopyLink={onCopyLink}
+                            onDelete={onDelete}
+                            onOpenHere={onOpenHere}
+                            onOpenInNewTab={onOpenInNewTab}
+                            pendingDeleteItemId={pendingDeleteItemId}
+                            postedLabel={postedLabel}
+                        />
                     </MasonryItem>
                 );
             })}
@@ -220,7 +331,12 @@ export function ExtensionLibrarySection({
     emptyHint,
     items,
     layoutToken,
+    onCopyLink,
+    onDelete,
+    onOpenHere,
+    onOpenInNewTab,
     onToggle,
+    pendingDeleteItemId,
     summaryLabel,
     title,
 }: SectionProps): ReactElement {
@@ -238,6 +354,11 @@ export function ExtensionLibrarySection({
                 columnCount={columnCount}
                 items={items}
                 layoutToken={layoutToken}
+                onCopyLink={onCopyLink}
+                onDelete={onDelete}
+                onOpenHere={onOpenHere}
+                onOpenInNewTab={onOpenInNewTab}
+                pendingDeleteItemId={pendingDeleteItemId}
             />
         );
     }

@@ -6,7 +6,7 @@ import { createLogger } from "@/lib/logs/console/logger";
 import { prisma } from "@/prisma";
 import { headers } from "next/headers";
 
-const log = createLogger("library:soundcloud-likes");
+const log = createLogger("library:actions");
 const SOUNDCLOUD_PROVIDER_ID = "soundcloud";
 const SOUNDCLOUD_LIKES_LIMIT = 6;
 
@@ -31,6 +31,16 @@ export type LatestSoundcloudLikesResult =
           message: string;
           status: "ERROR" | "RECONNECT_REQUIRED";
           tracks: [];
+      };
+
+export type DeleteLibraryItemResult =
+    | {
+          itemId: string;
+          status: "DELETED";
+      }
+    | {
+          message: string;
+          status: "ERROR" | "NOT_FOUND" | "UNAUTHORIZED";
       };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -224,6 +234,66 @@ export async function getLatestSoundcloudLikes(): Promise<LatestSoundcloudLikesR
                 "We hit an unexpected SoundCloud error while loading your latest likes.",
             status: "ERROR",
             tracks: [],
+        };
+    }
+}
+
+export async function deleteLibraryItem(
+    itemId: string
+): Promise<DeleteLibraryItemResult> {
+    const normalizedItemId = itemId.trim();
+    if (normalizedItemId.length === 0) {
+        return {
+            message: "Select a saved item before trying to delete it.",
+            status: "ERROR",
+        };
+    }
+
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    if (!session?.user?.id) {
+        return {
+            message: "Sign in again to manage saved items.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    const libraryItemDelegate = prisma.libraryItem as unknown as {
+        deleteMany(args: {
+            where: {
+                id: string;
+                userId: string;
+            };
+        }): Promise<{ count: number }>;
+    };
+
+    try {
+        const result = await libraryItemDelegate.deleteMany({
+            where: {
+                id: normalizedItemId,
+                userId: session.user.id,
+            },
+        });
+
+        if (result.count === 0) {
+            return {
+                message: "This saved item was already removed.",
+                status: "NOT_FOUND",
+            };
+        }
+
+        return {
+            itemId: normalizedItemId,
+            status: "DELETED",
+        };
+    } catch (error) {
+        log.error("Unexpected library item delete failure", error);
+        return {
+            message: "We couldn't delete this saved item right now.",
+            status: "ERROR",
         };
     }
 }

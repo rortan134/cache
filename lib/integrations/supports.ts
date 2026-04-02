@@ -83,7 +83,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: true },
         category: "media",
-        description: "Videos in your Watch Later playlist",
+        description: "Videos in your playlists",
         Icon: YouTube,
         id: "youtube",
         label: "YouTube",

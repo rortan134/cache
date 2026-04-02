@@ -117,15 +117,12 @@ export function IntegrationSetupWizard({
         <button
             {...props}
             className={cn(
-                "flex items-center gap-2 rounded-full bg-muted/94 px-2.5 py-1.5 text-left",
+                "flex items-center gap-2 rounded-full bg-muted/94 py-1.5 pr-3 pl-2.5 text-left",
                 className
             )}
             type="button"
         >
-            <span
-                aria-hidden="true"
-                className="shrink-0 text-left leading-none"
-            >
+            <span aria-hidden="true" className="shrink-0 leading-none">
                 <RadialChart size={36} value={progressPercent} />
             </span>
             <span className="select-none font-medium text-sm">{text}</span>

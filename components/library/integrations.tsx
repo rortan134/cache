@@ -8,12 +8,12 @@ import {
     CollapsiblePanel,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useExtensionInstalled } from "@/hooks/use-extension-installed";
 import {
     type IntegrationId,
     INTEGRATIONS,
     type SupportedIntegration,
 } from "@/lib/integrations/supports";
-import { useExtensionInstalled } from "@/hooks/use-extension-installed";
 import type { LibraryItemSource } from "@/prisma/client/enums";
 
 type LibrarySidebarIntegrationsProps = Readonly<{
@@ -76,41 +76,38 @@ export function LibrarySidebarIntegrations({
                     <ul className="flex flex-col gap-1">
                         {INTEGRATIONS.map(
                             ({ id, label, description, Icon }) => (
-                                <li key={id}>
-                                    <div className="flex items-center gap-2 rounded-xl py-2 pr-2">
-                                        <Avatar
-                                            aria-label={label}
-                                            className="size-10 rounded-lg ring-1 ring-border/60"
-                                        >
-                                            <AvatarFallback className="rounded-lg bg-card text-foreground">
-                                                <Icon
-                                                    aria-hidden
-                                                    className="size-5 shrink-0"
-                                                />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                            <span className="font-medium text-sm">
-                                                {label}
-                                            </span>
-                                            <span className="text-[11px] text-muted-foreground leading-snug">
-                                                {description}
-                                            </span>
-                                        </div>
-                                        <SidebarIntegrationAction
-                                            connected={connectedIntegrationIds.includes(
-                                                id
-                                            )}
-                                            extensionInstalled={
-                                                extensionInstalled
-                                            }
-                                            id={id}
-                                            locale={locale}
-                                            parked={parkedIntegrationIdSet.has(
-                                                id
-                                            )}
-                                        />
+                                <li
+                                    className="flex items-center gap-2 rounded-xl p-2"
+                                    key={id}
+                                >
+                                    <Avatar
+                                        aria-label={label}
+                                        className="size-10 rounded-lg ring-1 ring-border/60"
+                                    >
+                                        <AvatarFallback className="rounded-lg bg-card text-foreground">
+                                            <Icon
+                                                aria-hidden
+                                                className="size-5 shrink-0"
+                                            />
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                        <span className="font-medium text-sm">
+                                            {label}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground leading-snug">
+                                            {description}
+                                        </span>
                                     </div>
+                                    <SidebarIntegrationAction
+                                        connected={connectedIntegrationIds.includes(
+                                            id
+                                        )}
+                                        extensionInstalled={extensionInstalled}
+                                        id={id}
+                                        locale={locale}
+                                        parked={parkedIntegrationIdSet.has(id)}
+                                    />
                                 </li>
                             )
                         )}

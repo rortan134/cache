@@ -5,6 +5,7 @@ import {
     SignedOutOnly,
 } from "@/components/auth/session";
 import { Button } from "@/components/ui/button";
+import { GradientWaveText } from "@/components/ui/gradient-wave-text";
 import { Chrome } from "@/components/ui/integration-icons";
 import { PageShell, PageSidebarShell } from "@/components/ui/layouts";
 import { gtPublicString } from "@/lib/gt-public-json";
@@ -95,7 +96,9 @@ export default async function Home({
                             <div className="flex flex-col gap-3 text-balance">
                                 <T context="'Cache' is the product's name">
                                     <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
-                                        Unify your bookmarks.
+                                        <GradientWaveText ariaLabel="Unify your bookmarks">
+                                            Unify your bookmarks.
+                                        </GradientWaveText>
                                     </h1>
                                     <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
                                         Meet Cache – one place to collect,
@@ -302,7 +305,7 @@ export default async function Home({
                                         <svg
                                             aria-hidden
                                             aria-label="Branding"
-                                            className="overflow-fade-bottom mx-auto flex h-auto w-full justify-center overflow-hidden"
+                                            className="overflow-fade-bottom mx-auto flex h-auto w-full justify-center"
                                             fill="none"
                                             height="200"
                                             role="presentation"
@@ -311,6 +314,7 @@ export default async function Home({
                                             xmlns="http://www.w3.org/2000/svg"
                                         >
                                             <rect
+                                                className="origin-top transition-transform duration-300 hover:scale-95"
                                                 fill="black"
                                                 height="100"
                                                 rx="30"
@@ -318,6 +322,7 @@ export default async function Home({
                                                 y="50"
                                             />
                                             <rect
+                                                className="origin-top transition-transform duration-300 hover:scale-95"
                                                 fill="black"
                                                 height="100"
                                                 rx="48"
@@ -326,6 +331,7 @@ export default async function Home({
                                                 y="50"
                                             />
                                             <rect
+                                                className="origin-top transition-transform duration-300 hover:scale-95"
                                                 fill="black"
                                                 height="100"
                                                 rx="28"
@@ -334,6 +340,7 @@ export default async function Home({
                                                 y="50"
                                             />
                                             <rect
+                                                className="origin-top transition-transform duration-300 hover:scale-95"
                                                 fill="black"
                                                 height="100"
                                                 rx="38"

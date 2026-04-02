@@ -1,10 +1,23 @@
 "use client";
 
 import {
+    deleteLibraryItem,
+    type DeleteLibraryItemResult,
+} from "@/app/[locale]/library/actions";
+import {
     ExtensionLibraryEmptyMasonryPeek,
     ExtensionLibraryGrid,
     ExtensionLibrarySection,
 } from "@/components/library/extension-library-grid";
+import {
+    AlertDialog,
+    AlertDialogClose,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogPopup,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
     Command,
@@ -20,6 +33,8 @@ import {
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { TruncateAfter } from "@/components/ui/truncate-after";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import type { LibraryItem } from "@/prisma/client/client";
 import { LibraryItemSource } from "@/prisma/client/enums";
@@ -32,6 +47,7 @@ import {
     useMemo,
     useRef,
     useState,
+    useTransition,
     type PointerEvent as ReactPointerEvent,
 } from "react";
 
@@ -425,7 +441,12 @@ function renderLibraryGridBody({
     columnCount,
     enableSectionCollapse,
     layoutRefreshToken,
+    onCopyLink,
+    onDelete,
+    onOpenHere,
+    onOpenInNewTab,
     onToggleSection,
+    pendingDeleteItemId,
     sections,
     showEmptyLibraryPeek,
     showNoFilteredResults,
@@ -435,7 +456,12 @@ function renderLibraryGridBody({
     readonly columnCount?: number;
     readonly enableSectionCollapse: boolean;
     readonly layoutRefreshToken: number;
+    readonly onCopyLink: (item: LibraryItem) => void;
+    readonly onDelete: (item: LibraryItem) => void;
+    readonly onOpenHere: (item: LibraryItem) => void;
+    readonly onOpenInNewTab: (item: LibraryItem) => void;
     readonly onToggleSection: (key: string) => void;
+    readonly pendingDeleteItemId: string | null;
     readonly sections: readonly LibraryBrowserSection[];
     readonly showEmptyLibraryPeek: boolean;
     readonly showNoFilteredResults: boolean;
@@ -471,7 +497,12 @@ function renderLibraryGridBody({
                 items={section.items}
                 key={section.key}
                 layoutToken={layoutRefreshToken}
+                onCopyLink={onCopyLink}
+                onDelete={onDelete}
+                onOpenHere={onOpenHere}
+                onOpenInNewTab={onOpenInNewTab}
                 onToggle={() => onToggleSection(section.key)}
+                pendingDeleteItemId={pendingDeleteItemId}
                 summaryLabel={section.title ? undefined : "Filtered view"}
                 title={section.title ?? "Results"}
             />
@@ -492,6 +523,11 @@ function renderLibraryGridBody({
                     columnCount={columnCount}
                     items={section.items}
                     layoutToken={layoutRefreshToken}
+                    onCopyLink={onCopyLink}
+                    onDelete={onDelete}
+                    onOpenHere={onOpenHere}
+                    onOpenInNewTab={onOpenInNewTab}
+                    pendingDeleteItemId={pendingDeleteItemId}
                 />
             </section>
         )
@@ -848,7 +884,139 @@ interface Props {
     readonly items: LibraryItem[];
 }
 
+interface LibraryActionFeedback {
+    readonly message: string;
+    readonly tone: "error" | "success";
+}
+
+interface UseLibraryItemActionsResult {
+    readonly actionFeedback: LibraryActionFeedback | null;
+    readonly handleConfirmDelete: () => void;
+    readonly handleCopyLink: (item: LibraryItem) => void;
+    readonly handleDeleteDialogOpenChange: (open: boolean) => void;
+    readonly handleOpenHere: (item: LibraryItem) => void;
+    readonly handleOpenInNewTab: (item: LibraryItem) => void;
+    readonly handleRequestDelete: (item: LibraryItem) => void;
+    readonly isDeletePending: boolean;
+    readonly pendingDeleteItem: LibraryItem | null;
+}
+
+function openSavedItemInNewTab(url: string) {
+    try {
+        if (typeof window.openai !== "undefined") {
+            window.openai.openExternal({ href: url });
+            return;
+        }
+    } catch {
+        // Fall back to a regular browser tab when the desktop bridge is unavailable.
+    }
+
+    window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function useLibraryItemActions(
+    setVisibleItems: (
+        value: LibraryItem[] | ((current: LibraryItem[]) => LibraryItem[])
+    ) => void
+): UseLibraryItemActionsResult {
+    const [pendingDeleteItem, setPendingDeleteItem] =
+        useState<LibraryItem | null>(null);
+    const [actionFeedback, setActionFeedback] =
+        useState<LibraryActionFeedback | null>(null);
+    const [isDeletePending, startDeleteTransition] = useTransition();
+    const { copyToClipboard } = useCopyToClipboard({
+        onCopy: () => {
+            setActionFeedback({
+                message: "Saved link copied to the clipboard.",
+                tone: "success",
+            });
+        },
+    });
+
+    const handleOpenInNewTab = useCallback((item: LibraryItem) => {
+        setActionFeedback(null);
+        openSavedItemInNewTab(normalizeURL(item.url));
+    }, []);
+
+    const handleOpenHere = useCallback((item: LibraryItem) => {
+        setActionFeedback(null);
+        window.location.assign(normalizeURL(item.url));
+    }, []);
+
+    const handleCopyLink = useCallback(
+        (item: LibraryItem) => {
+            copyToClipboard(normalizeURL(item.url));
+        },
+        [copyToClipboard]
+    );
+
+    const handleRequestDelete = useCallback((item: LibraryItem) => {
+        setActionFeedback(null);
+        setPendingDeleteItem(item);
+    }, []);
+
+    const handleDeleteDialogOpenChange = useCallback(
+        (open: boolean) => {
+            if (!(open || isDeletePending)) {
+                setPendingDeleteItem(null);
+            }
+        },
+        [isDeletePending]
+    );
+
+    const handleConfirmDelete = useCallback(() => {
+        const targetItem = pendingDeleteItem;
+        if (!targetItem) {
+            return;
+        }
+
+        startDeleteTransition(async () => {
+            let result: DeleteLibraryItemResult;
+
+            try {
+                result = await deleteLibraryItem(targetItem.id);
+            } catch {
+                result = {
+                    message: "We couldn't delete this saved item right now.",
+                    status: "ERROR",
+                };
+            }
+
+            if (result.status === "DELETED") {
+                setVisibleItems((current) =>
+                    current.filter((item) => item.id !== result.itemId)
+                );
+                setPendingDeleteItem(null);
+                setActionFeedback({
+                    message: "Saved item deleted from Cache.",
+                    tone: "success",
+                });
+                return;
+            }
+
+            setActionFeedback({
+                message: result.message,
+                tone: "error",
+            });
+        });
+    }, [pendingDeleteItem, setVisibleItems]);
+
+    return {
+        actionFeedback,
+        handleConfirmDelete,
+        handleCopyLink,
+        handleDeleteDialogOpenChange,
+        handleOpenHere,
+        handleOpenInNewTab,
+        handleRequestDelete,
+        isDeletePending,
+        pendingDeleteItem,
+    };
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this client entry intentionally coordinates search, filters, grouping, layout, and item actions together.
 export function LibraryBrowser({ items }: Props) {
+    const [visibleItems, setVisibleItems] = useState<LibraryItem[]>(items);
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const [paletteInput, setPaletteInput] = useState("");
     const [sourceFilters, setSourceFilters] = useState<SourceFilterValue[]>([]);
@@ -872,6 +1040,21 @@ export function LibraryBrowser({ items }: Props) {
     const paletteInputRef = useRef<HTMLInputElement>(null);
     /** Skips one combobox-driven close right after entering a drill-down section. */
     const suppressNextCommandCloseRef = useRef(false);
+    const {
+        actionFeedback,
+        handleConfirmDelete,
+        handleCopyLink,
+        handleDeleteDialogOpenChange,
+        handleOpenHere,
+        handleOpenInNewTab,
+        handleRequestDelete,
+        isDeletePending,
+        pendingDeleteItem,
+    } = useLibraryItemActions(setVisibleItems);
+
+    useEffect(() => {
+        setVisibleItems(items);
+    }, [items]);
 
     const sourceOptions = useMemo(
         () => [
@@ -957,7 +1140,7 @@ export function LibraryBrowser({ items }: Props) {
 
     const domainOptions = useMemo(() => {
         const counts = new Map<string, number>();
-        for (const item of items) {
+        for (const item of visibleItems) {
             const domain = itemDomain(item.url);
             counts.set(domain, (counts.get(domain) ?? 0) + 1);
         }
@@ -976,7 +1159,7 @@ export function LibraryBrowser({ items }: Props) {
             { label: "All domains", value: ALL_DOMAIN_FILTER },
             ...dynamicDomains,
         ];
-    }, [items]);
+    }, [visibleItems]);
 
     useEffect(() => {
         if (typeof window === "undefined") {
@@ -1470,7 +1653,7 @@ export function LibraryBrowser({ items }: Props) {
     }
 
     const filteredItems = useMemo(() => {
-        let list = items;
+        let list = visibleItems;
         const normalizedSearchTerms = searchTerms.map((term) =>
             term.trim().toLowerCase()
         );
@@ -1515,10 +1698,10 @@ export function LibraryBrowser({ items }: Props) {
     }, [
         captionFilters,
         domainFilters,
-        items,
         searchTerms,
         sourceFilters,
         thumbFilters,
+        visibleItems,
     ]);
 
     const sortedItems = useMemo(
@@ -1586,7 +1769,9 @@ export function LibraryBrowser({ items }: Props) {
         columnCountMode !== DEFAULT_COLUMN_COUNT_MODE;
 
     const showEmptyLibraryPeek =
-        items.length === 0 && filteredItems.length === 0 && !hasActiveFilters;
+        visibleItems.length === 0 &&
+        filteredItems.length === 0 &&
+        !hasActiveFilters;
 
     const showNoFilteredResults =
         filteredItems.length === 0 && !showEmptyLibraryPeek;
@@ -1610,9 +1795,9 @@ export function LibraryBrowser({ items }: Props) {
         columnCountMode === "auto" ? undefined : Number(columnCountMode);
 
     const resultsSummary =
-        filteredItems.length === items.length
-            ? `${items.length} item${items.length === 1 ? "" : "s"}`
-            : `${filteredItems.length} of ${items.length} items`;
+        filteredItems.length === visibleItems.length
+            ? `${visibleItems.length} item${visibleItems.length === 1 ? "" : "s"}`
+            : `${filteredItems.length} of ${visibleItems.length} items`;
 
     const libraryGridBody = renderLibraryGridBody({
         clearLibraryPalette,
@@ -1620,7 +1805,12 @@ export function LibraryBrowser({ items }: Props) {
         columnCount: resolvedColumnCount,
         enableSectionCollapse,
         layoutRefreshToken,
+        onCopyLink: handleCopyLink,
+        onDelete: handleRequestDelete,
+        onOpenHere: handleOpenHere,
+        onOpenInNewTab: handleOpenInNewTab,
         onToggleSection: toggleSection,
+        pendingDeleteItemId: pendingDeleteItem?.id ?? null,
         sections,
         showEmptyLibraryPeek,
         showNoFilteredResults,
@@ -1628,6 +1818,41 @@ export function LibraryBrowser({ items }: Props) {
 
     return (
         <div className="flex w-full flex-col gap-6">
+            <AlertDialog
+                onOpenChange={handleDeleteDialogOpenChange}
+                open={pendingDeleteItem !== null}
+            >
+                <AlertDialogPopup>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete saved item?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Remove{" "}
+                            {pendingDeleteItem?.caption?.trim() ||
+                                pendingDeleteItem?.url ||
+                                "this saved item"}{" "}
+                            from Cache. This only deletes it from your library,
+                            not from the original platform.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogClose
+                            disabled={isDeletePending}
+                            render={<Button size="sm" variant="ghost" />}
+                        >
+                            Cancel
+                        </AlertDialogClose>
+                        <Button
+                            loading={isDeletePending}
+                            onClick={handleConfirmDelete}
+                            size="sm"
+                            variant="destructive"
+                        >
+                            Delete
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogPopup>
+            </AlertDialog>
+
             <div
                 className="sticky top-3 z-20 w-full max-w-md"
                 onPointerDownCapture={handlePaletteShellPointerDownCapture}
@@ -1747,6 +1972,18 @@ export function LibraryBrowser({ items }: Props) {
             </div>
 
             <div className="flex flex-col gap-2">
+                {actionFeedback ? (
+                    <div
+                        className={cn(
+                            "rounded-2xl border px-4 py-3 text-sm",
+                            actionFeedback.tone === "success"
+                                ? "border-emerald-500/25 bg-emerald-500/8 text-foreground"
+                                : "border-destructive/25 bg-destructive/6 text-foreground"
+                        )}
+                    >
+                        {actionFeedback.message}
+                    </div>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs tabular-nums">
                         {resultsSummary}
