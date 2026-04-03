@@ -15,6 +15,7 @@ import {
     type SupportedIntegration,
 } from "@/lib/integrations/supports";
 import type { LibraryItemSource } from "@/prisma/client/enums";
+import { Info } from "lucide-react";
 
 type LibrarySidebarIntegrationsProps = Readonly<{
     items: readonly { readonly source: LibraryItemSource }[];
@@ -95,7 +96,7 @@ export function LibrarySidebarIntegrations({
                                         <span className="font-medium text-sm">
                                             {label}
                                         </span>
-                                        <span className="text-[11px] text-muted-foreground leading-snug">
+                                        <span className="text-[11px] text-muted-foreground leading-tight">
                                             {description}
                                         </span>
                                     </div>
@@ -112,6 +113,14 @@ export function LibrarySidebarIntegrations({
                             )
                         )}
                     </ul>
+                    <div className="flex items-center gap-2">
+                        <Info className="inline-block size-3.5 shrink-0" />
+                        <p className="text-muted-foreground text-xs leading-tight">
+                            Please only connect accounts you fully trust. Cache
+                            can access what you choose to save with connected
+                            apps.
+                        </p>
+                    </div>
                 </CollapsiblePanel>
             </div>
         </Collapsible>

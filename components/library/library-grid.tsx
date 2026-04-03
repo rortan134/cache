@@ -1,7 +1,17 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    Combobox,
+    ComboboxCollection,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxLabel,
+    ComboboxList,
+    ComboboxPopup,
+    ComboboxTrigger,
+} from "@/components/ui/combobox";
 import {
     ContextMenu,
     ContextMenuItem,
@@ -10,7 +20,6 @@ import {
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Masonry, MasonryItem } from "@/components/ui/masonry";
-import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSubtleColorGradientFromName } from "@/lib/colors";
 import type {
@@ -19,14 +28,15 @@ import type {
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
+import fscreen from "fscreen";
 import {
     ArrowUpRightIcon,
-    CheckIcon,
     ChevronDownIcon,
     ChevronRightIcon,
     CopyIcon,
     ExternalLinkIcon,
     Layers3Icon,
+    MaximizeIcon,
     PlusIcon,
     Trash2Icon,
 } from "lucide-react";
@@ -35,7 +45,7 @@ import type {
     ReactElement,
     MouseEvent as ReactMouseEvent,
 } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 /** Stable placeholders for empty-library masonry sneak peek (opacity fades by order). */
 const EMPTY_LIBRARY_PEEK_PLACEHOLDERS = [
@@ -159,8 +169,17 @@ function LibraryCollectionPicker({
     const selectedCount = selectedCollectionIds.length;
 
     return (
-        <Popover onOpenChange={setOpen} open={open}>
-            <PopoverTrigger
+        <Combobox
+            items={collections}
+            multiple
+            onOpenChange={setOpen}
+            onValueChange={(nextIds) => {
+                onUpdateItemCollections(item.id, nextIds as string[]);
+            }}
+            open={open}
+            value={selectedCollectionIds}
+        >
+            <ComboboxTrigger
                 render={
                     <Button
                         aria-label={
@@ -168,107 +187,58 @@ function LibraryCollectionPicker({
                                 ? `Edit collections (${selectedCount} selected)`
                                 : "Add to collections"
                         }
-                        className={cn(
-                            "rounded-full border-border/60 bg-background/88 shadow-sm backdrop-blur-sm",
-                            selectedCount > 0 &&
-                                "border-primary/30 bg-primary/10 text-primary"
-                        )}
+                        className="rounded-full border-border/50 bg-background/50 opacity-0 backdrop-blur-xs transition-opacity group-hover:opacity-100"
                         loading={isPending}
-                        size="icon-xs"
-                        variant="outline"
+                        size="icon"
+                        variant="ghost"
                     />
                 }
             >
-                {!isPending && (
-                    <>
-                        <Layers3Icon className="size-3.5" />
-                        {selectedCount > 0 ? (
-                            <Badge
-                                className="-mr-0.5 min-w-4.5 rounded-full px-1 text-[10px]"
-                                size="sm"
-                            >
-                                {selectedCount}
-                            </Badge>
-                        ) : null}
-                    </>
-                )}
-            </PopoverTrigger>
-            <PopoverPopup
-                align="end"
+                {!isPending && <Layers3Icon className="size-3.5" />}
+            </ComboboxTrigger>
+            <ComboboxPopup
+                align="center"
                 className="w-[18rem] rounded-2xl [--viewport-inline-padding:0px]"
                 sideOffset={8}
             >
-                <div className="flex max-h-88 min-h-0 flex-col">
-                    <div className="border-border/70 border-b px-4 py-3">
-                        <p className="font-medium text-sm">Collections</p>
-                        <p className="mt-1 text-muted-foreground text-xs">
-                            Tag this item into one or more groups.
-                        </p>
+                <div className="flex min-h-0 flex-col">
+                    <div className="flex flex-col gap-1 px-3 pt-3 pb-2">
+                        <ComboboxLabel className="font-medium text-sm">
+                            Add to one or more collections
+                        </ComboboxLabel>
+                        <ComboboxInput
+                            placeholder="Search collections..."
+                            size="sm"
+                        />
                     </div>
-                    {collections.length > 0 ? (
-                        <div className="min-h-0 flex-1 overflow-y-auto p-2">
-                            {collections.map((collection) => {
-                                const isSelected =
-                                    selectedCollectionIds.includes(
-                                        collection.id
-                                    );
-                                return (
-                                    <button
-                                        className={cn(
-                                            "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent/70 focus-visible:bg-accent/70 focus-visible:outline-none",
-                                            isSelected && "bg-accent/50"
-                                        )}
-                                        disabled={isPending}
-                                        key={collection.id}
-                                        onClick={() => {
-                                            const nextIds = isSelected
-                                                ? selectedCollectionIds.filter(
-                                                      (id) =>
-                                                          id !== collection.id
-                                                  )
-                                                : [
-                                                      ...selectedCollectionIds,
-                                                      collection.id,
-                                                  ];
-                                            onUpdateItemCollections(
-                                                item.id,
-                                                nextIds
-                                            );
-                                        }}
-                                        type="button"
-                                    >
-                                        <span
-                                            className={cn(
-                                                "flex size-5 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background text-primary transition-colors",
-                                                isSelected &&
-                                                    "border-primary/40 bg-primary/12"
-                                            )}
-                                        >
-                                            {isSelected ? (
-                                                <CheckIcon className="size-3.5" />
-                                            ) : null}
-                                        </span>
-                                        <span className="min-w-0 flex-1">
-                                            <span className="block truncate font-medium text-sm">
-                                                {collection.name}
-                                            </span>
-                                            <span className="block text-muted-foreground text-xs">
-                                                {collection.itemCount} item
-                                                {collection.itemCount === 1
-                                                    ? ""
-                                                    : "s"}
-                                            </span>
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="flex min-h-24 flex-1 items-center justify-center px-4 text-center text-muted-foreground text-sm">
+                    <ComboboxList className="min-h-0 flex-1">
+                        <ComboboxEmpty className="flex min-h-24 flex-1 items-center justify-center px-4 text-center text-muted-foreground text-sm">
                             No collections yet. Create one to start grouping
                             saved items.
-                        </div>
-                    )}
+                        </ComboboxEmpty>
+                        <ComboboxCollection>
+                            {(collection) => (
+                                <ComboboxItem
+                                    className="px-3 py-2.5"
+                                    disabled={isPending}
+                                    key={collection.id}
+                                    value={collection.id}
+                                >
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block truncate font-medium text-sm">
+                                            {collection.name}
+                                        </span>
+                                        <span className="block text-muted-foreground text-xs">
+                                            {collection.itemCount} item
+                                            {collection.itemCount === 1
+                                                ? ""
+                                                : "s"}
+                                        </span>
+                                    </span>
+                                </ComboboxItem>
+                            )}
+                        </ComboboxCollection>
+                    </ComboboxList>
                     <div className="border-border/70 border-t bg-background/96 p-2 backdrop-blur-sm">
                         <Button
                             className="w-full justify-start rounded-xl"
@@ -284,8 +254,8 @@ function LibraryCollectionPicker({
                         </Button>
                     </div>
                 </div>
-            </PopoverPopup>
-        </Popover>
+            </ComboboxPopup>
+        </Combobox>
     );
 }
 
@@ -308,16 +278,28 @@ function LibraryGridCard({
     postedLabel,
 }: LibraryGridCardProps): ReactElement {
     const isDeletePending = pendingDeleteItemId === item.id;
+    const cardRef = useRef<HTMLDivElement>(null);
 
     const handlePrimaryClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
         event.preventDefault();
         onOpenInNewTab?.(item);
     };
 
+    const handleFullscreen = (event: ReactMouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (cardRef.current && fscreen.fullscreenEnabled) {
+            fscreen.requestFullscreen(cardRef.current);
+        }
+    };
+
     return (
         <ContextMenu>
             <ContextMenuTrigger render={<div className="contents" />}>
-                <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] hover:border-border hover:shadow-lg/5">
+                <div
+                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] hover:border-border hover:shadow-lg/5"
+                    ref={cardRef}
+                >
                     <div className="absolute top-2 right-2 z-10">
                         <LibraryCollectionPicker
                             collections={collections}
@@ -328,6 +310,19 @@ function LibraryGridCard({
                             onUpdateItemCollections={onUpdateItemCollections}
                             pendingCollectionItemIds={pendingCollectionItemIds}
                         />
+                    </div>
+                    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-3/4">
+                        <div className="pointer-events-auto absolute right-2 bottom-2 opacity-0 transition-opacity group-hover:opacity-100">
+                            <Button
+                                aria-label="View fullscreen"
+                                className="rounded-full border-border/60 bg-background/88 shadow-sm backdrop-blur-sm"
+                                onClick={handleFullscreen}
+                                size="icon-xs"
+                                variant="outline"
+                            >
+                                <MaximizeIcon className="size-3.5" />
+                            </Button>
+                        </div>
                     </div>
                     <a
                         className="flex flex-col focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
@@ -377,25 +372,6 @@ function LibraryGridCard({
                             <p className="line-clamp-2 truncate text-foreground text-xs leading-tight">
                                 {item.caption?.trim() || item.url}
                             </p>
-                            {item.collections.length > 0 ? (
-                                <div className="flex flex-wrap gap-1.5">
-                                    {item.collections
-                                        .slice(0, 2)
-                                        .map((collection) => (
-                                            <span
-                                                className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground"
-                                                key={collection.id}
-                                            >
-                                                {collection.name}
-                                            </span>
-                                        ))}
-                                    {item.collections.length > 2 ? (
-                                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                                            +{item.collections.length - 2}
-                                        </span>
-                                    ) : null}
-                                </div>
-                            ) : null}
                         </div>
                     </a>
                 </div>

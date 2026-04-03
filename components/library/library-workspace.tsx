@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { PageSidebarShell } from "@/components/ui/layouts";
+import { Textarea } from "@/components/ui/textarea";
 import type {
     LibraryCollectionSummary,
     LibraryCollectionTag,
@@ -106,6 +107,7 @@ function deriveCollectionSummaries(
 
     return sortCollectionsByName(
         collections.map((collection) => ({
+            description: collection.description ?? null,
             id: collection.id,
             itemCount: counts.get(collection.id) ?? 0,
             name: collection.name,
@@ -125,6 +127,7 @@ export function LibraryWorkspace({
     const [collections, setCollections] = useState<LibraryCollectionTag[]>(
         sortCollectionsByName(
             initialCollections.map((collection) => ({
+                description: collection.description,
                 id: collection.id,
                 name: collection.name,
             }))
@@ -136,6 +139,8 @@ export function LibraryWorkspace({
     const [isCollectionsOpen, setIsCollectionsOpen] = useState(true);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [createDialogDraft, setCreateDialogDraft] = useState("");
+    const [createDialogDescriptionDraft, setCreateDialogDescriptionDraft] =
+        useState("");
     const [createDialogError, setCreateDialogError] = useState<string | null>(
         null
     );
@@ -147,6 +152,7 @@ export function LibraryWorkspace({
     >([]);
     const [isCreatePending, startCreateTransition] = useTransition();
     const createInputId = useId();
+    const createDescriptionId = useId();
 
     const collectionSummaries = useMemo(
         () => deriveCollectionSummaries(collections, items),
@@ -157,6 +163,7 @@ export function LibraryWorkspace({
         (open: boolean) => {
             if (!(open || isCreatePending)) {
                 setCreateDialogDraft("");
+                setCreateDialogDescriptionDraft("");
                 setCreateDialogError(null);
                 setCreateDialogAssignItemId(null);
             }
@@ -168,6 +175,7 @@ export function LibraryWorkspace({
     const handleCreateCollectionRequest = useCallback((itemId?: string) => {
         setCreateDialogAssignItemId(itemId ?? null);
         setCreateDialogDraft("");
+        setCreateDialogDescriptionDraft("");
         setCreateDialogError(null);
         setIsCreateDialogOpen(true);
     }, []);
@@ -183,6 +191,7 @@ export function LibraryWorkspace({
             try {
                 result = await createCollection({
                     assignToItemId: createDialogAssignItemId ?? undefined,
+                    description: createDialogDescriptionDraft || undefined,
                     name: createDialogDraft,
                 });
             } catch {
@@ -198,6 +207,7 @@ export function LibraryWorkspace({
             }
 
             const nextCollection = {
+                description: result.collection.description,
                 id: result.collection.id,
                 name: result.collection.name,
             } satisfies LibraryCollectionTag;
@@ -222,11 +232,16 @@ export function LibraryWorkspace({
             }
 
             setCreateDialogDraft("");
+            setCreateDialogDescriptionDraft("");
             setCreateDialogError(null);
             setCreateDialogAssignItemId(null);
             setIsCreateDialogOpen(false);
         });
-    }, [createDialogAssignItemId, createDialogDraft]);
+    }, [
+        createDialogAssignItemId,
+        createDialogDescriptionDraft,
+        createDialogDraft,
+    ]);
 
     const handleUpdateItemCollections = useCallback(
         (itemId: string, collectionIds: string[]) => {
@@ -342,6 +357,28 @@ export function LibraryWorkspace({
                                     value={createDialogDraft}
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <label
+                                    className="font-medium text-sm"
+                                    htmlFor={createDescriptionId}
+                                >
+                                    Description{" "}
+                                    <span className="font-normal text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </label>
+                                <Textarea
+                                    id={createDescriptionId}
+                                    maxLength={1024}
+                                    onChange={(event) => {
+                                        setCreateDialogDescriptionDraft(
+                                            event.currentTarget.value
+                                        );
+                                    }}
+                                    placeholder="e.g. Articles and videos I want to check out later"
+                                    value={createDialogDescriptionDraft}
+                                />
+                            </div>
                             <p
                                 className={cn(
                                     "min-h-5 text-sm",
@@ -386,20 +423,15 @@ export function LibraryWorkspace({
                                 onOpenChange={setIsCollectionsOpen}
                                 open={isCollectionsOpen}
                             >
-                                <CollapsibleTrigger className="flex items-center gap-2.5 rounded-[1.35rem] bg-muted/94 py-2.5 pr-3 pl-3.5 text-left">
+                                <CollapsibleTrigger className="flex items-center gap-3 rounded-[1.35rem] bg-muted/94 py-2.5 pr-3 pl-3.5 text-left">
                                     <Component
                                         aria-hidden
                                         className="inline-block size-5 shrink-0"
                                         focusable="false"
                                     />
-                                    <div className="min-w-0 flex-1">
-                                        <span className="block select-none font-medium text-sm leading-tight">
-                                            Collections
-                                        </span>
-                                        <span className="block text-muted-foreground text-xs">
-                                            {collectionSummaries.length} saved
-                                        </span>
-                                    </div>
+                                    <span className="min-w-0 select-none font-medium text-sm leading-tight">
+                                        Collections
+                                    </span>
                                     {selectedCollectionIds.length > 0 ? (
                                         <Badge
                                             className="rounded-full"

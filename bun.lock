@@ -47,6 +47,7 @@
         "@biomejs/biome": "2.4.10",
         "@tailwindcss/postcss": "^4",
         "@types/bun": "^1.3.11",
+        "@types/fscreen": "^1.0.4",
         "@types/node": "^25",
         "@types/react": "^19",
         "@types/react-dom": "^19",
@@ -615,6 +616,8 @@
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 
     "@types/estree-jsx": ["@types/estree-jsx@1.0.5", "", { "dependencies": { "@types/estree": "*" } }, "sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg=="],
+
+    "@types/fscreen": ["@types/fscreen@1.0.4", "", {}, "sha512-TsjxyAUvlvuQyao9vNk0yES4nY07K9xoAbkhgXU948JG39EqlLxniWuW9OiZde9Q8ACSpu3fmbXXRAfb/l/HqQ=="],
 
     "@types/hast": ["@types/hast@3.0.4", "", { "dependencies": { "@types/unist": "*" } }, "sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ=="],
 

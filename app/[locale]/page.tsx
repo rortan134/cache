@@ -4,11 +4,11 @@ import {
     SignedInOnly,
     SignedOutOnly,
 } from "@/components/auth/session";
-import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import { Button } from "@/components/ui/button";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
 import { Chrome } from "@/components/ui/integration-icons";
 import { PageShell, PageSidebarShell } from "@/components/ui/layouts";
+import { LogoContextMenu } from "@/components/ui/logo-context-menu";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
@@ -152,9 +152,10 @@ export default async function Home({
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Bring together bookmarks from social, video,
-                                    and the web automatically. Ditch the endless
-                                    scrolling and tabbing through multiple
-                                    platforms to find what matters to you.
+                                    and the browser automatically. Ditch the
+                                    endless scrolling and tabbing through
+                                    multiple platforms to find what matters to
+                                    you.
                                 </p>
                             </T>
                             <div className="flex w-full items-center gap-5">
@@ -198,8 +199,7 @@ export default async function Home({
                                     Create more actionable opportunities for
                                     yourself by having your most insightful
                                     saved content top of mind instead of losing
-                                    them in a huge backlog of forgotten
-                                    bookmarks.
+                                    them in a backlog of forgotten bookmarks.
                                 </p>
                             </T>
                         </div>
@@ -213,7 +213,7 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Organization">
                                 <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Stay organized. Spot the stale, and keep the
+                                    Stay organized. Spot the stale, keep the
                                     useful
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">

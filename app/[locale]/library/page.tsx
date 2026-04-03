@@ -1,8 +1,8 @@
 import { UserMenu } from "@/components/auth/user-menu";
-import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import { LibrarySidebarIntegrations } from "@/components/library/integrations";
 import { LibraryWorkspace } from "@/components/library/library-workspace";
 import { PageShell } from "@/components/ui/layouts";
+import { LogoContextMenu } from "@/components/ui/logo-context-menu";
 import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";

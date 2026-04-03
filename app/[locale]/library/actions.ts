@@ -20,6 +20,7 @@ const COLLECTION_NAME_MAX_LENGTH = 64;
 
 const CreateCollectionInputSchema = z.object({
     assignToItemId: z.string().trim().min(1).optional(),
+    description: z.string().trim().max(1024).optional(),
     name: z
         .string()
         .trim()
@@ -363,6 +364,7 @@ export async function deleteLibraryItem(
 
 export async function createCollection(input: {
     assignToItemId?: string;
+    description?: string;
     name: string;
 }): Promise<CreateCollectionResult> {
     const parsed = CreateCollectionInputSchema.safeParse(input);
@@ -387,7 +389,7 @@ export async function createCollection(input: {
         };
     }
 
-    const { assignToItemId } = parsed.data;
+    const { assignToItemId, description } = parsed.data;
     const normalized = normalizeCollectionName(parsed.data.name);
 
     try {
@@ -432,6 +434,7 @@ export async function createCollection(input: {
 
             const collection = await tx.collection.create({
                 data: {
+                    description,
                     items: assignToItemId
                         ? {
                               connect: {
@@ -444,6 +447,7 @@ export async function createCollection(input: {
                     userId: session.user.id,
                 },
                 select: {
+                    description: true,
                     id: true,
                     name: true,
                 },
@@ -452,6 +456,7 @@ export async function createCollection(input: {
             return {
                 assignedItemId: assignToItemId ?? null,
                 collection: {
+                    description: collection.description,
                     id: collection.id,
                     itemCount: assignToItemId ? 1 : 0,
                     name: collection.name,
@@ -545,6 +550,7 @@ export async function updateLibraryItemCollections(input: {
                       name: "asc",
                   },
                   select: {
+                      description: true,
                       id: true,
                       name: true,
                   },
@@ -578,6 +584,7 @@ export async function updateLibraryItemCollections(input: {
                         name: "asc",
                     },
                     select: {
+                        description: true,
                         id: true,
                         name: true,
                     },

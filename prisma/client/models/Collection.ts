@@ -29,6 +29,7 @@ export type CollectionMinAggregateOutputType = {
   userId: string | null
   name: string | null
   nameKey: string | null
+  description: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -38,6 +39,7 @@ export type CollectionMaxAggregateOutputType = {
   userId: string | null
   name: string | null
   nameKey: string | null
+  description: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,6 +49,7 @@ export type CollectionCountAggregateOutputType = {
   userId: number
   name: number
   nameKey: number
+  description: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -58,6 +61,7 @@ export type CollectionMinAggregateInputType = {
   userId?: true
   name?: true
   nameKey?: true
+  description?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,6 +71,7 @@ export type CollectionMaxAggregateInputType = {
   userId?: true
   name?: true
   nameKey?: true
+  description?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,6 +81,7 @@ export type CollectionCountAggregateInputType = {
   userId?: true
   name?: true
   nameKey?: true
+  description?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -158,6 +164,7 @@ export type CollectionGroupByOutputType = {
   userId: string
   name: string
   nameKey: string
+  description: string | null
   createdAt: Date
   updatedAt: Date
   _count: CollectionCountAggregateOutputType | null
@@ -188,6 +195,7 @@ export type CollectionWhereInput = {
   userId?: Prisma.StringFilter<"Collection"> | string
   name?: Prisma.StringFilter<"Collection"> | string
   nameKey?: Prisma.StringFilter<"Collection"> | string
+  description?: Prisma.StringNullableFilter<"Collection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Collection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Collection"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -199,6 +207,7 @@ export type CollectionOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   nameKey?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -214,6 +223,7 @@ export type CollectionWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"Collection"> | string
   name?: Prisma.StringFilter<"Collection"> | string
   nameKey?: Prisma.StringFilter<"Collection"> | string
+  description?: Prisma.StringNullableFilter<"Collection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Collection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Collection"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -225,6 +235,7 @@ export type CollectionOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   nameKey?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CollectionCountOrderByAggregateInput
@@ -240,6 +251,7 @@ export type CollectionScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"Collection"> | string
   name?: Prisma.StringWithAggregatesFilter<"Collection"> | string
   nameKey?: Prisma.StringWithAggregatesFilter<"Collection"> | string
+  description?: Prisma.StringNullableWithAggregatesFilter<"Collection"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Collection"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Collection"> | Date | string
 }
@@ -248,6 +260,7 @@ export type CollectionCreateInput = {
   id?: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutCollectionsInput
@@ -259,6 +272,7 @@ export type CollectionUncheckedCreateInput = {
   userId: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutCollectionsInput
@@ -268,6 +282,7 @@ export type CollectionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutCollectionsNestedInput
@@ -279,6 +294,7 @@ export type CollectionUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.LibraryItemUncheckedUpdateManyWithoutCollectionsNestedInput
@@ -289,6 +305,7 @@ export type CollectionCreateManyInput = {
   userId: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -297,6 +314,7 @@ export type CollectionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -306,6 +324,7 @@ export type CollectionUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -330,6 +349,7 @@ export type CollectionCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   nameKey?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -339,6 +359,7 @@ export type CollectionMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   nameKey?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -348,6 +369,7 @@ export type CollectionMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   nameKey?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -436,6 +458,7 @@ export type CollectionCreateWithoutUserInput = {
   id?: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.LibraryItemCreateNestedManyWithoutCollectionsInput
@@ -445,6 +468,7 @@ export type CollectionUncheckedCreateWithoutUserInput = {
   id?: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   items?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutCollectionsInput
@@ -484,6 +508,7 @@ export type CollectionScalarWhereInput = {
   userId?: Prisma.StringFilter<"Collection"> | string
   name?: Prisma.StringFilter<"Collection"> | string
   nameKey?: Prisma.StringFilter<"Collection"> | string
+  description?: Prisma.StringNullableFilter<"Collection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Collection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Collection"> | Date | string
 }
@@ -492,6 +517,7 @@ export type CollectionCreateWithoutItemsInput = {
   id?: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutCollectionsInput
@@ -502,6 +528,7 @@ export type CollectionUncheckedCreateWithoutItemsInput = {
   userId: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -531,6 +558,7 @@ export type CollectionCreateManyUserInput = {
   id?: string
   name: string
   nameKey: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -539,6 +567,7 @@ export type CollectionUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.LibraryItemUpdateManyWithoutCollectionsNestedInput
@@ -548,6 +577,7 @@ export type CollectionUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.LibraryItemUncheckedUpdateManyWithoutCollectionsNestedInput
@@ -557,6 +587,7 @@ export type CollectionUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -565,6 +596,7 @@ export type CollectionUpdateWithoutItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutCollectionsNestedInput
@@ -575,6 +607,7 @@ export type CollectionUncheckedUpdateWithoutItemsInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -584,6 +617,7 @@ export type CollectionUncheckedUpdateManyWithoutItemsInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   nameKey?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -624,6 +658,7 @@ export type CollectionSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   userId?: boolean
   name?: boolean
   nameKey?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -636,6 +671,7 @@ export type CollectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   userId?: boolean
   name?: boolean
   nameKey?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -646,6 +682,7 @@ export type CollectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   userId?: boolean
   name?: boolean
   nameKey?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -656,11 +693,12 @@ export type CollectionSelectScalar = {
   userId?: boolean
   name?: boolean
   nameKey?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CollectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "nameKey" | "createdAt" | "updatedAt", ExtArgs["result"]["collection"]>
+export type CollectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "nameKey" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["collection"]>
 export type CollectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Collection$itemsArgs<ExtArgs>
@@ -684,6 +722,7 @@ export type $CollectionPayload<ExtArgs extends runtime.Types.Extensions.Internal
     userId: string
     name: string
     nameKey: string
+    description: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["collection"]>
@@ -1115,6 +1154,7 @@ export interface CollectionFieldRefs {
   readonly userId: Prisma.FieldRef<"Collection", 'String'>
   readonly name: Prisma.FieldRef<"Collection", 'String'>
   readonly nameKey: Prisma.FieldRef<"Collection", 'String'>
+  readonly description: Prisma.FieldRef<"Collection", 'String'>
   readonly createdAt: Prisma.FieldRef<"Collection", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Collection", 'DateTime'>
 }

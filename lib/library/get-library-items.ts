@@ -15,6 +15,7 @@ export async function getLibraryItemsForUser(userId: string) {
                         name: "asc",
                     },
                     select: {
+                        description: true,
                         id: true,
                         name: true,
                     },
@@ -36,6 +37,7 @@ export async function getLibraryItemsForUser(userId: string) {
                         items: true,
                     },
                 },
+                description: true,
                 id: true,
                 name: true,
             },
@@ -48,6 +50,7 @@ export async function getLibraryItemsForUser(userId: string) {
     return {
         collections: collections.map(
             (collection): LibraryCollectionSummary => ({
+                description: collection.description,
                 id: collection.id,
                 itemCount: collection._count.items,
                 name: collection.name,
