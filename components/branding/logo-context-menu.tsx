@@ -57,7 +57,7 @@ export function LogoContextMenu({
                 >
                     <Image
                         alt="App Icon"
-                        className="block select-none transition-transform duration-200 group-hover:scale-[1.02] group-focus-visible:scale-[1.02]"
+                        className="block select-none"
                         draggable={false}
                         fetchPriority="high"
                         height={50}

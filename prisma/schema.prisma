@@ -83,7 +83,7 @@ model LibraryItem {
     @@unique([userId, source, browserProfileId, externalId])
     @@index([userId])
     @@index([userId, source, browserProfileId])
-    @@index([userId, source, browserProfileId, parentExternalId])
+    @@index([userId, source, browserProfileId, parentExternalId], map: "library_item_user_source_profile_parent_idx")
     @@map("library_item")
 }
 

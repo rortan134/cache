@@ -1,10 +1,10 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import {
     SessionHint,
     SignedInOnly,
     SignedOutOnly,
 } from "@/components/auth/session";
+import { LogoContextMenu } from "@/components/branding/logo-context-menu";
 import { Button } from "@/components/ui/button";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
 import { Chrome } from "@/components/ui/integration-icons";
@@ -95,7 +95,8 @@ export default async function Home({
                                     <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
                                         Meet Cache – one place to collect,
                                         organize, and rediscover everything
-                                        you’ve saved across platforms.
+                                        you’ve saved across platforms, right in
+                                        your browser.
                                     </p>
                                 </T>
                             </div>
@@ -146,13 +147,14 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Integrations">
                                 <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Connect your favorite media platforms
+                                    Connect your favorite media platforms –
+                                    Backfill everything you've ever saved
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Bring together bookmarks from social, video,
-                                    and the web. Ditch the endless scrolling and
-                                    tabbing through multiple platforms to find
-                                    what matters to you.
+                                    and the web automatically. Ditch the endless
+                                    scrolling and tabbing through multiple
+                                    platforms to find what matters to you.
                                 </p>
                             </T>
                             <div className="flex w-full items-center gap-5">
@@ -171,30 +173,12 @@ export default async function Home({
                         <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
                             <T context="Feed">
                                 <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Explore from a single, fast feed
+                                    Search and explore from a single, fast feed
                                 </h2>
                                 <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
                                     Streamline the way you consume and reengage
                                     with your saved content from a single clean
-                                    view.
-                                </p>
-                            </T>
-                        </div>
-                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
-                            <figure className="overflow-hidden">
-                                {/* <Image alt="" height={800} src="" width={800} /> */}
-                            </figure>
-                        </div>
-                    </div>
-                    <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
-                        <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
-                            <T context="Organization">
-                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
-                                    Stay organized. Spot stale bookmarks easily
-                                </h2>
-                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
-                                    Import once and go from messy to organized
-                                    in minutes, then search, manage or group.
+                                    and powerful interface.
                                 </p>
                             </T>
                         </div>
@@ -214,7 +198,27 @@ export default async function Home({
                                     Create more actionable opportunities for
                                     yourself by having your most insightful
                                     saved content top of mind instead of losing
-                                    them in a backlog of forgotten bookmarks.
+                                    them in a huge backlog of forgotten
+                                    bookmarks.
+                                </p>
+                            </T>
+                        </div>
+                        <div className="order-first aspect-square w-full overflow-hidden rounded-2xl bg-muted md:order-last">
+                            <figure className="overflow-hidden">
+                                {/* <Image alt="" height={800} src="" width={800} /> */}
+                            </figure>
+                        </div>
+                    </div>
+                    <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">
+                        <div className="flex max-w-[340px] flex-col gap-[12px] py-[20px] md:gap-[16px]">
+                            <T context="Organization">
+                                <h2 className="font-medium text-[#0A0B0D] text-[28px] leading-[1.1] tracking-[-1.28px] lg:text-[32px]">
+                                    Stay organized. Spot the stale, and keep the
+                                    useful
+                                </h2>
+                                <p className="tracking=[-3%] text-pretty font-medium font-regular text-[#0A0B0D] text-[16px] leading-[1.2] opacity-50">
+                                    Import once and go from messy to organized
+                                    in minutes.
                                 </p>
                             </T>
                         </div>
@@ -228,7 +232,16 @@ export default async function Home({
                         <div className="relative mx-auto mt-auto grid h-auto w-full grid-cols-12 gap-x-[min(2.25vw,32px)] pt-[120px] lg:top-0">
                             <div className="relative z-20 col-span-full mx-auto grid w-full grid-cols-12 flex-col gap-6 gap-x-[min(2.25vw,32px)] pb-4! md:pb-6! lg:mb-20 lg:py-8 lg:pb-8!">
                                 <div className="col-span-full flex flex-col gap-4">
-                                    <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%]">
+                                    <div className="col-span-full flex h-full flex-row gap-6 text-[#0A0B0D] text-[0.8rem] leading-[1.22] tracking-[-3%] opacity-50">
+                                        <Link
+                                            className="underline"
+                                            href="/pricing"
+                                            target="_blank"
+                                        >
+                                            <T>
+                                                <p>Pricing</p>
+                                            </T>
+                                        </Link>
                                         <Link
                                             className="underline"
                                             href="/legal/terms-of-service"
@@ -267,7 +280,7 @@ export default async function Home({
                                         <p>&copy; Cache. All rights reserved</p>
                                     </div>
                                 </div>
-                                <div className="relative col-span-full flex flex-col items-start justify-between font-sans text-xs leading-[1.22] tracking-[-3%]">
+                                <div className="relative col-span-full flex flex-col items-start justify-between font-sans text-[#0A0B0D] text-xs leading-[1.22] tracking-[-3%] opacity-50">
                                     <span className="opacity-90">
                                         <T context="Disclaimer">
                                             *Third-party platforms you connect

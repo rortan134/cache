@@ -26,5 +26,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS "library_item_userId_source_browserProfileId_e
 CREATE INDEX IF NOT EXISTS "library_item_userId_source_browserProfileId_idx"
     ON "library_item"("userId", "source", "browserProfileId");
 
-CREATE INDEX IF NOT EXISTS "library_item_userId_source_browserProfileId_parentExternalId_idx"
+CREATE INDEX IF NOT EXISTS "library_item_user_source_profile_parent_idx"
     ON "library_item"("userId", "source", "browserProfileId", "parentExternalId");

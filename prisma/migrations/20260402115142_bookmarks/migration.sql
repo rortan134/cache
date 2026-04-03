@@ -13,6 +13,6 @@ BEGIN
           AND relname = 'library_item_userId_source_browserProfileId_parentExternalId_id'
     ) THEN
         ALTER INDEX "library_item_userId_source_browserProfileId_parentExternalId_id"
-            RENAME TO "library_item_userId_source_browserProfileId_parentExternalId_idx";
+            RENAME TO "library_item_user_source_profile_parent_idx";
     END IF;
 END $$;
