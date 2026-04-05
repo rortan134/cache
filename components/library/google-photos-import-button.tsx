@@ -133,7 +133,7 @@ async function importSelectedMedia(sessionId: string): Promise<ImportResponse> {
 export function GooglePhotosImportButton({
     locale,
     size = "icon",
-    variant = "outline",
+    variant = "ghost",
 }: Readonly<{
     buttonLabel?: string;
     locale: string;

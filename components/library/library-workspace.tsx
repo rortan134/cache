@@ -7,7 +7,6 @@ import {
     type UpdateLibraryItemCollectionsResult,
 } from "@/app/[locale]/library/actions";
 import { LibraryBrowser } from "@/components/library/library-browser";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Collapsible,
@@ -414,10 +413,11 @@ export function LibraryWorkspace({
             </Dialog>
             <PageSidebarShell
                 bottom={sidebarBottom}
+                className="max-h-[80vh]"
                 top={
                     <>
                         {sidebarTop}
-                        <div className="flex w-full items-start gap-1.5">
+                        <div className="flex w-full items-center gap-1.5">
                             <Collapsible
                                 className="w-full flex-1"
                                 onOpenChange={setIsCollectionsOpen}
@@ -432,16 +432,6 @@ export function LibraryWorkspace({
                                     <span className="min-w-0 select-none font-medium text-sm leading-tight">
                                         Collections
                                     </span>
-                                    {selectedCollectionIds.length > 0 ? (
-                                        <Badge
-                                            className="rounded-full"
-                                            size="sm"
-                                            variant="secondary"
-                                        >
-                                            {selectedCollectionIds.length}{" "}
-                                            active
-                                        </Badge>
-                                    ) : null}
                                     <ChevronDown
                                         aria-hidden
                                         className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"

@@ -408,14 +408,18 @@ export function SidebarIntegrationAction({
             {errorMessage ? (
                 <p
                     aria-live="polite"
-                    className="text-destructive text-xs underline decoration-dotted underline-offset-4"
+                    className="text-destructive text-xs underline decoration-dotted"
                     role="alert"
                 >
                     {errorMessage}
                 </p>
             ) : null}
             {successMessage ? (
-                <p className="text-emerald-600 text-xs" role="status">
+                <p
+                    aria-live="polite"
+                    className="text-emerald-600 text-xs"
+                    role="status"
+                >
                     {successMessage}
                 </p>
             ) : null}

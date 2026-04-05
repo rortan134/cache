@@ -33,7 +33,7 @@ function PageSidebarShell({
                 className
             )}
         >
-            <div className="no-scrollbar flex max-h-full min-h-0 w-full flex-1 flex-col gap-6 overflow-auto lg:sticky lg:top-8">
+            <div className="no-scrollbar flex max-h-full min-h-0 w-full flex-col gap-6 overflow-auto lg:sticky lg:top-8">
                 {top}
             </div>
             <div className="flex w-full flex-col gap-6 lg:sticky lg:bottom-8">
