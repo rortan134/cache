@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/ui/layouts";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { T } from "gt-next";
-import { Check, ChevronRight } from "lucide-react";
+import {
+    Check,
+    ChevronRight,
+    Lock,
+    ShieldCheck,
+    TrendingDown,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -40,16 +46,13 @@ export default async function PricingPage({
                 <div className="absolute inset-x-0 top-0 -z-10 h-80 bg-linear-to-b from-muted via-muted/50 to-transparent" />
                 <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
                     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
-                        <Badge size="lg" variant="outline">
-                            <T context="Pricing badge label">Cache Pro</T>
-                        </Badge>
                         <T context="Pricing page hero copy">
                             <h1 className="max-w-4xl text-balance font-medium text-[3rem] leading-[0.95] tracking-[-0.05em] md:text-[4.5rem]">
-                                Keep every bookmark within reach.
+                                Give more meaning to every bookmark
                             </h1>
                             <p className="max-w-2xl text-balance text-[1.05rem] text-muted-foreground leading-[1.35] md:text-[1.15rem]">
-                                Cache Pro is for people who save a lot: one
-                                clean place to collect, organize, search, and
+                                Cache is for people who save a lot: one clean
+                                place to collect, organize, search, and
                                 rediscover everything from across the web.
                             </p>
                         </T>
@@ -59,7 +62,7 @@ export default async function PricingPage({
                             <div className="flex flex-col gap-6">
                                 <T context="Pricing page feature section">
                                     <div className="space-y-3">
-                                        <p className="font-medium text-muted-foreground text-sm uppercase tracking-[0.18em]">
+                                        <p className="font-medium text-muted-foreground text-sm uppercase tracking-widest">
                                             What you get
                                         </p>
                                         <h2 className="text-balance font-medium text-3xl tracking-[-0.04em] md:text-4xl">
@@ -68,8 +71,8 @@ export default async function PricingPage({
                                         </h2>
                                         <p className="max-w-2xl text-pretty text-muted-foreground">
                                             No team tiers, no feature maze, and
-                                            no awkward upsells. Just the full
-                                            Cache experience for personal use.
+                                            no awkward upsells. The full Cache
+                                            app experience for personal use.
                                         </p>
                                     </div>
                                 </T>
@@ -140,7 +143,7 @@ export default async function PricingPage({
                                 <div className="flex items-start justify-between gap-4">
                                     <T context="Pricing page plan heading">
                                         <div className="space-y-2">
-                                            <p className="font-medium text-muted-foreground text-sm uppercase tracking-[0.18em]">
+                                            <p className="font-medium text-muted-foreground text-sm uppercase tracking-widest">
                                                 Pro plan
                                             </p>
                                             <h2 className="font-medium text-3xl tracking-[-0.04em]">
@@ -150,7 +153,7 @@ export default async function PricingPage({
                                     </T>
                                     <Badge size="lg">
                                         <T context="Pricing page savings badge">
-                                            Save 10 € yearly
+                                            Save 3 months
                                         </T>
                                     </Badge>
                                 </div>
@@ -171,7 +174,7 @@ export default async function PricingPage({
                                                     </p>
                                                 </div>
                                                 <p className="text-muted-foreground text-sm">
-                                                    Billed every month
+                                                    Billed monthly
                                                 </p>
                                             </div>
                                         </T>
@@ -225,6 +228,34 @@ export default async function PricingPage({
                                         size="xl"
                                         variant="outline"
                                     />
+                                </div>
+                                <div className="mt-8 grid gap-4 border-border border-t pt-8">
+                                    <div className="flex items-center gap-3">
+                                        <ShieldCheck className="size-4 shrink-0 text-muted-foreground" />
+                                        <T context="Pricing page trust signal">
+                                            <p className="text-muted-foreground text-sm">
+                                                Up to 30-day money back
+                                                guarantee
+                                            </p>
+                                        </T>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <TrendingDown className="size-4 shrink-0 text-muted-foreground" />
+                                        <T context="Pricing page trust signal">
+                                            <p className="text-muted-foreground text-sm">
+                                                Save with annual subscriptions
+                                            </p>
+                                        </T>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <Lock className="size-4 shrink-0 text-muted-foreground" />
+                                        <T context="Pricing page trust signal">
+                                            <p className="text-muted-foreground text-sm">
+                                                Buy with flexibility and
+                                                security
+                                            </p>
+                                        </T>
+                                    </div>
                                 </div>
                                 <T context="Pricing page reassurance text">
                                     <p className="mt-6 text-pretty text-muted-foreground text-sm leading-6">

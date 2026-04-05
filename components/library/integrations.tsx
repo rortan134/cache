@@ -113,9 +113,9 @@ export function LibrarySidebarIntegrations({
                             )
                         )}
                     </ul>
-                    <div className="flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2">
                         <Info className="inline-block size-3.5 shrink-0" />
-                        <p className="text-muted-foreground text-xs leading-tight">
+                        <p className="text-[11px] text-muted-foreground leading-tight">
                             Please only connect accounts you fully trust. Cache
                             can access what you choose to save with connected
                             apps.

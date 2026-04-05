@@ -16,6 +16,9 @@ export const SUPPORTED_GT_LOCALES = [
     "sv-SE",
     "da-DK",
     "pl-PL",
+    "it-IT",
+    "ru-RU",
+    "tr-TR",
 ] as const;
 
 export type SupportedGTLocale = (typeof SUPPORTED_GT_LOCALES)[number];

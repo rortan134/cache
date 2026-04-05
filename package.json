@@ -40,7 +40,7 @@
         "culori": "^4.0.2",
         "dayjs": "^1.11.20",
         "fscreen": "^1.2.0",
-        "gt-next": "^6.15.1",
+        "gt-next": "^6.15.2",
         "lucide-react": "^1.7.0",
         "mcp-handler": "^1.1.0",
         "nanoid": "^5.1.7",
@@ -69,13 +69,13 @@
         "babel-plugin-react-compiler": "1.0.0",
         "chalk": "^5.6.2",
         "dotenv": "^17.4.0",
-        "gt": "^2.14.3",
+        "gt": "^2.14.4",
         "husky": "^9.1.7",
-        "knip": "^6.2.0",
+        "knip": "^6.3.0",
         "prisma": "^7.6.0",
         "tailwindcss": "^4",
         "typescript": "^6",
-        "ultracite": "^7.4.2"
+        "ultracite": "^7.4.3"
     },
     "engines": {
         "node": "24.x"

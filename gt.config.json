@@ -13,7 +13,10 @@
         "zh-TW",
         "sv-SE",
         "da-DK",
-        "pl-PL"
+        "pl-PL",
+        "it-IT",
+        "ru-RU",
+        "tr-TR"
     ],
     "files": {
         "gt": {
