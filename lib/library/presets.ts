@@ -5,7 +5,8 @@ export interface PresetCollection {
 
 export const PRESET_COLLECTIONS: PresetCollection[] = [
     {
-        description: "Articles, essays, and long-reads to get through when you have a moment.",
+        description:
+            "Articles, essays, and long-reads to get through when you have a moment.",
         name: "Reading List",
     },
     {
@@ -13,7 +14,8 @@ export const PRESET_COLLECTIONS: PresetCollection[] = [
         name: "Inspiration",
     },
     {
-        description: "Educational content, how-tos, and documentation for learning new skills.",
+        description:
+            "Educational content, how-tos, and documentation for learning new skills.",
         name: "Tutorials & Guides",
     },
     {
