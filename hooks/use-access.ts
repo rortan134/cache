@@ -12,7 +12,7 @@ async function getActiveSubscription(input: { email?: string }) {
         throw new Error(error.message);
     }
     const activeSubscription = subscriptions.find(
-        (sub) => sub.status === "active" || sub.status === "trialing"
+        (sub) => sub.status === "active" || sub.status === "trialing",
     );
     return activeSubscription ?? null;
 }
@@ -30,19 +30,21 @@ function useAccess() {
         throw sessionError;
     }
 
-    const { data: subscription, isLoading } = useSWR<
+    const { data: subscription, isLoading: _isLoading } = useSWR<
         Awaited<ReturnType<typeof getActiveSubscription>>
     >(() =>
         session?.user.email
             ? getActiveSubscription({ email: session?.user.email })
-            : null
+            : null,
     );
 
     const hasAccess =
         subscription?.status === "active" ||
         subscription?.status === "trialing";
 
-    return { hasAccess, isLoading, isPending, mutate, subscription };
+    const isLoading = isPending || _isLoading;
+
+    return { hasAccess, isLoading, mutate, subscription };
 }
 
 export { useAccess };

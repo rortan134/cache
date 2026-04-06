@@ -96,6 +96,16 @@ export type UpdateLibraryItemCollectionsResult =
           status: "ERROR" | "INVALID" | "NOT_FOUND" | "UNAUTHORIZED";
       };
 
+export type DownloadMediaResult =
+    | {
+          downloadUrl: string;
+          status: "SUCCESS";
+      }
+    | {
+          message: string;
+          status: "ERROR" | "INVALID" | "UNAUTHORIZED";
+      };
+
 function asRecord(value: unknown): Record<string, unknown> | null {
     return typeof value === "object" && value !== null
         ? (value as Record<string, unknown>)
@@ -605,6 +615,88 @@ export async function updateLibraryItemCollections(input: {
         log.error("Unexpected library collection update failure", error);
         return {
             message: "We couldn't update collections for this item.",
+            status: "ERROR",
+        };
+    }
+}
+
+export async function downloadMedia(url: string): Promise<DownloadMediaResult> {
+    const normalizedUrl = url.trim();
+    if (normalizedUrl.length === 0) {
+        return {
+            message: "A valid URL is required to download media.",
+            status: "INVALID",
+        };
+    }
+
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    if (!session?.user?.id) {
+        return {
+            message: "Sign in again to download media.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    const API_BASE = "https://cobalt-production-d7b0.up.railway.app";
+
+    try {
+        const response = await fetch(`${API_BASE}/`, {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: normalizedUrl }),
+            cache: "no-store",
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            log.warn("Cobalt download request failed", {
+                status: response.status,
+                error: errorText,
+                url: normalizedUrl,
+            });
+            return {
+                message:
+                    "The download service is currently unavailable. Please try again later.",
+                status: "ERROR",
+            };
+        }
+
+        const data = (await response.json()) as {
+            status?: string;
+            text?: string;
+            url?: string;
+        };
+
+        if (data.status === "error") {
+            return {
+                message: data.text || "Failed to process the download request.",
+                status: "ERROR",
+            };
+        }
+
+        if (data.url) {
+            return {
+                downloadUrl: data.url,
+                status: "SUCCESS",
+            };
+        }
+
+        return {
+            message: "Could not find a download link for this media.",
+            status: "ERROR",
+        };
+    } catch (error) {
+        log.error("Unexpected download failure", error);
+        return {
+            message:
+                "We hit an unexpected error while preparing your download.",
             status: "ERROR",
         };
     }

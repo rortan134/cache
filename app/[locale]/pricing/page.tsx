@@ -1,20 +1,23 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { SignedInOnly, SignedOutOnly } from "@/components/auth/session";
 import { PricingUpgradeButton } from "@/components/billing/pricing-upgrade-button";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+    Collapsible,
+    CollapsiblePanel,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Footer } from "@/components/ui/footer";
 import { PageShell } from "@/components/ui/layouts";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { T } from "gt-next";
 import {
     Check,
-    ChevronRight,
+    ChevronDown,
     Lock,
     ShieldCheck,
     TrendingDown,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export async function generateMetadata({
     params,
@@ -27,7 +30,7 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "pricing.metadata.description",
-            "Simple pricing for power users who want one place to organize and rediscover everything they save."
+            "Simple pricing for power users who want one place to organize and rediscover everything they save.",
         ),
         title: gtPublicString(locale, "pricing.metadata.title", "Pricing"),
     };
@@ -42,38 +45,38 @@ export default async function PricingPage({
 
     return (
         <PageShell className="bg-background">
-            <section className="relative overflow-hidden px-6 py-16 md:px-10 md:py-24">
+            <section className="relative overflow-hidden px-6 pt-16 md:px-10 md:pt-24">
                 <div className="absolute inset-x-0 top-0 -z-10 h-80 bg-linear-to-b from-muted via-muted/50 to-transparent" />
                 <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-                    <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
+                    <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
                         <T context="Pricing page hero copy">
-                            <h1 className="max-w-4xl text-balance font-medium text-[3rem] leading-[0.95] tracking-[-0.05em] md:text-[4.5rem]">
-                                Give more meaning to every bookmark
+                            <h1 className="max-w-readable font-medium text-4xl leading-[0.95] tracking-[-0.05em] md:text-5xl">
+                                Give your every bookmark more meaning.
                             </h1>
-                            <p className="max-w-2xl text-balance text-[1.05rem] text-muted-foreground leading-[1.35] md:text-[1.15rem]">
-                                Cache is for people who save a lot: one clean
-                                place to collect, organize, search, and
-                                rediscover everything from across the web.
+                            <p className="max-w-2xl text-base text-muted-foreground leading-[1.35] md:text-[1.15rem]">
+                                Starting from only 5 € per month — Cancel
+                                anytime.
+                            </p>
+                            <p className="max-w-2xl text-base text-muted-foreground">
+                                <strong className="font-medium text-blue-700">
+                                    Save 2 months
+                                </strong>{" "}
+                                on a yearly subscription
                             </p>
                         </T>
                     </div>
                     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                        <div className="rounded-[2rem] border border-border bg-card p-8 shadow-xs md:p-10">
+                        <div className="rounded-[2rem] border border-border bg-card p-7 shadow-xs md:p-10">
                             <div className="flex flex-col gap-6">
                                 <T context="Pricing page feature section">
                                     <div className="space-y-3">
-                                        <p className="font-medium text-muted-foreground text-sm uppercase tracking-widest">
+                                        <p className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
                                             What you get
                                         </p>
-                                        <h2 className="text-balance font-medium text-3xl tracking-[-0.04em] md:text-4xl">
+                                        <h2 className="font-medium text-3xl tracking-[-0.04em] md:text-4xl">
                                             One subscription for your entire
                                             saved-content workflow
                                         </h2>
-                                        <p className="max-w-2xl text-pretty text-muted-foreground">
-                                            No team tiers, no feature maze, and
-                                            no awkward upsells. The full Cache
-                                            app experience for personal use.
-                                        </p>
                                     </div>
                                 </T>
                                 <ul className="space-y-4">
@@ -139,37 +142,31 @@ export default async function PricingPage({
                             </div>
                         </div>
                         <div className="rounded-[2rem] border border-primary/15 bg-muted p-3 shadow-xs">
-                            <div className="flex h-full flex-col rounded-[1.4rem] border border-border bg-background p-8 md:p-10">
+                            <div className="flex h-full flex-col rounded-[1.4rem] border border-border bg-background p-7 md:p-10">
                                 <div className="flex items-start justify-between gap-4">
                                     <T context="Pricing page plan heading">
                                         <div className="space-y-2">
-                                            <p className="font-medium text-muted-foreground text-sm uppercase tracking-widest">
+                                            <p className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
                                                 Pro plan
                                             </p>
-                                            <h2 className="font-medium text-3xl tracking-[-0.04em]">
+                                            <h2 className="text-balance font-medium text-3xl tracking-[-0.04em]">
                                                 Everything in Cache
                                             </h2>
                                         </div>
                                     </T>
-                                    <Badge size="lg">
-                                        <T context="Pricing page savings badge">
-                                            Save 3 months
-                                        </T>
-                                    </Badge>
                                 </div>
-
                                 <div className="mt-8 grid gap-3">
                                     <div className="rounded-2xl border border-border bg-card px-5 py-4">
                                         <T context="Monthly billing option">
                                             <div className="flex items-end justify-between gap-4">
                                                 <div>
-                                                    <p className="text-muted-foreground text-sm">
+                                                    {/* <p className="text-muted-foreground text-sm">
                                                         Monthly
-                                                    </p>
+                                                    </p> */}
                                                     <p className="mt-1 font-medium text-4xl tracking-[-0.04em]">
                                                         5 €
                                                         <span className="ml-2 font-normal text-base text-muted-foreground">
-                                                            / month
+                                                            per month
                                                         </span>
                                                     </p>
                                                 </div>
@@ -183,13 +180,13 @@ export default async function PricingPage({
                                         <T context="Yearly billing option">
                                             <div className="flex items-end justify-between gap-4">
                                                 <div>
-                                                    <p className="text-muted-foreground text-sm">
+                                                    {/* <p className="text-muted-foreground text-sm">
                                                         Yearly
-                                                    </p>
+                                                    </p> */}
                                                     <p className="mt-1 font-medium text-4xl tracking-[-0.04em]">
                                                         50 €
                                                         <span className="ml-2 font-normal text-base text-muted-foreground">
-                                                            / year
+                                                            per year
                                                         </span>
                                                     </p>
                                                 </div>
@@ -200,7 +197,6 @@ export default async function PricingPage({
                                         </T>
                                     </div>
                                 </div>
-
                                 <div className="mt-8 flex flex-col gap-3">
                                     <SignedOutOnly>
                                         <GoogleSignInButton locale={locale}>
@@ -212,24 +208,12 @@ export default async function PricingPage({
                                     <SignedInOnly>
                                         <PricingUpgradeButton locale={locale}>
                                             <T context="Pricing page upgrade CTA">
-                                                Upgrade to Cache Pro
+                                                Upgrade plan
                                             </T>
                                         </PricingUpgradeButton>
                                     </SignedInOnly>
-                                    <Button
-                                        render={
-                                            <Link href="/library">
-                                                <T context="Pricing page secondary CTA">
-                                                    Go to my library
-                                                </T>
-                                                <ChevronRight className="size-4" />
-                                            </Link>
-                                        }
-                                        size="xl"
-                                        variant="outline"
-                                    />
                                 </div>
-                                <div className="mt-8 grid gap-4 border-border border-t pt-8">
+                                <div className="mt-8 grid gap-4">
                                     <div className="flex items-center gap-3">
                                         <ShieldCheck className="size-4 shrink-0 text-muted-foreground" />
                                         <T context="Pricing page trust signal">
@@ -257,18 +241,143 @@ export default async function PricingPage({
                                         </T>
                                     </div>
                                 </div>
-                                <T context="Pricing page reassurance text">
-                                    <p className="mt-6 text-pretty text-muted-foreground text-sm leading-6">
-                                        Start with the billing cadence that fits
-                                        you best. You get the same full product,
-                                        whether you prefer to pay monthly or
-                                        yearly.
-                                    </p>
-                                </T>
                             </div>
                         </div>
                     </div>
+
+                    <div className="mx-auto mt-20 w-full max-w-3xl pb-20">
+                        <T context="FAQ section heading">
+                            <h2 className="mb-10 text-center font-medium text-3xl tracking-tight md:text-4xl">
+                                Frequently Asked Questions
+                            </h2>
+                        </T>
+                        <div className="divide-y divide-border border-y border-border">
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">What is Cache?</T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        Cache is a unified library for
+                                        everything you save online. We bring
+                                        together your bookmarks, liked photos,
+                                        and saved content from various
+                                        platforms into one searchable, organized
+                                        space.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">
+                                        How often is my content updated?
+                                    </T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        We sync your connected integrations
+                                        automatically. Whether it's a new Google
+                                        Photo or a Pinterest Pin, Cache keeps
+                                        your library up to date so you can find
+                                        what you need instantly.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">
+                                        Do you have discounts for students?
+                                    </T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        Yes! We believe in supporting students
+                                        and educators. Please contact our
+                                        support team with your academic email to
+                                        receive a special discount code.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">
+                                        What payment methods do you accept?
+                                    </T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        We accept all major credit cards (Visa,
+                                        Mastercard, American Express) and
+                                        digital wallets through our secure
+                                        payment processor, Stripe.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">
+                                        Can I cancel my subscription?
+                                    </T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        Of course. You can cancel your Pro
+                                        subscription at any time from your
+                                        account settings. You'll continue to
+                                        have access to Pro features until the
+                                        end of your billing period.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">
+                                        Do you offer plans for teams?
+                                    </T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        Currently, we focus on providing the
+                                        best experience for individual power
+                                        users. If you're interested in using
+                                        Cache with your team, please reach out
+                                        to us—we'd love to hear about your
+                                        needs.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+
+                            <Collapsible className="py-5">
+                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                                    <T context="FAQ question">
+                                        What is your refund policy?
+                                    </T>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </CollapsibleTrigger>
+                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                    <T context="FAQ answer">
+                                        We offer a 30-day money-back guarantee.
+                                        If Cache isn't right for you, just let
+                                        us know within 30 days of your initial
+                                        purchase for a full refund.
+                                    </T>
+                                </CollapsiblePanel>
+                            </Collapsible>
+                        </div>
+                    </div>
                 </div>
+                <Footer />
             </section>
         </PageShell>
     );

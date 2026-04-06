@@ -1,5 +1,6 @@
 "use client";
 
+import { downloadMedia } from "@/app/[locale]/library/actions";
 import { Button } from "@/components/ui/button";
 import {
     Combobox,
@@ -34,6 +35,7 @@ import {
     ChevronDownIcon,
     ChevronRightIcon,
     CopyIcon,
+    DownloadIcon,
     ExternalLinkIcon,
     Layers3Icon,
     MaximizeIcon,
@@ -74,7 +76,7 @@ interface GridProps {
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -86,7 +88,6 @@ interface SectionProps extends GridProps {
     readonly collapsible?: boolean;
     readonly emptyHint: string;
     readonly onToggle?: () => void;
-    readonly summaryLabel?: string;
     readonly title: string;
 }
 
@@ -105,7 +106,7 @@ interface LibraryGridCardProps {
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -156,14 +157,14 @@ function LibraryCollectionPicker({
     readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
 }): ReactElement {
     const [open, setOpen] = useState(false);
     const selectedCollectionIds = useMemo(
         () => item.collections.map((collection) => collection.id),
-        [item.collections]
+        [item.collections],
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
@@ -278,6 +279,7 @@ function LibraryGridCard({
     postedLabel,
 }: LibraryGridCardProps): ReactElement {
     const isDeletePending = pendingDeleteItemId === item.id;
+    const [isDownloading, setIsDownloading] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
     const handlePrimaryClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
@@ -290,6 +292,34 @@ function LibraryGridCard({
         event.stopPropagation();
         if (cardRef.current && fscreen.fullscreenEnabled) {
             fscreen.requestFullscreen(cardRef.current);
+        }
+    };
+
+    const handleDownload = async (event: ReactMouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        setIsDownloading(true);
+        try {
+            const result = await downloadMedia(item.url);
+            if (result.status === "SUCCESS") {
+                // Use a hidden anchor to trigger download if possible, or just open in new tab
+                const link = document.createElement("a");
+                link.href = result.downloadUrl;
+                link.download = ""; // Cobalt usually provides a good filename or direct link
+                link.target = "_blank";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                // alert(result.message);
+                console.error(result.message);
+            }
+        } catch (error) {
+            // alert("An unexpected error occurred while starting the download.");
+            console.error(error);
+        } finally {
+            setIsDownloading(false);
         }
     };
 
@@ -312,7 +342,17 @@ function LibraryGridCard({
                         />
                     </div>
                     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-3/4">
-                        <div className="pointer-events-auto absolute right-2 bottom-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="pointer-events-auto absolute right-2 bottom-2 flex flex-col gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                            <Button
+                                aria-label="Download media"
+                                className="rounded-full border-border/60 bg-background/88 shadow-sm backdrop-blur-sm"
+                                loading={isDownloading}
+                                onClick={handleDownload}
+                                size="icon-xs"
+                                variant="outline"
+                            >
+                                <DownloadIcon className="size-3.5" />
+                            </Button>
                             <Button
                                 aria-label="View fullscreen"
                                 className="rounded-full border-border/60 bg-background/88 shadow-sm backdrop-blur-sm"
@@ -388,6 +428,13 @@ function LibraryGridCard({
                 <ContextMenuItem onClick={() => onCopyLink?.(item)}>
                     <CopyIcon className="size-4 text-muted-foreground" />
                     Copy link
+                </ContextMenuItem>
+                <ContextMenuItem
+                    disabled={isDownloading}
+                    onClick={handleDownload}
+                >
+                    <DownloadIcon className="size-4 text-muted-foreground" />
+                    {isDownloading ? "Downloading..." : "Download media"}
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
@@ -482,7 +529,7 @@ export function ExtensionLibraryGrid({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -499,7 +546,7 @@ export function ExtensionLibraryGrid({
                 const alt = (item.caption ?? "").trim() || "Saved item";
                 const domain = itemDomain(item.url);
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt
+                    item.scrapedAt ?? item.createdAt,
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
@@ -552,7 +599,6 @@ export function ExtensionLibrarySection({
     onToggle,
     pendingCollectionItemIds,
     pendingDeleteItemId,
-    summaryLabel,
     title,
 }: SectionProps): ReactElement {
     const canToggle = collapsible && onToggle;
@@ -599,9 +645,9 @@ export function ExtensionLibrarySection({
             >
                 <div
                     className={cn(
-                        "flex items-center justify-between gap-3",
+                        "flex items-center justify-between gap-3 pr-5 shadow-xs",
                         stickyHeader &&
-                            "rounded-xl bg-background/92 backdrop-blur-md supports-backdrop-filter:bg-background/80"
+                            "rounded-xl bg-background/92 backdrop-blur-sm supports-backdrop-filter:bg-background/80",
                     )}
                     style={
                         stickyHeader
@@ -613,8 +659,9 @@ export function ExtensionLibrarySection({
                 >
                     {canToggle ? (
                         <Button
-                            className="min-w-0 flex-1 justify-start rounded-xl px-3"
+                            className="min-w-0 flex-1 justify-start rounded-xl px-4"
                             onClick={onToggle}
+                            size="lg"
                             variant="ghost"
                         >
                             {collapsed ? (
@@ -629,16 +676,9 @@ export function ExtensionLibrarySection({
                     ) : (
                         <h2 className="font-medium text-lg">{title}</h2>
                     )}
-                    <div className="flex items-center gap-2">
-                        {summaryLabel ? (
-                            <span className="rounded-full bg-card/60 px-2 py-1 text-muted-foreground text-xs">
-                                {summaryLabel}
-                            </span>
-                        ) : null}
-                        <span className="font-medium text-muted-foreground text-xs tabular-nums">
-                            {items.length}
-                        </span>
-                    </div>
+                    <span className="font-medium text-foreground text-xs tabular-nums">
+                        {items.length}
+                    </span>
                 </div>
             </div>
             {body}

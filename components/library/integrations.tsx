@@ -59,7 +59,7 @@ export function LibrarySidebarIntegrations({
     const connectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
         isConnectedOnClient({ extensionInstalled, id, serverConnectedIds })
             ? [id]
-            : []
+            : [],
     );
 
     return (
@@ -102,7 +102,7 @@ export function LibrarySidebarIntegrations({
                                     </div>
                                     <SidebarIntegrationAction
                                         connected={connectedIntegrationIds.includes(
-                                            id
+                                            id,
                                         )}
                                         extensionInstalled={extensionInstalled}
                                         id={id}
@@ -110,10 +110,10 @@ export function LibrarySidebarIntegrations({
                                         parked={parkedIntegrationIdSet.has(id)}
                                     />
                                 </li>
-                            )
+                            ),
                         )}
                     </ul>
-                    <div className="mt-3 flex items-center gap-2 p-2">
+                    <div className="mt-1 flex items-center gap-2 py-2 pl-3">
                         <Info className="inline-block size-3.5 shrink-0" />
                         <p className="text-[11px] text-muted-foreground leading-tight">
                             Please only connect accounts you fully trust. Cache

@@ -7,6 +7,7 @@ import {
     type UpdateLibraryItemCollectionsResult,
 } from "@/app/[locale]/library/actions";
 import { LibraryBrowser } from "@/components/library/library-browser";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Collapsible,
@@ -16,7 +17,6 @@ import {
 import {
     Dialog,
     DialogClose,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogPanel,
@@ -32,7 +32,15 @@ import type {
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { cn } from "@/lib/utils";
-import { CheckIcon, ChevronDown, Component, PlusIcon } from "lucide-react";
+import AppIconSmall from "@/public/cache-icon-small.png";
+import {
+    CheckIcon,
+    ChevronDown,
+    ChevronRight,
+    Component,
+    PlusIcon,
+} from "lucide-react";
+import Image from "next/image";
 import type { ReactElement, ReactNode } from "react";
 import { useCallback, useId, useMemo, useState, useTransition } from "react";
 
@@ -49,17 +57,17 @@ interface Props {
 }
 
 function sortCollectionsByName<T extends { readonly name: string }>(
-    collections: readonly T[]
+    collections: readonly T[],
 ): T[] {
     return [...collections].sort((a, b) =>
-        COLLECTION_NAME_COLLATOR.compare(a.name, b.name)
+        COLLECTION_NAME_COLLATOR.compare(a.name, b.name),
     );
 }
 
 function replaceItemCollections(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collections: readonly LibraryCollectionTag[]
+    collections: readonly LibraryCollectionTag[],
 ): LibraryItemWithCollections[] {
     return items.map((item) =>
         item.id === itemId
@@ -67,14 +75,14 @@ function replaceItemCollections(
                   ...item,
                   collections: [...collections],
               }
-            : item
+            : item,
     );
 }
 
 function appendCollectionToItem(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collection: LibraryCollectionTag
+    collection: LibraryCollectionTag,
 ): LibraryItemWithCollections[] {
     return items.map((item) => {
         if (item.id !== itemId) {
@@ -95,7 +103,7 @@ function appendCollectionToItem(
 
 function deriveCollectionSummaries(
     collections: readonly LibraryCollectionTag[],
-    items: readonly LibraryItemWithCollections[]
+    items: readonly LibraryItemWithCollections[],
 ): LibraryCollectionSummary[] {
     const counts = new Map<string, number>();
     for (const item of items) {
@@ -110,7 +118,7 @@ function deriveCollectionSummaries(
             id: collection.id,
             itemCount: counts.get(collection.id) ?? 0,
             name: collection.name,
-        }))
+        })),
     );
 }
 
@@ -129,8 +137,8 @@ export function LibraryWorkspace({
                 description: collection.description,
                 id: collection.id,
                 name: collection.name,
-            }))
-        )
+            })),
+        ),
     );
     const [selectedCollectionIds, setSelectedCollectionIds] = useState<
         string[]
@@ -141,7 +149,7 @@ export function LibraryWorkspace({
     const [createDialogDescriptionDraft, setCreateDialogDescriptionDraft] =
         useState("");
     const [createDialogError, setCreateDialogError] = useState<string | null>(
-        null
+        null,
     );
     const [createDialogAssignItemId, setCreateDialogAssignItemId] = useState<
         string | null
@@ -155,7 +163,7 @@ export function LibraryWorkspace({
 
     const collectionSummaries = useMemo(
         () => deriveCollectionSummaries(collections, items),
-        [collections, items]
+        [collections, items],
     );
 
     const handleCreateDialogOpenChange = useCallback(
@@ -168,7 +176,7 @@ export function LibraryWorkspace({
             }
             setIsCreateDialogOpen(open);
         },
-        [isCreatePending]
+        [isCreatePending],
     );
 
     const handleCreateCollectionRequest = useCallback((itemId?: string) => {
@@ -213,10 +221,10 @@ export function LibraryWorkspace({
 
             setCollections((current) =>
                 current.some(
-                    (collection) => collection.id === nextCollection.id
+                    (collection) => collection.id === nextCollection.id,
                 )
                     ? current
-                    : sortCollectionsByName([...current, nextCollection])
+                    : sortCollectionsByName([...current, nextCollection]),
             );
 
             if (result.assignedItemId) {
@@ -225,8 +233,8 @@ export function LibraryWorkspace({
                     appendCollectionToItem(
                         current,
                         assignedItemId,
-                        nextCollection
-                    )
+                        nextCollection,
+                    ),
                 );
             }
 
@@ -248,15 +256,15 @@ export function LibraryWorkspace({
                 items.find((item) => item.id === itemId)?.collections ?? [];
             const optimisticCollections = sortCollectionsByName(
                 collections.filter((collection) =>
-                    collectionIds.includes(collection.id)
-                )
+                    collectionIds.includes(collection.id),
+                ),
             );
 
             setItems((current) =>
-                replaceItemCollections(current, itemId, optimisticCollections)
+                replaceItemCollections(current, itemId, optimisticCollections),
             );
             setPendingCollectionItemIds((current) =>
-                current.includes(itemId) ? current : [...current, itemId]
+                current.includes(itemId) ? current : [...current, itemId],
             );
 
             const runUpdate = async () => {
@@ -280,164 +288,88 @@ export function LibraryWorkspace({
                         replaceItemCollections(
                             current,
                             itemId,
-                            result.collections
-                        )
+                            result.collections,
+                        ),
                     );
                 } else {
                     setItems((current) =>
                         replaceItemCollections(
                             current,
                             itemId,
-                            previousCollections
-                        )
+                            previousCollections,
+                        ),
                     );
                 }
 
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId)
+                    current.filter((id) => id !== itemId),
                 );
             };
 
             runUpdate().catch(() => {
                 setItems((current) =>
-                    replaceItemCollections(current, itemId, previousCollections)
+                    replaceItemCollections(
+                        current,
+                        itemId,
+                        previousCollections,
+                    ),
                 );
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId)
+                    current.filter((id) => id !== itemId),
                 );
             });
         },
-        [collections, items]
+        [collections, items],
     );
 
     return (
-        <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
-            <Dialog
-                onOpenChange={handleCreateDialogOpenChange}
-                open={isCreateDialogOpen}
-            >
-                <DialogPopup>
-                    <form
-                        className="contents"
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            handleCreateCollectionSubmit();
-                        }}
-                    >
-                        <DialogHeader>
-                            <DialogTitle>Create new collection</DialogTitle>
-                            <DialogDescription>
-                                Give this collection a short name so you can
-                                start grouping items right away.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogPanel className="space-y-3">
-                            <div className="space-y-2">
-                                <label
-                                    className="font-medium text-sm"
-                                    htmlFor={createInputId}
-                                >
-                                    Name
-                                </label>
-                                <Input
-                                    autoFocus
-                                    id={createInputId}
-                                    maxLength={64}
-                                    onChange={(event) => {
-                                        setCreateDialogDraft(
-                                            event.currentTarget.value
-                                        );
-                                        if (createDialogError) {
-                                            setCreateDialogError(null);
-                                        }
-                                    }}
-                                    placeholder="Reading backlog"
-                                    required
-                                    value={createDialogDraft}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label
-                                    className="font-medium text-sm"
-                                    htmlFor={createDescriptionId}
-                                >
-                                    Description{" "}
-                                    <span className="font-normal text-muted-foreground">
-                                        (optional)
-                                    </span>
-                                </label>
-                                <Textarea
-                                    id={createDescriptionId}
-                                    maxLength={1024}
-                                    onChange={(event) => {
-                                        setCreateDialogDescriptionDraft(
-                                            event.currentTarget.value
-                                        );
-                                    }}
-                                    placeholder="e.g. Articles and videos I want to check out later"
-                                    value={createDialogDescriptionDraft}
-                                />
-                            </div>
-                            <p
-                                className={cn(
-                                    "min-h-5 text-sm",
-                                    createDialogError
-                                        ? "text-destructive"
-                                        : "text-muted-foreground"
-                                )}
-                                role={createDialogError ? "alert" : undefined}
-                            >
-                                {createDialogError ??
-                                    (createDialogAssignItemId
-                                        ? "This new collection will also be assigned to the selected item."
-                                        : "Collections work like tags, so each item can live in multiple groups.")}
-                            </p>
-                        </DialogPanel>
-                        <DialogFooter>
-                            <DialogClose
-                                disabled={isCreatePending}
-                                render={<Button size="sm" variant="ghost" />}
-                            >
-                                Cancel
-                            </DialogClose>
-                            <Button
-                                loading={isCreatePending}
-                                size="sm"
-                                type="submit"
-                            >
-                                Create collection
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogPopup>
-            </Dialog>
-            <PageSidebarShell
-                bottom={sidebarBottom}
-                className="max-h-[80vh]"
-                top={
-                    <>
-                        {sidebarTop}
-                        <div className="flex w-full items-center gap-1.5">
+        <>
+            <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
+                <PageSidebarShell
+                    bottom={sidebarBottom}
+                    top={
+                        <>
+                            {sidebarTop}
                             <Collapsible
                                 className="w-full flex-1"
                                 onOpenChange={setIsCollectionsOpen}
                                 open={isCollectionsOpen}
                             >
-                                <CollapsibleTrigger className="flex items-center gap-3 rounded-[1.35rem] bg-muted/94 py-2.5 pr-3 pl-3.5 text-left">
-                                    <Component
-                                        aria-hidden
-                                        className="inline-block size-5 shrink-0"
-                                        focusable="false"
-                                    />
-                                    <span className="min-w-0 select-none font-medium text-sm leading-tight">
-                                        Collections
-                                    </span>
-                                    <ChevronDown
-                                        aria-hidden
-                                        className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
-                                        focusable="false"
-                                    />
-                                </CollapsibleTrigger>
+                                <div className="flex w-full items-center gap-1.5">
+                                    <CollapsibleTrigger className="flex items-center gap-3 rounded-[1.35rem] bg-muted/94 py-2.5 pr-3 pl-3.5 text-left">
+                                        <Component
+                                            aria-hidden
+                                            className="inline-block size-5 shrink-0"
+                                            focusable="false"
+                                        />
+                                        <span className="min-w-0 select-none font-medium text-sm leading-tight">
+                                            Collections
+                                        </span>
+                                        <ChevronDown
+                                            aria-hidden
+                                            className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
+                                            focusable="false"
+                                        />
+                                    </CollapsibleTrigger>
+                                    <Button
+                                        aria-label="Create new collection"
+                                        className="rounded-full"
+                                        onClick={() =>
+                                            handleCreateCollectionRequest()
+                                        }
+                                        size="icon-lg"
+                                        variant="secondary"
+                                    >
+                                        <span className="sr-only">
+                                            Create new collection
+                                        </span>
+                                        <PlusIcon
+                                            aria-hidden
+                                            className="inline-block size-4 shrink-0"
+                                            focusable="false"
+                                        />
+                                    </Button>
+                                </div>
                                 <CollapsiblePanel className="pt-2">
                                     <div className="flex flex-col gap-2 rounded-[1.35rem] border border-border/60 bg-card/50 p-2.5">
                                         {selectedCollectionIds.length > 0 ? (
@@ -462,7 +394,7 @@ export function LibraryWorkspace({
                                                 (collection) => {
                                                     const isSelected =
                                                         selectedCollectionIds.includes(
-                                                            collection.id
+                                                            collection.id,
                                                         );
 
                                                     return (
@@ -470,28 +402,28 @@ export function LibraryWorkspace({
                                                             className={cn(
                                                                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent/70 focus-visible:bg-accent/70 focus-visible:outline-none",
                                                                 isSelected &&
-                                                                    "bg-accent"
+                                                                    "bg-accent",
                                                             )}
                                                             key={collection.id}
                                                             onClick={() =>
                                                                 setSelectedCollectionIds(
                                                                     (
-                                                                        current
+                                                                        current,
                                                                     ) =>
                                                                         current.includes(
-                                                                            collection.id
+                                                                            collection.id,
                                                                         )
                                                                             ? current.filter(
                                                                                   (
-                                                                                      id
+                                                                                      id,
                                                                                   ) =>
                                                                                       id !==
-                                                                                      collection.id
+                                                                                      collection.id,
                                                                               )
                                                                             : [
                                                                                   ...current,
                                                                                   collection.id,
-                                                                              ]
+                                                                              ],
                                                                 )
                                                             }
                                                             type="button"
@@ -500,7 +432,7 @@ export function LibraryWorkspace({
                                                                 className={cn(
                                                                     "flex size-5 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background text-primary",
                                                                     isSelected &&
-                                                                        "border-primary/40 bg-primary/12"
+                                                                        "border-primary/40 bg-primary/12",
                                                                 )}
                                                             >
                                                                 {isSelected ? (
@@ -521,7 +453,7 @@ export function LibraryWorkspace({
                                                             </span>
                                                         </button>
                                                     );
-                                                }
+                                                },
                                             )
                                         ) : (
                                             <div className="rounded-xl border border-border/60 border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
@@ -532,38 +464,122 @@ export function LibraryWorkspace({
                                     </div>
                                 </CollapsiblePanel>
                             </Collapsible>
-                            <Button
-                                aria-label="Create new collection"
-                                className="rounded-full"
-                                onClick={() => handleCreateCollectionRequest()}
-                                size="icon"
-                                variant="secondary"
-                            >
-                                <span className="sr-only">
-                                    Create new collection
-                                </span>
-                                <PlusIcon
-                                    aria-hidden
-                                    className="inline-block size-4 shrink-0"
-                                    focusable="false"
-                                />
-                            </Button>
-                        </div>
-                    </>
-                }
-            />
-            <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
-                <LibraryBrowser
-                    collections={collectionSummaries}
-                    items={items}
-                    onClearCollectionFilters={clearCollectionFilters}
-                    onCreateCollectionRequest={handleCreateCollectionRequest}
-                    onItemsChange={setItems}
-                    onUpdateItemCollections={handleUpdateItemCollections}
-                    pendingCollectionItemIds={pendingCollectionItemIds}
-                    selectedCollectionIds={selectedCollectionIds}
+                        </>
+                    }
                 />
+                <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
+                    <LibraryBrowser
+                        collections={collectionSummaries}
+                        items={items}
+                        onClearCollectionFilters={clearCollectionFilters}
+                        onCreateCollectionRequest={
+                            handleCreateCollectionRequest
+                        }
+                        onItemsChange={setItems}
+                        onUpdateItemCollections={handleUpdateItemCollections}
+                        pendingCollectionItemIds={pendingCollectionItemIds}
+                        selectedCollectionIds={selectedCollectionIds}
+                    />
+                </div>
             </div>
-        </div>
+            <Dialog
+                onOpenChange={handleCreateDialogOpenChange}
+                open={isCreateDialogOpen}
+            >
+                <DialogPopup showCloseButton>
+                    <form
+                        className="contents"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            handleCreateCollectionSubmit();
+                        }}
+                    >
+                        <DialogHeader>
+                            <div className="flex items-center gap-1">
+                                <Badge size="lg" variant="outline">
+                                    <Image
+                                        alt=""
+                                        height={12}
+                                        src={AppIconSmall}
+                                        width={12}
+                                    />
+                                    Cache
+                                </Badge>
+                                <ChevronRight className="inline-block size-3.5 shrink-0" />
+                                <DialogTitle className="font-medium text-sm">
+                                    New collection
+                                </DialogTitle>
+                            </div>
+                        </DialogHeader>
+                        <DialogPanel className="space-y-2">
+                            <div>
+                                <label
+                                    className="sr-only font-medium text-sm"
+                                    htmlFor={createInputId}
+                                >
+                                    Name
+                                </label>
+                                <Input
+                                    autoFocus
+                                    className="-mx-[calc(--spacing(3)-1px)] font-semibold text-xl"
+                                    id={createInputId}
+                                    maxLength={64}
+                                    onChange={(event) => {
+                                        setCreateDialogDraft(
+                                            event.currentTarget.value,
+                                        );
+                                        if (createDialogError) {
+                                            setCreateDialogError(null);
+                                        }
+                                    }}
+                                    placeholder="Collection title"
+                                    required
+                                    size="lg"
+                                    unstyled
+                                    value={createDialogDraft}
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    className="sr-only font-medium text-sm"
+                                    htmlFor={createDescriptionId}
+                                >
+                                    Description (optional)
+                                </label>
+                                <Textarea
+                                    className="-mx-[calc(--spacing(3)-1px)] *:resize-none"
+                                    id={createDescriptionId}
+                                    maxLength={1024}
+                                    onChange={(event) => {
+                                        setCreateDialogDescriptionDraft(
+                                            event.currentTarget.value,
+                                        );
+                                    }}
+                                    placeholder="Add description..."
+                                    size="lg"
+                                    unstyled
+                                    value={createDialogDescriptionDraft}
+                                />
+                            </div>
+                        </DialogPanel>
+                        <DialogFooter>
+                            <DialogClose
+                                disabled={isCreatePending}
+                                render={<Button size="sm" variant="ghost" />}
+                            >
+                                Cancel
+                            </DialogClose>
+                            <Button
+                                loading={isCreatePending}
+                                size="sm"
+                                type="submit"
+                            >
+                                Create collection
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogPopup>
+            </Dialog>
+        </>
     );
 }

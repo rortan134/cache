@@ -101,7 +101,7 @@ export const toHexCode = (color: string): string => {
         return formatHex(parsed);
     } catch (error) {
         throw new Error(
-            `Failed to normalize color "${color}": ${error instanceof Error ? error.message : "Unknown error"}`
+            `Failed to normalize color "${color}": ${error instanceof Error ? error.message : "Unknown error"}`,
         );
     }
 };
@@ -215,7 +215,7 @@ export function getSubtleColorGradientFromName(name: string): string {
         ? clamp((Math.max(...rgb) - Math.min(...rgb)) / 255, 0.6, 2.2)
         : 1;
     const start = `lch(97 ${Number((2.4 + chromaBias * 0.7).toFixed(3))} ${Number(hue.toFixed(3))})`;
-    const end = `lch(94.8 ${Number((0.8 + chromaBias * 0.2).toFixed(3))} ${Number(((hue + 10) % 360).toFixed(3))})`;
+    const end = `lch(97 ${Number((0.8 + chromaBias * 0.2).toFixed(3))} ${Number(((hue + 10) % 360).toFixed(3))})`;
 
     return `linear-gradient(90deg, ${start} 0%, ${end} 100%), ${end}`;
 }
@@ -257,7 +257,7 @@ export const hexToRgb = (hexCode: string): [number, number, number] | null => {
 
 export const euclideanRgbDistance = (
     sourceHexColor: string,
-    targetHexColor: string
+    targetHexColor: string,
 ): number => {
     const sourceRgb = hexToRgb(sourceHexColor);
     const targetRgb = hexToRgb(targetHexColor);

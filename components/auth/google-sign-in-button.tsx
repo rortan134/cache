@@ -54,14 +54,14 @@ export function GoogleSignInButton({
             });
             if (result.error) {
                 setErrorMessage(
-                    result.error.message ?? "Could not start Google sign-in."
+                    result.error.message ?? "Could not start Google sign-in.",
                 );
             }
         } catch (err) {
             setErrorMessage(
                 err instanceof Error
                     ? err.message
-                    : "Could not start Google sign-in."
+                    : "Could not start Google sign-in.",
             );
         } finally {
             setLoading(false);
@@ -77,7 +77,6 @@ export function GoogleSignInButton({
                 onClick={handleSignIn}
                 size="xl"
                 type="button"
-                variant="outline"
             >
                 <GoogleMark />
                 {children}
