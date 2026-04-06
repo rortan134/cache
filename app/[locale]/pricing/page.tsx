@@ -30,7 +30,7 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "pricing.metadata.description",
-            "Simple pricing for power users who want one place to organize and rediscover everything they save.",
+            "Simple pricing for power users who want one place to organize and rediscover everything they save."
         ),
         title: gtPublicString(locale, "pricing.metadata.title", "Pricing"),
     };
@@ -251,7 +251,7 @@ export default async function PricingPage({
                                 Frequently Asked Questions
                             </h2>
                         </T>
-                        <div className="divide-y divide-border border-y border-border">
+                        <div className="divide-y divide-border border-border border-y">
                             <Collapsible className="py-5">
                                 <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
                                     <T context="FAQ question">What is Cache?</T>
@@ -262,9 +262,8 @@ export default async function PricingPage({
                                         Cache is a unified library for
                                         everything you save online. We bring
                                         together your bookmarks, liked photos,
-                                        and saved content from various
-                                        platforms into one searchable, organized
-                                        space.
+                                        and saved content from various platforms
+                                        into one searchable, organized space.
                                     </T>
                                 </CollapsiblePanel>
                             </Collapsible>

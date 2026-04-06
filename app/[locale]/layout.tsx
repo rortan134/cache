@@ -1,3 +1,4 @@
+import { OneTapTrigger } from "@/components/auth/session";
 import { SITE_APP_NAME } from "@/lib/constants";
 import { getLocales } from "gt-next/server";
 import type { Metadata } from "next";
@@ -25,5 +26,10 @@ export default function LocaleLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return <Suspense fallback={null}>{children}</Suspense>;
+    return (
+        <Suspense fallback={null}>
+            <OneTapTrigger />
+            {children}
+        </Suspense>
+    );
 }

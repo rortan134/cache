@@ -53,13 +53,13 @@ async function createPickerSessionRequest(): Promise<SessionCreateResponse> {
     if (!response.ok) {
         throw new Error(
             payload.error ??
-                "Could not start Google Photos Picker. Please reconnect Google and try again.",
+                "Could not start Google Photos Picker. Please reconnect Google and try again."
         );
     }
     if (!("sessionId" in payload)) {
         throw new Error(
             payload.error ??
-                "Could not start Google Photos Picker. Please reconnect Google and try again.",
+                "Could not start Google Photos Picker. Please reconnect Google and try again."
         );
     }
     return payload;
@@ -68,7 +68,7 @@ async function createPickerSessionRequest(): Promise<SessionCreateResponse> {
 async function pollUntilMediaSelected(
     sessionId: string,
     initialPollMs: number,
-    timeoutIn: string | null,
+    timeoutIn: string | null
 ): Promise<void> {
     const startedAt = Date.now();
     const timeoutMs = parseDurationMs(timeoutIn) ?? 5 * 60_000;
@@ -78,7 +78,7 @@ async function pollUntilMediaSelected(
         await sleep(Math.max(1000, pollMs));
         const response = await fetch(
             `/api/google-photos/picker/session?id=${encodeURIComponent(sessionId)}`,
-            { method: "GET" },
+            { method: "GET" }
         );
         const payload = (await response.json()) as
             | SessionPollResponse
@@ -86,13 +86,13 @@ async function pollUntilMediaSelected(
         if (!response.ok) {
             throw new Error(
                 payload.error ??
-                    "Could not read picker status. Please try again.",
+                    "Could not read picker status. Please try again."
             );
         }
         if (!("mediaItemsSet" in payload)) {
             throw new Error(
                 payload.error ??
-                    "Could not read picker status. Please try again.",
+                    "Could not read picker status. Please try again."
             );
         }
         pollMs = payload.pollIntervalMs;
@@ -102,7 +102,7 @@ async function pollUntilMediaSelected(
     }
 
     throw new Error(
-        "Selection timed out. Open the picker again and confirm your media.",
+        "Selection timed out. Open the picker again and confirm your media."
     );
 }
 
@@ -118,13 +118,13 @@ async function importSelectedMedia(sessionId: string): Promise<ImportResponse> {
     if (!response.ok) {
         throw new Error(
             payload.error ??
-                "Import failed. Ensure Photos permission is granted, then try again.",
+                "Import failed. Ensure Photos permission is granted, then try again."
         );
     }
     if (!("importedCount" in payload)) {
         throw new Error(
             payload.error ??
-                "Import failed. Ensure Photos permission is granted, then try again.",
+                "Import failed. Ensure Photos permission is granted, then try again."
         );
     }
     return payload;
@@ -162,19 +162,19 @@ export function GooglePhotosImportButton({
             window.open(
                 createPayload.pickerUri,
                 "_blank",
-                "noopener,noreferrer",
+                "noopener,noreferrer"
             );
             await pollUntilMediaSelected(
                 createPayload.sessionId,
                 createPayload.pollIntervalMs,
-                createPayload.timeoutIn,
+                createPayload.timeoutIn
             );
             const importPayload = await importSelectedMedia(
-                createPayload.sessionId,
+                createPayload.sessionId
             );
 
             setSuccessMessage(
-                `Imported ${importPayload.importedCount} item${importPayload.importedCount === 1 ? "" : "s"}.`,
+                `Imported ${importPayload.importedCount} item${importPayload.importedCount === 1 ? "" : "s"}.`
             );
             router.push(`/${locale}/library`);
         } catch (error) {

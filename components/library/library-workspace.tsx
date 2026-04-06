@@ -52,22 +52,23 @@ const COLLECTION_NAME_COLLATOR = new Intl.Collator(undefined, {
 interface Props {
     readonly initialCollections: readonly LibraryCollectionSummary[];
     readonly initialItems: readonly LibraryItemWithCollections[];
+    readonly locale: string;
     readonly sidebarBottom?: ReactNode;
     readonly sidebarTop?: ReactNode;
 }
 
 function sortCollectionsByName<T extends { readonly name: string }>(
-    collections: readonly T[],
+    collections: readonly T[]
 ): T[] {
     return [...collections].sort((a, b) =>
-        COLLECTION_NAME_COLLATOR.compare(a.name, b.name),
+        COLLECTION_NAME_COLLATOR.compare(a.name, b.name)
     );
 }
 
 function replaceItemCollections(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collections: readonly LibraryCollectionTag[],
+    collections: readonly LibraryCollectionTag[]
 ): LibraryItemWithCollections[] {
     return items.map((item) =>
         item.id === itemId
@@ -75,14 +76,14 @@ function replaceItemCollections(
                   ...item,
                   collections: [...collections],
               }
-            : item,
+            : item
     );
 }
 
 function appendCollectionToItem(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collection: LibraryCollectionTag,
+    collection: LibraryCollectionTag
 ): LibraryItemWithCollections[] {
     return items.map((item) => {
         if (item.id !== itemId) {
@@ -103,7 +104,7 @@ function appendCollectionToItem(
 
 function deriveCollectionSummaries(
     collections: readonly LibraryCollectionTag[],
-    items: readonly LibraryItemWithCollections[],
+    items: readonly LibraryItemWithCollections[]
 ): LibraryCollectionSummary[] {
     const counts = new Map<string, number>();
     for (const item of items) {
@@ -118,13 +119,14 @@ function deriveCollectionSummaries(
             id: collection.id,
             itemCount: counts.get(collection.id) ?? 0,
             name: collection.name,
-        })),
+        }))
     );
 }
 
 export function LibraryWorkspace({
     initialCollections,
     initialItems,
+    locale,
     sidebarBottom,
     sidebarTop,
 }: Props): ReactElement {
@@ -137,8 +139,8 @@ export function LibraryWorkspace({
                 description: collection.description,
                 id: collection.id,
                 name: collection.name,
-            })),
-        ),
+            }))
+        )
     );
     const [selectedCollectionIds, setSelectedCollectionIds] = useState<
         string[]
@@ -149,7 +151,7 @@ export function LibraryWorkspace({
     const [createDialogDescriptionDraft, setCreateDialogDescriptionDraft] =
         useState("");
     const [createDialogError, setCreateDialogError] = useState<string | null>(
-        null,
+        null
     );
     const [createDialogAssignItemId, setCreateDialogAssignItemId] = useState<
         string | null
@@ -163,7 +165,7 @@ export function LibraryWorkspace({
 
     const collectionSummaries = useMemo(
         () => deriveCollectionSummaries(collections, items),
-        [collections, items],
+        [collections, items]
     );
 
     const handleCreateDialogOpenChange = useCallback(
@@ -176,7 +178,7 @@ export function LibraryWorkspace({
             }
             setIsCreateDialogOpen(open);
         },
-        [isCreatePending],
+        [isCreatePending]
     );
 
     const handleCreateCollectionRequest = useCallback((itemId?: string) => {
@@ -221,10 +223,10 @@ export function LibraryWorkspace({
 
             setCollections((current) =>
                 current.some(
-                    (collection) => collection.id === nextCollection.id,
+                    (collection) => collection.id === nextCollection.id
                 )
                     ? current
-                    : sortCollectionsByName([...current, nextCollection]),
+                    : sortCollectionsByName([...current, nextCollection])
             );
 
             if (result.assignedItemId) {
@@ -233,8 +235,8 @@ export function LibraryWorkspace({
                     appendCollectionToItem(
                         current,
                         assignedItemId,
-                        nextCollection,
-                    ),
+                        nextCollection
+                    )
                 );
             }
 
@@ -256,15 +258,15 @@ export function LibraryWorkspace({
                 items.find((item) => item.id === itemId)?.collections ?? [];
             const optimisticCollections = sortCollectionsByName(
                 collections.filter((collection) =>
-                    collectionIds.includes(collection.id),
-                ),
+                    collectionIds.includes(collection.id)
+                )
             );
 
             setItems((current) =>
-                replaceItemCollections(current, itemId, optimisticCollections),
+                replaceItemCollections(current, itemId, optimisticCollections)
             );
             setPendingCollectionItemIds((current) =>
-                current.includes(itemId) ? current : [...current, itemId],
+                current.includes(itemId) ? current : [...current, itemId]
             );
 
             const runUpdate = async () => {
@@ -288,38 +290,34 @@ export function LibraryWorkspace({
                         replaceItemCollections(
                             current,
                             itemId,
-                            result.collections,
-                        ),
+                            result.collections
+                        )
                     );
                 } else {
                     setItems((current) =>
                         replaceItemCollections(
                             current,
                             itemId,
-                            previousCollections,
-                        ),
+                            previousCollections
+                        )
                     );
                 }
 
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId),
+                    current.filter((id) => id !== itemId)
                 );
             };
 
             runUpdate().catch(() => {
                 setItems((current) =>
-                    replaceItemCollections(
-                        current,
-                        itemId,
-                        previousCollections,
-                    ),
+                    replaceItemCollections(current, itemId, previousCollections)
                 );
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId),
+                    current.filter((id) => id !== itemId)
                 );
             });
         },
-        [collections, items],
+        [collections, items]
     );
 
     return (
@@ -394,7 +392,7 @@ export function LibraryWorkspace({
                                                 (collection) => {
                                                     const isSelected =
                                                         selectedCollectionIds.includes(
-                                                            collection.id,
+                                                            collection.id
                                                         );
 
                                                     return (
@@ -402,28 +400,28 @@ export function LibraryWorkspace({
                                                             className={cn(
                                                                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent/70 focus-visible:bg-accent/70 focus-visible:outline-none",
                                                                 isSelected &&
-                                                                    "bg-accent",
+                                                                    "bg-accent"
                                                             )}
                                                             key={collection.id}
                                                             onClick={() =>
                                                                 setSelectedCollectionIds(
                                                                     (
-                                                                        current,
+                                                                        current
                                                                     ) =>
                                                                         current.includes(
-                                                                            collection.id,
+                                                                            collection.id
                                                                         )
                                                                             ? current.filter(
                                                                                   (
-                                                                                      id,
+                                                                                      id
                                                                                   ) =>
                                                                                       id !==
-                                                                                      collection.id,
+                                                                                      collection.id
                                                                               )
                                                                             : [
                                                                                   ...current,
                                                                                   collection.id,
-                                                                              ],
+                                                                              ]
                                                                 )
                                                             }
                                                             type="button"
@@ -432,7 +430,7 @@ export function LibraryWorkspace({
                                                                 className={cn(
                                                                     "flex size-5 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background text-primary",
                                                                     isSelected &&
-                                                                        "border-primary/40 bg-primary/12",
+                                                                        "border-primary/40 bg-primary/12"
                                                                 )}
                                                             >
                                                                 {isSelected ? (
@@ -453,7 +451,7 @@ export function LibraryWorkspace({
                                                             </span>
                                                         </button>
                                                     );
-                                                },
+                                                }
                                             )
                                         ) : (
                                             <div className="rounded-xl border border-border/60 border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
@@ -471,6 +469,7 @@ export function LibraryWorkspace({
                     <LibraryBrowser
                         collections={collectionSummaries}
                         items={items}
+                        locale={locale}
                         onClearCollectionFilters={clearCollectionFilters}
                         onCreateCollectionRequest={
                             handleCreateCollectionRequest
@@ -526,7 +525,7 @@ export function LibraryWorkspace({
                                     maxLength={64}
                                     onChange={(event) => {
                                         setCreateDialogDraft(
-                                            event.currentTarget.value,
+                                            event.currentTarget.value
                                         );
                                         if (createDialogError) {
                                             setCreateDialogError(null);
@@ -552,7 +551,7 @@ export function LibraryWorkspace({
                                     maxLength={1024}
                                     onChange={(event) => {
                                         setCreateDialogDescriptionDraft(
-                                            event.currentTarget.value,
+                                            event.currentTarget.value
                                         );
                                     }}
                                     placeholder="Add description..."

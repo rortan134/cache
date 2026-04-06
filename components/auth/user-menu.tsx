@@ -117,15 +117,6 @@ function getToneClassName(
     return "bg-primary/10 text-primary";
 }
 
-function readRedirectUrl(response: unknown): string | null {
-    if (typeof response !== "object" || response === null) {
-        return null;
-    }
-
-    const candidate = response as { url?: unknown };
-    return typeof candidate.url === "string" ? candidate.url : null;
-}
-
 export function UserMenu({
     locale,
     subscription,
@@ -136,7 +127,7 @@ export function UserMenu({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const subscriptionLabel = formatSubscriptionLabel(subscription);
-    const returnPath = `/${locale}/library`;
+    const returnPath = `${typeof window === "undefined" ? "" : window.location.origin}/${locale}/library`;
     const hasManagedSubscription =
         subscription?.status === "active" ||
         subscription?.status === "trialing";
@@ -146,21 +137,21 @@ export function UserMenu({
             setErrorMessage(null);
 
             try {
-                const response = await authClient.$fetch(
-                    "/subscription/upgrade",
-                    {
-                        body: {
-                            cancelUrl: returnPath,
-                            plan: "pro",
-                            successUrl: returnPath,
-                        },
-                        method: "POST",
-                    }
-                );
-                const redirectUrl = readRedirectUrl(response);
+                const { data, error } = await authClient.subscription.upgrade({
+                    cancelUrl: returnPath,
+                    plan: "pro",
+                    successUrl: returnPath,
+                });
 
-                if (redirectUrl) {
-                    window.location.assign(redirectUrl);
+                if (error) {
+                    setErrorMessage(
+                        error.message ?? "We couldn't open checkout right now."
+                    );
+                    return;
+                }
+
+                if (data?.url) {
+                    window.location.assign(data.url);
                     return;
                 }
 
@@ -176,19 +167,20 @@ export function UserMenu({
             setErrorMessage(null);
 
             try {
-                const response = await authClient.$fetch(
-                    "/subscription/billing-portal",
-                    {
-                        body: {
-                            returnUrl: returnPath,
-                        },
-                        method: "POST",
-                    }
-                );
-                const redirectUrl = readRedirectUrl(response);
+                const { data, error } =
+                    await authClient.subscription.billingPortal({
+                        returnUrl: returnPath,
+                    });
 
-                if (redirectUrl) {
-                    window.location.assign(redirectUrl);
+                if (error) {
+                    setErrorMessage(
+                        error.message ?? "We couldn't open billing right now."
+                    );
+                    return;
+                }
+
+                if (data?.url) {
+                    window.location.assign(data.url);
                     return;
                 }
 

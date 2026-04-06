@@ -76,7 +76,7 @@ interface GridProps {
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -106,7 +106,7 @@ interface LibraryGridCardProps {
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -157,14 +157,14 @@ function LibraryCollectionPicker({
     readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
 }): ReactElement {
     const [open, setOpen] = useState(false);
     const selectedCollectionIds = useMemo(
         () => item.collections.map((collection) => collection.id),
-        [item.collections],
+        [item.collections]
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
@@ -529,7 +529,7 @@ export function ExtensionLibraryGrid({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -546,7 +546,7 @@ export function ExtensionLibraryGrid({
                 const alt = (item.caption ?? "").trim() || "Saved item";
                 const domain = itemDomain(item.url);
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt,
+                    item.scrapedAt ?? item.createdAt
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
@@ -647,7 +647,7 @@ export function ExtensionLibrarySection({
                     className={cn(
                         "flex items-center justify-between gap-3 pr-5 shadow-xs",
                         stickyHeader &&
-                            "rounded-xl bg-background/92 backdrop-blur-sm supports-backdrop-filter:bg-background/80",
+                            "rounded-xl bg-background/92 backdrop-blur-sm supports-backdrop-filter:bg-background/80"
                     )}
                     style={
                         stickyHeader

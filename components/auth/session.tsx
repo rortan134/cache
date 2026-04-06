@@ -5,14 +5,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth/client";
 import { Info } from "lucide-react";
 import Link from "next/link";
-import type * as React from "react";
+import { type PropsWithChildren, type ReactNode, useEffect } from "react";
 
 const { useSession } = authClient;
+
+function OneTapTrigger() {
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        if (session) {
+            return;
+        }
+
+        const initOneTap = async () => {
+            try {
+                await authClient.oneTap();
+            } catch (error) {
+                console.error("One Tap error:", error);
+            }
+        };
+
+        initOneTap();
+    }, [session]);
+
+    return null;
+}
 
 function SignedOutOnly({
     children,
     loadingRender,
-}: React.PropsWithChildren<{ loadingRender?: React.ReactNode }>) {
+}: PropsWithChildren<{ loadingRender?: ReactNode }>) {
     const { data: session, isPending } = useSession();
 
     if (isPending && typeof loadingRender !== "undefined") {
@@ -29,7 +51,7 @@ function SignedOutOnly({
 function SignedInOnly({
     children,
     loadingRender,
-}: React.PropsWithChildren<{ loadingRender?: React.ReactNode }>) {
+}: PropsWithChildren<{ loadingRender?: ReactNode }>) {
     const { data: session, isPending } = useSession();
 
     if (isPending && typeof loadingRender !== "undefined") {
@@ -43,7 +65,7 @@ function SignedInOnly({
     return null;
 }
 
-function SessionLoadingOnly({ children }: React.PropsWithChildren) {
+function SessionLoadingOnly({ children }: PropsWithChildren) {
     const { isPending } = useSession();
 
     if (isPending) {
@@ -78,4 +100,10 @@ function SessionHint() {
     );
 }
 
-export { SessionHint, SessionLoadingOnly, SignedInOnly, SignedOutOnly };
+export {
+    OneTapTrigger,
+    SessionHint,
+    SessionLoadingOnly,
+    SignedInOnly,
+    SignedOutOnly,
+};

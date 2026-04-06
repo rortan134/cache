@@ -4,6 +4,7 @@ import { AccountError } from "@/lib/auth/error";
 import { auth } from "@/lib/auth/server";
 import { extractNamedErrorMessage } from "@/lib/error";
 import { LibraryCollectionError } from "@/lib/library/error";
+import { normalizeCollectionName } from "@/lib/library/utils";
 import type {
     LibraryCollectionSummary,
     LibraryCollectionTag,
@@ -169,17 +170,6 @@ function normalizeLikesResponse(payload: unknown): SoundcloudLikeTrack[] {
     }
 
     return tracks;
-}
-
-function normalizeCollectionName(name: string): {
-    name: string;
-    nameKey: string;
-} {
-    const normalizedName = name.trim().replace(/\s+/g, " ");
-    return {
-        name: normalizedName,
-        nameKey: normalizedName.toLocaleLowerCase(),
-    };
 }
 
 async function resolveSoundcloudUserId(
@@ -645,20 +635,20 @@ export async function downloadMedia(url: string): Promise<DownloadMediaResult> {
 
     try {
         const response = await fetch(`${API_BASE}/`, {
-            method: "POST",
+            body: JSON.stringify({ url: normalizedUrl }),
+            cache: "no-store",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ url: normalizedUrl }),
-            cache: "no-store",
+            method: "POST",
         });
 
         if (!response.ok) {
             const errorText = await response.text();
             log.warn("Cobalt download request failed", {
-                status: response.status,
                 error: errorText,
+                status: response.status,
                 url: normalizedUrl,
             });
             return {

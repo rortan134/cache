@@ -101,7 +101,7 @@ export const toHexCode = (color: string): string => {
         return formatHex(parsed);
     } catch (error) {
         throw new Error(
-            `Failed to normalize color "${color}": ${error instanceof Error ? error.message : "Unknown error"}`,
+            `Failed to normalize color "${color}": ${error instanceof Error ? error.message : "Unknown error"}`
         );
     }
 };
@@ -257,7 +257,7 @@ export const hexToRgb = (hexCode: string): [number, number, number] | null => {
 
 export const euclideanRgbDistance = (
     sourceHexColor: string,
-    targetHexColor: string,
+    targetHexColor: string
 ): number => {
     const sourceRgb = hexToRgb(sourceHexColor);
     const targetRgb = hexToRgb(targetHexColor);

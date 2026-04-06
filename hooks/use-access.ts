@@ -12,7 +12,7 @@ async function getActiveSubscription(input: { email?: string }) {
         throw new Error(error.message);
     }
     const activeSubscription = subscriptions.find(
-        (sub) => sub.status === "active" || sub.status === "trialing",
+        (sub) => sub.status === "active" || sub.status === "trialing"
     );
     return activeSubscription ?? null;
 }
@@ -35,7 +35,7 @@ function useAccess() {
     >(() =>
         session?.user.email
             ? getActiveSubscription({ email: session?.user.email })
-            : null,
+            : null
     );
 
     const hasAccess =

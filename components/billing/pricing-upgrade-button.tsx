@@ -6,15 +6,6 @@ import { Sparkles } from "lucide-react";
 import type * as React from "react";
 import { useState, useTransition } from "react";
 
-function readRedirectUrl(response: unknown): string | null {
-    if (typeof response !== "object" || response === null) {
-        return null;
-    }
-
-    const candidate = response as { url?: unknown };
-    return typeof candidate.url === "string" ? candidate.url : null;
-}
-
 export function PricingUpgradeButton({
     children = "Upgrade to Pro",
     locale,
@@ -30,22 +21,22 @@ export function PricingUpgradeButton({
             setErrorMessage(null);
 
             try {
-                const returnPath = `/${locale}/library`;
-                const response = await authClient.$fetch(
-                    "/subscription/upgrade",
-                    {
-                        body: {
-                            cancelUrl: returnPath,
-                            plan: "pro",
-                            successUrl: returnPath,
-                        },
-                        method: "POST",
-                    }
-                );
-                const redirectUrl = readRedirectUrl(response);
+                const returnPath = `${window.location.origin}/${locale}/library`;
+                const { data, error } = await authClient.subscription.upgrade({
+                    cancelUrl: returnPath,
+                    plan: "pro",
+                    successUrl: returnPath,
+                });
 
-                if (redirectUrl) {
-                    window.location.assign(redirectUrl);
+                if (error) {
+                    setErrorMessage(
+                        error.message ?? "We couldn't open checkout right now."
+                    );
+                    return;
+                }
+
+                if (data?.url) {
+                    window.location.assign(data.url);
                     return;
                 }
 

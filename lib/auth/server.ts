@@ -1,5 +1,6 @@
 import { getStripeClient, getStripeWebhookSecret } from "@/lib/billing/client";
 import { SITE_APP_NAME } from "@/lib/constants";
+import { setupUserCollections } from "@/lib/library/setup-user";
 import { prisma } from "@/prisma";
 import type { OAuth2Tokens } from "@better-auth/core/oauth2";
 import { stripe } from "@better-auth/stripe";
@@ -7,7 +8,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import type { GenericOAuthConfig } from "better-auth/plugins";
-import { genericOAuth, multiSession } from "better-auth/plugins";
+import { genericOAuth, multiSession, oneTap } from "better-auth/plugins";
 import { headers } from "next/headers";
 
 interface PinterestUserAccount {
@@ -122,7 +123,7 @@ async function xUserFromTokens(tokens: OAuth2Tokens): Promise<{
                 Accept: "application/json",
                 Authorization: `Bearer ${accessToken}`,
             },
-        },
+        }
     );
 
     if (!response.ok) {
@@ -173,7 +174,7 @@ const trustedOrigins = [
 const soundcloudClientId = optionalEnv("SOUNDCLOUD_CLIENT_ID");
 const soundcloudClientSecret = optionalEnv("SOUNDCLOUD_CLIENT_SECRET");
 const soundcloudOAuthEnabled = Boolean(
-    soundcloudClientId && soundcloudClientSecret,
+    soundcloudClientId && soundcloudClientSecret
 );
 const xClientId = optionalEnv("X_CLIENT_ID");
 const xClientSecret = optionalEnv("X_CLIENT_SECRET");
@@ -242,11 +243,21 @@ export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: "postgresql",
     }),
+    databaseHooks: {
+        user: {
+            create: {
+                after: async (user) => {
+                    await setupUserCollections(user.id);
+                },
+            },
+        },
+    },
     emailAndPassword: {
         enabled: false,
     },
     plugins: [
         nextCookies(),
+        oneTap(),
         genericOAuth({
             config: genericOAuthConfig,
         }),
@@ -259,7 +270,7 @@ export const auth = betterAuth({
                 plans: [
                     {
                         annualDiscountPriceId: requiredEnv(
-                            "STRIPE_PRICE_ID_YEARLY",
+                            "STRIPE_PRICE_ID_YEARLY"
                         ),
                         name: "pro",
                         priceId: requiredEnv("STRIPE_PRICE_ID_MONTHLY"),
@@ -270,6 +281,12 @@ export const auth = betterAuth({
         multiSession(),
     ],
     secret: requiredEnv("BETTER_AUTH_SECRET"),
+    session: {
+        cookieCache: {
+            enabled: true,
+            maxAge: 5 * 60, // Cache duration in seconds
+        },
+    },
     socialProviders: {
         google: {
             accessType: "offline",
