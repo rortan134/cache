@@ -37,6 +37,10 @@ const UpdateLibraryItemCollectionsInputSchema = z.object({
     itemId: z.string().trim().min(1),
 });
 
+const DeleteCollectionInputSchema = z.object({
+    collectionId: z.string().trim().min(1, "Select a collection to delete."),
+});
+
 export interface SoundcloudLikeTrack {
     artist: string | null;
     artworkUrl: string | null;
@@ -84,6 +88,16 @@ export type CreateCollectionResult =
               | "INVALID"
               | "NOT_FOUND"
               | "UNAUTHORIZED";
+      };
+
+export type DeleteCollectionResult =
+    | {
+          collection: Pick<LibraryCollectionSummary, "id" | "name">;
+          status: "DELETED";
+      }
+    | {
+          message: string;
+          status: "ERROR" | "INVALID" | "NOT_FOUND" | "UNAUTHORIZED";
       };
 
 export type UpdateLibraryItemCollectionsResult =
@@ -357,6 +371,84 @@ export async function deleteLibraryItem(
         log.error("Unexpected library item delete failure", error);
         return {
             message: "We couldn't delete this saved item right now.",
+            status: "ERROR",
+        };
+    }
+}
+
+export async function deleteCollection(input: {
+    collectionId: string;
+}): Promise<DeleteCollectionResult> {
+    const parsed = DeleteCollectionInputSchema.safeParse(input);
+    if (!parsed.success) {
+        return {
+            message:
+                parsed.error.issues[0]?.message ??
+                "Select a collection to delete.",
+            status: "INVALID",
+        };
+    }
+
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    if (!session?.user?.id) {
+        return {
+            message: "Sign in again to manage collections.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            const collection = await tx.collection.findFirst({
+                select: {
+                    id: true,
+                    name: true,
+                },
+                where: {
+                    id: parsed.data.collectionId,
+                    userId: session.user.id,
+                },
+            });
+
+            if (!collection) {
+                throw new LibraryCollectionError({
+                    code: "not_found",
+                    message: "This collection was already removed.",
+                    operation: "deleteCollection",
+                });
+            }
+
+            await tx.collection.delete({
+                where: {
+                    id: collection.id,
+                },
+            });
+
+            return collection;
+        });
+
+        return {
+            collection: result,
+            status: "DELETED",
+        };
+    } catch (error) {
+        if (
+            LibraryCollectionError.isInstance(error) &&
+            error.data.code === "not_found"
+        ) {
+            return {
+                message: extractNamedErrorMessage(error).message,
+                status: "NOT_FOUND",
+            };
+        }
+
+        log.error("Unexpected collection delete failure", error);
+        return {
+            message: "We couldn't delete this collection right now.",
             status: "ERROR",
         };
     }

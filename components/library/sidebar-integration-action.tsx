@@ -95,7 +95,7 @@ function extensionButtonLabel(extensionInstalled: boolean) {
 
 function chromeExtensionLabel(extensionInstalled: boolean) {
     if (extensionInstalled) {
-        return "Installed";
+        return null;
     }
     return "Get Extension";
 }

@@ -11,24 +11,13 @@ body {
 }
 
 .panel {
-    padding: 12px 14px 10px;
-}
-
-.title {
-    margin: 0 0 6px;
-    font-size: 15px;
-}
-
-.hint {
-    margin: 0 0 10px;
-    line-height: 1.35;
-    color: color-mix(in oklab, CanvasText 72%, transparent);
+    padding: 24px 16px 0px;
 }
 
 .section {
     display: grid;
     gap: 8px;
-    padding: 10px 0;
+    padding: 12px 0;
     border-top: 1px solid color-mix(in oklab, CanvasText 10%, transparent);
 }
 
@@ -48,8 +37,7 @@ body {
     margin: 0;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    margin-bottom: 4px;
 }
 
 .switch {
@@ -58,16 +46,6 @@ body {
     gap: 6px;
     font-size: 12px;
     color: color-mix(in oklab, CanvasText 82%, transparent);
-}
-
-.field {
-    display: grid;
-    gap: 4px;
-}
-
-.field-label {
-    font-size: 12px;
-    color: color-mix(in oklab, CanvasText 76%, transparent);
 }
 
 .select,
@@ -90,13 +68,6 @@ body {
     background: color-mix(in oklab, CanvasText 6%, Canvas);
 }
 
-.consent {
-    margin: 0;
-    line-height: 1.35;
-    font-size: 12px;
-    color: color-mix(in oklab, CanvasText 72%, transparent);
-}
-
 .btn-secondary {
     margin-top: 6px;
     font-size: 12px;
@@ -110,7 +81,7 @@ body {
 
 .status {
     min-height: 1.2em;
-    margin: 10px 0 0;
+    margin: 4px 0 20px;
     font-size: 12px;
 }
 
@@ -120,16 +91,4 @@ body {
 
 .status.ok {
     color: #2e7d32;
-}
-
-.meta {
-    padding-top: 8px;
-    margin-top: 10px;
-    border-top: 1px solid color-mix(in oklab, CanvasText 12%, transparent);
-}
-
-.meta-line {
-    margin: 4px 0;
-    font-size: 12px;
-    color: color-mix(in oklab, CanvasText 78%, transparent);
 }

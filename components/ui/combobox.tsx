@@ -302,7 +302,7 @@ export function ComboboxEmpty({
     return (
         <ComboboxPrimitive.Empty
             className={cn(
-                "not-empty:p-2 text-center text-base text-muted-foreground sm:text-sm",
+                "not-empty:p-2 text-center text-muted-foreground text-xs opacity-80",
                 className
             )}
             data-slot="combobox-empty"

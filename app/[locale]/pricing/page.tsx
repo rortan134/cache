@@ -2,21 +2,16 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { SignedInOnly, SignedOutOnly } from "@/components/auth/session";
 import { PricingUpgradeButton } from "@/components/billing/pricing-upgrade-button";
 import {
-    Collapsible,
-    CollapsiblePanel,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Footer } from "@/components/ui/footer";
 import { PageShell } from "@/components/ui/layouts";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { T } from "gt-next";
-import {
-    Check,
-    ChevronDown,
-    Lock,
-    ShieldCheck,
-    TrendingDown,
-} from "lucide-react";
+import { Check, Lock, ShieldCheck, TrendingDown } from "lucide-react";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -251,13 +246,15 @@ export default async function PricingPage({
                                 Frequently Asked Questions
                             </h2>
                         </T>
-                        <div className="divide-y divide-border border-border border-y">
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                        <Accordion
+                            className="w-full border-border border-t"
+                            defaultValue={["item-0"]}
+                        >
+                            <AccordionItem value="item-0">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">What is Cache?</T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         Cache is a unified library for
                                         everything you save online. We bring
@@ -265,17 +262,16 @@ export default async function PricingPage({
                                         and saved content from various platforms
                                         into one searchable, organized space.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
+                                </AccordionContent>
+                            </AccordionItem>
 
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">
                                         How often is my content updated?
                                     </T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         We sync your connected integrations
                                         automatically. Whether it's a new Google
@@ -283,51 +279,48 @@ export default async function PricingPage({
                                         your library up to date so you can find
                                         what you need instantly.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
+                                </AccordionContent>
+                            </AccordionItem>
 
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                            <AccordionItem value="item-2">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">
                                         Do you have discounts for students?
                                     </T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         Yes! We believe in supporting students
                                         and educators. Please contact our
                                         support team with your academic email to
                                         receive a special discount code.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
+                                </AccordionContent>
+                            </AccordionItem>
 
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                            <AccordionItem value="item-3">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">
                                         What payment methods do you accept?
                                     </T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         We accept all major credit cards (Visa,
                                         Mastercard, American Express) and
                                         digital wallets through our secure
                                         payment processor, Stripe.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
+                                </AccordionContent>
+                            </AccordionItem>
 
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                            <AccordionItem value="item-4">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">
                                         Can I cancel my subscription?
                                     </T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         Of course. You can cancel your Pro
                                         subscription at any time from your
@@ -335,17 +328,16 @@ export default async function PricingPage({
                                         have access to Pro features until the
                                         end of your billing period.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
+                                </AccordionContent>
+                            </AccordionItem>
 
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                            <AccordionItem value="item-5">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">
                                         Do you offer plans for teams?
                                     </T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         Currently, we focus on providing the
                                         best experience for individual power
@@ -354,26 +346,25 @@ export default async function PricingPage({
                                         to us—we'd love to hear about your
                                         needs.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
+                                </AccordionContent>
+                            </AccordionItem>
 
-                            <Collapsible className="py-5">
-                                <CollapsibleTrigger className="flex items-center justify-between text-left font-medium text-lg md:text-xl">
+                            <AccordionItem value="item-6">
+                                <AccordionTrigger className="text-lg md:text-xl">
                                     <T context="FAQ question">
                                         What is your refund policy?
                                     </T>
-                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                </CollapsibleTrigger>
-                                <CollapsiblePanel className="mt-3 text-muted-foreground text-sm leading-relaxed md:text-base">
+                                </AccordionTrigger>
+                                <AccordionContent className="text-[0.95rem] leading-relaxed md:text-base">
                                     <T context="FAQ answer">
                                         We offer a 30-day money-back guarantee.
                                         If Cache isn't right for you, just let
                                         us know within 30 days of your initial
                                         purchase for a full refund.
                                     </T>
-                                </CollapsiblePanel>
-                            </Collapsible>
-                        </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </div>
                 </div>
                 <Footer />

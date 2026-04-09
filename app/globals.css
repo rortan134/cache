@@ -180,7 +180,7 @@ body {
 
     html,
     body {
-        @apply motion-safe:scroll-smooth;
+        /* @apply motion-safe:scroll-smooth; */
         overscroll-behavior: none;
         font-feature-settings: "case" on;
         font-variation-settings: "opsz" auto;

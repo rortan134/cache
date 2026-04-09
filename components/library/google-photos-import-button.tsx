@@ -145,8 +145,7 @@ export function GooglePhotosImportButton({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isImporting, setIsImporting] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-    const signedIn = Boolean(session?.user?.id);
+    const isSignedIn = !!session?.user?.id;
 
     const handleImport = useCallback(async () => {
         setErrorMessage(null);
@@ -188,7 +187,7 @@ export function GooglePhotosImportButton({
         }
     }, [locale, router]);
 
-    if (!signedIn) {
+    if (!isSignedIn) {
         return null;
     }
 

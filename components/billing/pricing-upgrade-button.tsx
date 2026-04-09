@@ -1,17 +1,25 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
-import { Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type * as React from "react";
 import { useState, useTransition } from "react";
 
 export function PricingUpgradeButton({
     children = "Upgrade to Pro",
+    className,
+    fullWidth = true,
     locale,
+    size = "xl",
+    variant,
 }: Readonly<{
     children?: React.ReactNode;
+    className?: string;
+    fullWidth?: boolean;
     locale: string;
+    size?: ButtonProps["size"];
+    variant?: ButtonProps["variant"];
 }>) {
     const [isPending, startTransition] = useTransition();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -48,15 +56,15 @@ export function PricingUpgradeButton({
     };
 
     return (
-        <div className="flex w-full flex-col gap-2">
+        <div className={cn("flex flex-col gap-2", fullWidth && "w-full")}>
             <Button
-                className="w-full"
+                className={cn(fullWidth && "w-full", className)}
                 loading={isPending}
                 onClick={handleUpgrade}
-                size="xl"
+                size={size}
                 type="button"
+                variant={variant}
             >
-                <Sparkles className="size-4" />
                 {children}
             </Button>
             {errorMessage ? (

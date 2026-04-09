@@ -164,18 +164,18 @@ export default async function LibraryPage({
                         }}
                     />
                 }
-                sidebarTop={
-                    <>
-                        <LogoContextMenu href="/library" src={LogoIconImage} />
-                        <LibrarySidebarIntegrations
-                            items={items}
-                            locale={locale}
-                            parkedIntegrationIds={parkedIntegrationIds}
-                            serverConnectedIntegrationIds={
-                                serverConnectedIntegrationIds
-                            }
-                        />
-                    </>
+                sidebarContent={
+                    <LibrarySidebarIntegrations
+                        items={items}
+                        locale={locale}
+                        parkedIntegrationIds={parkedIntegrationIds}
+                        serverConnectedIntegrationIds={
+                            serverConnectedIntegrationIds
+                        }
+                    />
+                }
+                sidebarHeader={
+                    <LogoContextMenu href="/library" src={LogoIconImage} />
                 }
             />
         </PageShell>

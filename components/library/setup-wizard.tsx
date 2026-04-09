@@ -84,13 +84,12 @@ function integrationSetupHeadingText(args: {
     return "You're all set — keep your library in sync";
 }
 
-export interface IntegrationSetupHeadingProps
-    extends React.ComponentProps<"button"> {
+interface IntegrationSetupHeadingProps extends React.ComponentProps<"button"> {
     readonly connectedIntegrationIds?: readonly IntegrationId[];
     readonly items: readonly { readonly source: LibraryItemSource }[];
 }
 
-export function IntegrationSetupWizard({
+export function IntegrationSetupWizardButton({
     connectedIntegrationIds,
     items,
     className,
@@ -128,7 +127,7 @@ export function IntegrationSetupWizard({
             <span className="select-none font-medium text-sm">{text}</span>
             <ChevronDown
                 aria-hidden
-                className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-[panel-open]:rotate-180"
+                className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
                 focusable="false"
             />
         </button>

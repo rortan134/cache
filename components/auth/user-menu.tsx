@@ -1,12 +1,16 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { XSocial } from "@/components/ui/integration-icons";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
 import { LocaleSelector } from "gt-next";
-import { ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
+import { ArrowUpRight, ChevronsUpDown } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -225,72 +229,93 @@ export function UserMenu({
                     className="size-4 text-muted-foreground"
                 />
             </PopoverTrigger>
-            <PopoverPopup
-                align="start"
-                className="w-[min(22rem,calc(100vw-2rem))]"
-                side="top"
-            >
+            <PopoverPopup align="start" positionMethod="fixed" side="top">
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-start gap-3">
-                        <Avatar className="size-11 ring-1 ring-border/60">
-                            <AvatarImage
-                                alt={user.name ?? user.email}
-                                src={user.image ?? undefined}
-                            />
-                            <AvatarFallback className="text-sm">
-                                {getInitials(user.name, user.email)}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium text-sm">
-                                {user.name ?? "Cache account"}
-                            </p>
-                            <p className="truncate text-muted-foreground text-sm">
-                                {user.email}
-                            </p>
-                            <div className="mt-2 flex items-center gap-2">
-                                <span
-                                    className={cn(
-                                        "inline-flex items-center rounded-full px-2 py-0.5 font-medium text-[11px]",
-                                        getToneClassName(subscriptionLabel.tone)
-                                    )}
-                                >
-                                    {subscriptionLabel.detail}
-                                </span>
-                            </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-sm">
+                            {user.name ?? "Cache account"}
+                        </p>
+                        <p className="truncate text-muted-foreground text-sm">
+                            {user.email}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                            <Badge
+                                className={cn(
+                                    "h-6! w-full",
+                                    getToneClassName(subscriptionLabel.tone)
+                                )}
+                                variant="secondary"
+                            >
+                                {subscriptionLabel.detail}
+                            </Badge>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="relative -my-1">
+                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+                    </div>
+                    <div className="-mx-2 flex flex-col gap-1">
+                        <Button
+                            className="justify-between"
+                            disabled
+                            variant="ghost"
+                        >
+                            Theme
+                            <span>Soon</span>
+                        </Button>
+                    </div>
+                    <div className="relative -my-1">
+                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+                    </div>
+                    <div className="-mx-2 flex flex-col gap-1">
                         {hasManagedSubscription ? (
                             <Button
                                 className="justify-start"
                                 loading={isPending}
                                 onClick={handleBillingPortal}
-                                size="sm"
                                 variant="ghost"
                             >
-                                <CreditCard />
                                 Billing
                             </Button>
                         ) : (
-                            <Button
-                                className="justify-start"
-                                loading={isPending}
-                                onClick={handleUpgrade}
-                                size="sm"
-                                variant="ghost"
-                            >
-                                <Sparkles />
-                                Upgrade to Pro
-                            </Button>
+                            <>
+                                <Button
+                                    className="justify-start"
+                                    render={<Link href="/pricing" />}
+                                    variant="ghost"
+                                >
+                                    Pricing
+                                </Button>
+                                <Button
+                                    className="justify-start"
+                                    loading={isPending}
+                                    onClick={handleUpgrade}
+                                    variant="ghost"
+                                >
+                                    Upgrade to Pro
+                                </Button>
+                            </>
                         )}
+                        <Button
+                            className="justify-between"
+                            render={<Link href="/changelog" />}
+                            variant="ghost"
+                        >
+                            Changelog
+                            <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
+                        </Button>
+                        <Button
+                            className="justify-between"
+                            render={<Link href="mailto:gsmt.dev@gmail.com" />}
+                            variant="ghost"
+                        >
+                            Support
+                            <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
+                        </Button>
                         <Button
                             className="justify-start"
                             onClick={handleLogout}
-                            size="sm"
                             variant="ghost"
                         >
-                            <LogOut />
                             Log out
                         </Button>
                     </div>
@@ -299,7 +324,43 @@ export function UserMenu({
                             {errorMessage}
                         </p>
                     ) : null}
+                    <div className="relative -my-1">
+                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+                    </div>
                     <LocaleSelector />
+                    <div className="relative -my-1">
+                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+                    </div>
+                    <div className="-mx-1 flex flex-wrap opacity-75">
+                        <Button
+                            render={<Link href="/legal/privacy-policy" />}
+                            size="xs"
+                            variant="ghost"
+                        >
+                            Privacy
+                        </Button>
+                        <Button
+                            render={<Link href="/legal/terms-of-service" />}
+                            size="xs"
+                            variant="ghost"
+                        >
+                            Terms
+                        </Button>
+                        <Button
+                            className="ml-auto"
+                            render={
+                                <Link
+                                    href="https://x.com/gsmmtt_"
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                />
+                            }
+                            size="icon-xs"
+                            variant="ghost"
+                        >
+                            <XSocial className="size-4" />
+                        </Button>
+                    </div>
                 </div>
             </PopoverPopup>
         </Popover>

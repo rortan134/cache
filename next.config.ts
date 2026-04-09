@@ -3,8 +3,6 @@ import { withGTConfig } from "gt-next/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    // In dev, BASE_URL is localhost; assetPrefix would make imported images
-    // absolute URLs. next/image then fetches that URL and blocks loopback (SSRF).
     assetPrefix: process.env.NODE_ENV === "development" ? undefined : BASE_URL,
     cacheComponents: true,
     experimental: {

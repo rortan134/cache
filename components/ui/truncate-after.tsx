@@ -1,11 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
@@ -55,13 +51,9 @@ const TruncateAfter = ({
                     >
                         +{numTruncated}
                     </PopoverTrigger>
-                    <PopoverContent
-                        align="end"
-                        className="w-auto p-2"
-                        side="top"
-                    >
+                    <PopoverPopup align="end" className="w-auto p-2" side="top">
                         <div className="flex flex-col gap-2">{remaining}</div>
-                    </PopoverContent>
+                    </PopoverPopup>
                 </Popover>
             )}
         </div>

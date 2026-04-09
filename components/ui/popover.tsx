@@ -33,6 +33,7 @@ export function PopoverPopup({
     sideOffset = 4,
     alignOffset = 0,
     tooltipStyle = false,
+    positionMethod,
     anchor,
     ...props
 }: PopoverPrimitive.Popup.Props & {
@@ -42,6 +43,7 @@ export function PopoverPopup({
     alignOffset?: PopoverPrimitive.Positioner.Props["alignOffset"];
     tooltipStyle?: boolean;
     anchor?: PopoverPrimitive.Positioner.Props["anchor"];
+    positionMethod?: PopoverPrimitive.Positioner.Props["positionMethod"];
 }): React.ReactElement {
     return (
         <PopoverPrimitive.Portal>
@@ -51,6 +53,7 @@ export function PopoverPopup({
                 anchor={anchor}
                 className="z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom,transform] data-instant:transition-none"
                 data-slot="popover-positioner"
+                positionMethod={positionMethod}
                 side={side}
                 sideOffset={sideOffset}
             >
@@ -68,7 +71,7 @@ export function PopoverPopup({
                         className={cn(
                             "relative size-full max-h-(--available-height) overflow-clip px-(--viewport-inline-padding) py-4 [--viewport-inline-padding:--spacing(4)] has-data-[slot=calendar]:p-2 data-instant:transition-none **:data-current:data-ending-style:opacity-0 **:data-current:data-starting-style:opacity-0 **:data-previous:data-ending-style:opacity-0 **:data-previous:data-starting-style:opacity-0 **:data-current:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-previous:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-current:opacity-100 **:data-previous:opacity-100 **:data-current:transition-opacity **:data-previous:transition-opacity",
                             tooltipStyle
-                                ? "py-1 [--viewport-inline-padding:--spacing(2)]"
+                                ? "max-w-64 text-pretty py-1.5 [--viewport-inline-padding:--spacing(2)]"
                                 : "not-data-transitioning:overflow-y-auto"
                         )}
                         data-slot="popover-viewport"
@@ -112,5 +115,3 @@ export function PopoverDescription({
         />
     );
 }
-
-export { PopoverPopup as PopoverContent };

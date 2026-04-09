@@ -1,12 +1,7 @@
 const statusEl = document.getElementById("status");
 const syncBtn = document.getElementById("sync");
 const chromeSyncBtn = document.getElementById("chromeSync");
-const chromeModeEl = document.getElementById("chromeMode");
 const chromeContinuousEl = document.getElementById("chromeContinuous");
-const instagramMetaEl = document.getElementById("instagramMeta");
-const tiktokMetaEl = document.getElementById("tiktokMeta");
-const youtubeMetaEl = document.getElementById("youtubeMeta");
-const chromeMetaEl = document.getElementById("chromeMeta");
 const openCacheBtnEl = document.getElementById("openCache");
 
 const CACHE_APP_DEFAULT_LOCALE = "en-US";
@@ -104,17 +99,6 @@ function formatErrorMessage(code, message) {
     return map[code] ?? message ?? "Sync failed.";
 }
 
-function formatLastSync(iso) {
-    if (!iso) {
-        return "—";
-    }
-    try {
-        return new Date(iso).toLocaleString();
-    } catch {
-        return "—";
-    }
-}
-
 function isYouTubeWatchLaterUrl(raw) {
     try {
         const url = new URL(raw);
@@ -136,29 +120,12 @@ async function loadMeta() {
 async function refreshFromStorage() {
     const meta = await loadMeta();
 
-    if (instagramMetaEl) {
-        instagramMetaEl.textContent = `Instagram Saved: ${meta.instagramCount ?? 0} · last sync ${formatLastSync(meta.instagramLastSyncAt)}`;
-    }
-    if (tiktokMetaEl) {
-        tiktokMetaEl.textContent = `TikTok Favorites: ${meta.tiktokCount ?? 0} · last sync ${formatLastSync(meta.tiktokLastSyncAt)}`;
-    }
-    if (youtubeMetaEl) {
-        youtubeMetaEl.textContent = `YouTube Watch Later: ${meta.youtubeCount ?? 0} · last sync ${formatLastSync(meta.youtubeLastSyncAt)}`;
-    }
-    if (chromeMetaEl) {
-        const pending = meta.chromePendingEvents ?? 0;
-        const mode = meta.chromeContinuousSync ? "continuous" : "one-time";
-        const error = meta.chromeLastError ? ` · error ${meta.chromeLastError}` : "";
-        chromeMetaEl.textContent = `Chrome bookmarks: ${meta.chromeCount ?? 0} · ${mode} mode · pending ${pending} · last sync ${formatLastSync(meta.chromeLastSyncAt)}${error}`;
-    }
+    const isContinuous = meta.chromeContinuousSync === true;
     if (chromeContinuousEl) {
-        chromeContinuousEl.checked = meta.chromeContinuousSync === true;
+        chromeContinuousEl.checked = isContinuous;
     }
-    if (chromeModeEl) {
-        chromeModeEl.value =
-            meta.chromeContinuousSync === true
-                ? "continuous_sync"
-                : chromeModeEl.value || "one_time_import";
+    if (chromeSyncBtn) {
+        chromeSyncBtn.style.display = isContinuous ? "none" : "";
     }
 }
 
@@ -312,25 +279,12 @@ chromeSyncBtn?.addEventListener("click", async () => {
         return;
     }
 
-    const selectedMode =
-        chromeModeEl?.value === "continuous_sync"
-            ? "continuous_sync"
-            : "one_time_import";
-    const continuousEnabled = chromeContinuousEl?.checked === true;
-    const mode = continuousEnabled ? "continuous_sync" : selectedMode;
+    const mode = "one_time_import";
 
-    setStatus(
-        mode === "continuous_sync"
-            ? "Importing Chrome bookmarks and enabling continuous sync…"
-            : "Importing Chrome bookmarks…",
-        "idle",
-    );
+    setStatus("Importing Chrome bookmarks…", "idle");
     chromeSyncBtn.disabled = true;
 
     try {
-        if (chromeContinuousEl) {
-            chromeContinuousEl.checked = mode === "continuous_sync";
-        }
         await chrome.runtime.sendMessage({
             mode,
             type: "SYNC_CHROME_BOOKMARKS",
@@ -349,9 +303,6 @@ chromeSyncBtn?.addEventListener("click", async () => {
 
 chromeContinuousEl?.addEventListener("change", async () => {
     const enabled = chromeContinuousEl.checked;
-    if (chromeModeEl) {
-        chromeModeEl.value = enabled ? "continuous_sync" : "one_time_import";
-    }
     await chrome.runtime.sendMessage({
         enabled,
         type: "TOGGLE_CHROME_SYNC",

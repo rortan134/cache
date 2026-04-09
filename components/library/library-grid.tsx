@@ -8,7 +8,6 @@ import {
     ComboboxEmpty,
     ComboboxInput,
     ComboboxItem,
-    ComboboxLabel,
     ComboboxList,
     ComboboxPopup,
     ComboboxTrigger,
@@ -21,6 +20,11 @@ import {
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Masonry, MasonryItem } from "@/components/ui/masonry";
+import {
+    PreviewDrawer,
+    PreviewDrawerContent,
+} from "@/components/ui/preview-drawer";
+import { BlockPromotionBanner } from "@/components/ui/promotion-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSubtleColorGradientFromName } from "@/lib/colors";
 import type {
@@ -34,20 +38,17 @@ import {
     ArrowUpRightIcon,
     ChevronDownIcon,
     ChevronRightIcon,
+    CircleDashed,
+    CircleDot,
     CopyIcon,
     DownloadIcon,
     ExternalLinkIcon,
-    Layers3Icon,
+    EyeIcon,
     MaximizeIcon,
-    PlusIcon,
     Trash2Icon,
 } from "lucide-react";
-import type {
-    CSSProperties,
-    ReactElement,
-    MouseEvent as ReactMouseEvent,
-} from "react";
-import { useMemo, useRef, useState } from "react";
+import type { CSSProperties, MouseEvent, ReactElement } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** Stable placeholders for empty-library masonry sneak peek (opacity fades by order). */
 const EMPTY_LIBRARY_PEEK_PLACEHOLDERS = [
@@ -70,16 +71,18 @@ interface GridProps {
     readonly items: LibraryItemWithCollections[];
     readonly layoutToken?: number;
     readonly onCopyLink?: (item: LibraryItemWithCollections) => void;
-    readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onDelete?: (item: LibraryItemWithCollections) => void;
     readonly onOpenHere?: (item: LibraryItemWithCollections) => void;
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
+    readonly paywallPreviewCount?: number;
+    readonly paywallTotalCount?: number;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
+    readonly showPaywallBanner?: boolean;
 }
 
 interface SectionProps extends GridProps {
@@ -100,17 +103,23 @@ interface LibraryGridCardProps {
     readonly href: string;
     readonly item: LibraryItemWithCollections;
     readonly onCopyLink?: (item: LibraryItemWithCollections) => void;
-    readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onDelete?: (item: LibraryItemWithCollections) => void;
     readonly onOpenHere?: (item: LibraryItemWithCollections) => void;
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
     readonly postedLabel: string;
+    readonly previewDescription?: string;
+    readonly previewTitle: string;
+}
+
+interface LockedLibraryGridCardProps {
+    readonly alt: string;
+    readonly item: LibraryItemWithCollections;
 }
 
 function itemDomain(url: string): string {
@@ -145,39 +154,52 @@ function fallbackGridStyle(columnCount?: number): CSSProperties | undefined {
     };
 }
 
-function LibraryCollectionPicker({
+function CollectionComboboxPicker({
     collections,
     item,
-    onCreateCollectionRequest,
     onUpdateItemCollections,
     pendingCollectionItemIds,
 }: {
     readonly collections: readonly LibraryCollectionSummary[];
     readonly item: LibraryItemWithCollections;
-    readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
 }): ReactElement {
-    const [open, setOpen] = useState(false);
-    const selectedCollectionIds = useMemo(
-        () => item.collections.map((collection) => collection.id),
-        [item.collections]
+    const [isOpen, setIsOpen] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const selectedCollectionIds = item.collections.map(
+        (collection) => collection.id,
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
 
+    useEffect(() => {
+        if (!isOpen || isPending) {
+            return;
+        }
+
+        const frame = window.requestAnimationFrame(() => {
+            inputRef.current?.focus();
+        });
+
+        return () => {
+            window.cancelAnimationFrame(frame);
+        };
+    }, [isOpen, isPending]);
+
     return (
         <Combobox
+            autoHighlight
             items={collections}
             multiple
-            onOpenChange={setOpen}
+            onOpenChange={setIsOpen}
             onValueChange={(nextIds) => {
-                onUpdateItemCollections(item.id, nextIds as string[]);
+                onUpdateItemCollections(item.id, [...nextIds]);
             }}
-            open={open}
+            open={isOpen}
             value={selectedCollectionIds}
         >
             <ComboboxTrigger
@@ -188,73 +210,48 @@ function LibraryCollectionPicker({
                                 ? `Edit collections (${selectedCount} selected)`
                                 : "Add to collections"
                         }
-                        className="rounded-full border-border/50 bg-background/50 opacity-0 backdrop-blur-xs transition-opacity group-hover:opacity-100"
+                        className="rounded-full"
                         loading={isPending}
-                        size="icon"
+                        size="icon-sm"
                         variant="ghost"
                     />
                 }
             >
-                {!isPending && <Layers3Icon className="size-3.5" />}
+                {selectedCount > 0 ? (
+                    <CircleDot className="size-4" />
+                ) : (
+                    <CircleDashed className="size-4" />
+                )}
             </ComboboxTrigger>
-            <ComboboxPopup
-                align="center"
-                className="w-[18rem] rounded-2xl [--viewport-inline-padding:0px]"
-                sideOffset={8}
-            >
-                <div className="flex min-h-0 flex-col">
-                    <div className="flex flex-col gap-1 px-3 pt-3 pb-2">
-                        <ComboboxLabel className="font-medium text-sm">
-                            Add to one or more collections
-                        </ComboboxLabel>
-                        <ComboboxInput
-                            placeholder="Search collections..."
-                            size="sm"
-                        />
-                    </div>
-                    <ComboboxList className="min-h-0 flex-1">
-                        <ComboboxEmpty className="flex min-h-24 flex-1 items-center justify-center px-4 text-center text-muted-foreground text-sm">
-                            No collections yet. Create one to start grouping
-                            saved items.
-                        </ComboboxEmpty>
-                        <ComboboxCollection>
-                            {(collection) => (
-                                <ComboboxItem
-                                    className="px-3 py-2.5"
-                                    disabled={isPending}
-                                    key={collection.id}
-                                    value={collection.id}
-                                >
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block truncate font-medium text-sm">
-                                            {collection.name}
-                                        </span>
-                                        <span className="block text-muted-foreground text-xs">
-                                            {collection.itemCount} item
-                                            {collection.itemCount === 1
-                                                ? ""
-                                                : "s"}
-                                        </span>
-                                    </span>
-                                </ComboboxItem>
-                            )}
-                        </ComboboxCollection>
-                    </ComboboxList>
-                    <div className="border-border/70 border-t bg-background/96 p-2 backdrop-blur-sm">
-                        <Button
-                            className="w-full justify-start rounded-xl"
-                            onClick={() => {
-                                setOpen(false);
-                                onCreateCollectionRequest(item.id);
-                            }}
-                            size="sm"
-                            variant="ghost"
-                        >
-                            <PlusIcon className="size-4" />
-                            Create new collection
-                        </Button>
-                    </div>
+            <ComboboxPopup>
+                <div className="border-b">
+                    <ComboboxInput
+                        className="border-none! ring-0!"
+                        placeholder="Assign collections..."
+                        ref={inputRef}
+                        showTrigger={false}
+                    />
                 </div>
+                <ComboboxEmpty>No matching collections</ComboboxEmpty>
+                <ComboboxList>
+                    <ComboboxCollection>
+                        {(collection) => (
+                            <ComboboxItem
+                                key={collection.id}
+                                value={collection.id}
+                            >
+                                <div className="flex min-w-0 items-center justify-between gap-3">
+                                    <span className="min-w-0 truncate text-foreground text-sm">
+                                        {collection.name}
+                                    </span>
+                                    <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+                                        {collection.itemCount}
+                                    </span>
+                                </div>
+                            </ComboboxItem>
+                        )}
+                    </ComboboxCollection>
+                </ComboboxList>
             </ComboboxPopup>
         </Combobox>
     );
@@ -269,7 +266,6 @@ function LibraryGridCard({
     href,
     item,
     onCopyLink,
-    onCreateCollectionRequest,
     onDelete,
     onOpenHere,
     onOpenInNewTab,
@@ -277,28 +273,27 @@ function LibraryGridCard({
     pendingCollectionItemIds,
     pendingDeleteItemId,
     postedLabel,
+    previewDescription,
+    previewTitle,
 }: LibraryGridCardProps): ReactElement {
     const isDeletePending = pendingDeleteItemId === item.id;
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
+    const canPreview = href !== "about:blank";
 
-    const handlePrimaryClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    const handlePrimaryClick = (event: MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault();
         onOpenInNewTab?.(item);
     };
 
-    const handleFullscreen = (event: ReactMouseEvent) => {
-        event.preventDefault();
-        event.stopPropagation();
+    const handleFullscreen = () => {
         if (cardRef.current && fscreen.fullscreenEnabled) {
             fscreen.requestFullscreen(cardRef.current);
         }
     };
 
-    const handleDownload = async (event: ReactMouseEvent) => {
-        event.preventDefault();
-        event.stopPropagation();
-
+    const handleDownload = async () => {
         setIsDownloading(true);
         try {
             const result = await downloadMedia(item.url);
@@ -327,43 +322,9 @@ function LibraryGridCard({
         <ContextMenu>
             <ContextMenuTrigger render={<div className="contents" />}>
                 <div
-                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/50 ring-1 ring-border/30 transition-[transform,border-color,box-shadow] hover:border-border hover:shadow-lg/5"
+                    className="group relative flex flex-col overflow-hidden rounded-xl ring-1 ring-border/50"
                     ref={cardRef}
                 >
-                    <div className="absolute top-2 right-2 z-10">
-                        <LibraryCollectionPicker
-                            collections={collections}
-                            item={item}
-                            onCreateCollectionRequest={
-                                onCreateCollectionRequest
-                            }
-                            onUpdateItemCollections={onUpdateItemCollections}
-                            pendingCollectionItemIds={pendingCollectionItemIds}
-                        />
-                    </div>
-                    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-3/4">
-                        <div className="pointer-events-auto absolute right-2 bottom-2 flex flex-col gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                            <Button
-                                aria-label="Download media"
-                                className="rounded-full border-border/60 bg-background/88 shadow-sm backdrop-blur-sm"
-                                loading={isDownloading}
-                                onClick={handleDownload}
-                                size="icon-xs"
-                                variant="outline"
-                            >
-                                <DownloadIcon className="size-3.5" />
-                            </Button>
-                            <Button
-                                aria-label="View fullscreen"
-                                className="rounded-full border-border/60 bg-background/88 shadow-sm backdrop-blur-sm"
-                                onClick={handleFullscreen}
-                                size="icon-xs"
-                                variant="outline"
-                            >
-                                <MaximizeIcon className="size-3.5" />
-                            </Button>
-                        </div>
-                    </div>
                     <a
                         className="flex flex-col focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                         href={href}
@@ -371,52 +332,86 @@ function LibraryGridCard({
                         rel="noopener noreferrer"
                         target="_blank"
                     >
-                        <div className="relative aspect-3/4 w-full overflow-hidden bg-muted">
+                        <div className="relative aspect-3/4 w-full overflow-hidden">
                             {item.thumbnailUrl ? (
                                 <img
                                     alt={alt}
-                                    className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
+                                    className="size-full object-cover transition-transform duration-200 group-focus-within:scale-[1.025] group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
                                     height={400}
                                     loading="lazy"
                                     src={item.thumbnailUrl}
                                     width={300}
                                 />
                             ) : (
-                                <div className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/40 text-muted-foreground text-xs">
+                                <div className="flex size-full items-center justify-center bg-muted/30 text-muted-foreground text-xs">
                                     No preview
                                 </div>
                             )}
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/78 via-black/40 to-transparent p-3 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
                                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                    <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                    <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                         {domain}
                                     </span>
                                     {hasBothDates ? (
                                         <>
-                                            <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                            <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                                 Posted: {postedLabel}
                                             </span>
-                                            <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                            <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                                 Added: {addedLabel}
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="rounded-full bg-white/14 px-2 py-0.5 backdrop-blur-sm">
+                                        <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                             {postedLabel || addedLabel}
                                         </span>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2 px-3 py-2">
-                            <p className="line-clamp-2 truncate text-foreground text-xs leading-tight">
-                                {item.caption?.trim() || item.url}
-                            </p>
-                        </div>
                     </a>
+                    <div className="flex items-center gap-0.5 px-2.5 py-2">
+                        <CollectionComboboxPicker
+                            collections={collections}
+                            item={item}
+                            onUpdateItemCollections={onUpdateItemCollections}
+                            pendingCollectionItemIds={pendingCollectionItemIds}
+                        />
+                        <p className="line-clamp-2 truncate text-foreground text-xs leading-tight">
+                            {item.caption?.trim() || item.url}
+                        </p>
+                    </div>
                 </div>
             </ContextMenuTrigger>
             <ContextMenuPopup>
+                <div className="relative mx-auto flex max-w-56 items-center gap-2 pt-2 pb-1.5 pl-2.5 opacity-50">
+                    <span className="block truncate text-xs">{item.url}</span>
+                </div>
+                <ContextMenuSeparator />
+                {canPreview ? (
+                    <>
+                        <ContextMenuItem
+                            closeOnClick={false}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setIsPreviewOpen(true);
+                            }}
+                        >
+                            <EyeIcon className="size-4 text-muted-foreground" />
+                            Open preview
+                        </ContextMenuItem>
+                        <PreviewDrawer
+                            description={previewDescription}
+                            onOpenChange={setIsPreviewOpen}
+                            open={isPreviewOpen}
+                            title={previewTitle}
+                            url={href}
+                        >
+                            <PreviewDrawerContent />
+                        </PreviewDrawer>
+                    </>
+                ) : null}
                 <ContextMenuItem onClick={() => onOpenInNewTab?.(item)}>
                     <ExternalLinkIcon className="size-4 text-muted-foreground" />
                     Open in new tab
@@ -428,6 +423,10 @@ function LibraryGridCard({
                 <ContextMenuItem onClick={() => onCopyLink?.(item)}>
                     <CopyIcon className="size-4 text-muted-foreground" />
                     Copy link
+                </ContextMenuItem>
+                <ContextMenuItem onClick={handleFullscreen}>
+                    <MaximizeIcon className="size-4 text-muted-foreground" />
+                    View fullscreen
                 </ContextMenuItem>
                 <ContextMenuItem
                     disabled={isDownloading}
@@ -450,6 +449,130 @@ function LibraryGridCard({
     );
 }
 
+function LockedLibraryGridCard({
+    alt,
+    item,
+}: LockedLibraryGridCardProps): ReactElement {
+    return (
+        <div className="relative flex flex-col overflow-hidden rounded-xl ring-1 ring-border/30">
+            <div className="relative aspect-3/4 w-full overflow-hidden bg-muted/30">
+                {item.thumbnailUrl ? (
+                    <img
+                        alt={alt}
+                        className="size-full object-cover"
+                        height={400}
+                        loading="lazy"
+                        src={item.thumbnailUrl}
+                        width={300}
+                    />
+                ) : (
+                    <div className="flex size-full items-center justify-center bg-muted/40 text-muted-foreground text-xs">
+                        Locked preview
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-background/35 backdrop-blur-md" />
+            </div>
+            <div className="relative flex flex-col gap-2 bg-background/75 px-3 py-2">
+                <p className="line-clamp-2 truncate text-foreground text-xs leading-tight">
+                    {item.caption?.trim() || item.url}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function renderLibraryMasonry({
+    collections,
+    columnCount,
+    items,
+    layoutToken,
+    locked = false,
+    onCopyLink,
+    onDelete,
+    onOpenHere,
+    onOpenInNewTab,
+    onUpdateItemCollections,
+    pendingCollectionItemIds,
+    pendingDeleteItemId,
+}: GridProps & { readonly locked?: boolean }): ReactElement {
+    return (
+        <Masonry
+            columnCount={columnCount}
+            deps={[
+                collections,
+                layoutToken,
+                items,
+                locked,
+                pendingCollectionItemIds,
+                pendingDeleteItemId,
+            ]}
+            fallback={
+                <div
+                    className={cn(
+                        "grid gap-2",
+                        !columnCount &&
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+                    )}
+                    style={fallbackGridStyle(columnCount)}
+                >
+                    {items.map((item) => (
+                        <Skeleton key={item.id} />
+                    ))}
+                </div>
+            }
+            gap={4}
+            linear
+        >
+            {items.map((item) => {
+                const href = normalizeURL(item.url);
+                const alt = (item.caption ?? "").trim() || "Saved item";
+                const domain = itemDomain(item.url);
+                const previewTitle = alt === "Saved item" ? "Preview" : alt;
+                const previewDescription =
+                    domain === "Other" ? item.url : domain;
+                const addedLabel = itemDateLabel(
+                    item.scrapedAt ?? item.createdAt,
+                );
+                const postedLabel = itemDateLabel(item.postedAt);
+                const hasBothDates =
+                    !!postedLabel && !!addedLabel && postedLabel !== addedLabel;
+
+                return (
+                    <MasonryItem key={item.id}>
+                        {locked ? (
+                            <LockedLibraryGridCard alt={alt} item={item} />
+                        ) : (
+                            <LibraryGridCard
+                                addedLabel={addedLabel}
+                                alt={alt}
+                                collections={collections}
+                                domain={domain}
+                                hasBothDates={hasBothDates}
+                                href={href}
+                                item={item}
+                                onCopyLink={onCopyLink}
+                                onDelete={onDelete}
+                                onOpenHere={onOpenHere}
+                                onOpenInNewTab={onOpenInNewTab}
+                                onUpdateItemCollections={
+                                    onUpdateItemCollections
+                                }
+                                pendingCollectionItemIds={
+                                    pendingCollectionItemIds
+                                }
+                                pendingDeleteItemId={pendingDeleteItemId}
+                                postedLabel={postedLabel}
+                                previewDescription={previewDescription}
+                                previewTitle={previewTitle}
+                            />
+                        )}
+                    </MasonryItem>
+                );
+            })}
+        </Masonry>
+    );
+}
+
 export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
     const fallback = (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -457,7 +580,7 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
                 return (
                     <div
-                        className="flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card/40 ring-1 ring-border/30 transition-opacity"
+                        className="flex flex-col overflow-hidden rounded-xl bg-card/40 transition-opacity"
                         key={id}
                         style={{ opacity }}
                     >
@@ -480,7 +603,7 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
                 return (
                     <MasonryItem asChild key={id} style={{ opacity }}>
-                        <div className="group flex flex-col overflow-hidden rounded-lg border border-border/40 bg-card/40 ring-1 ring-border/30">
+                        <div className="group flex flex-col overflow-hidden rounded-lg bg-card/40">
                             <Skeleton
                                 className={cn("w-full rounded-none", aspect)}
                             />
@@ -502,82 +625,90 @@ export function ExtensionLibraryGrid({
     items,
     layoutToken,
     onCopyLink,
-    onCreateCollectionRequest,
     onDelete,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
+    paywallPreviewCount,
+    paywallTotalCount,
     pendingCollectionItemIds,
     pendingDeleteItemId,
+    showPaywallBanner,
 }: GridProps): ReactElement | null {
     if (items.length === 0) {
         return null;
     }
 
-    return (
-        <Masonry
-            columnCount={columnCount}
-            deps={[
-                collections,
-                layoutToken,
-                items,
-                pendingCollectionItemIds,
-                pendingDeleteItemId,
-            ]}
-            fallback={
-                <div
-                    className={cn(
-                        "grid gap-2",
-                        !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-                    )}
-                    style={fallbackGridStyle(columnCount)}
-                >
-                    {items.map((item) => (
-                        <Skeleton key={item.id} />
-                    ))}
-                </div>
-            }
-            gap={4}
-            linear
-        >
-            {items.map((item) => {
-                const href = normalizeURL(item.url);
-                const alt = (item.caption ?? "").trim() || "Saved item";
-                const domain = itemDomain(item.url);
-                const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt
-                );
-                const postedLabel = itemDateLabel(item.postedAt);
-                const hasBothDates =
-                    !!postedLabel && !!addedLabel && postedLabel !== addedLabel;
+    const resolvedPreviewCount = Math.max(
+        0,
+        Math.min(paywallPreviewCount ?? items.length, items.length),
+    );
+    const showPaywall = resolvedPreviewCount < items.length;
+    const previewItems = showPaywall
+        ? items.slice(0, resolvedPreviewCount)
+        : items;
+    const lockedItems = showPaywall ? items.slice(resolvedPreviewCount) : [];
 
-                return (
-                    <MasonryItem key={item.id}>
-                        <LibraryGridCard
-                            addedLabel={addedLabel}
-                            alt={alt}
-                            collections={collections}
-                            domain={domain}
-                            hasBothDates={hasBothDates}
-                            href={href}
-                            item={item}
-                            onCopyLink={onCopyLink}
-                            onCreateCollectionRequest={
-                                onCreateCollectionRequest
-                            }
-                            onDelete={onDelete}
-                            onOpenHere={onOpenHere}
-                            onOpenInNewTab={onOpenInNewTab}
-                            onUpdateItemCollections={onUpdateItemCollections}
-                            pendingCollectionItemIds={pendingCollectionItemIds}
-                            pendingDeleteItemId={pendingDeleteItemId}
-                            postedLabel={postedLabel}
+    if (!showPaywall) {
+        return renderLibraryMasonry({
+            collections,
+            columnCount,
+            items,
+            layoutToken,
+            onCopyLink,
+            onDelete,
+            onOpenHere,
+            onOpenInNewTab,
+            onUpdateItemCollections,
+            pendingCollectionItemIds,
+            pendingDeleteItemId,
+        });
+    }
+
+    return (
+        <div className="flex flex-col gap-8">
+            {previewItems.length > 0
+                ? renderLibraryMasonry({
+                      collections,
+                      columnCount,
+                      items: previewItems,
+                      layoutToken,
+                      onCopyLink,
+                      onDelete,
+                      onOpenHere,
+                      onOpenInNewTab,
+                      onUpdateItemCollections,
+                      pendingCollectionItemIds,
+                      pendingDeleteItemId,
+                  })
+                : null}
+            {lockedItems.length > 0 ? (
+                <div className="relative isolate">
+                    {showPaywallBanner ? (
+                        <BlockPromotionBanner
+                            length={paywallTotalCount ?? items.length}
                         />
-                    </MasonryItem>
-                );
-            })}
-        </Masonry>
+                    ) : null}
+                    <div className="pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-linear-to-b from-background/10 via-background/45 to-background/75" />
+                    <div className="select-none opacity-60 blur-[1.5px] saturate-75">
+                        {renderLibraryMasonry({
+                            collections,
+                            columnCount,
+                            items: lockedItems,
+                            layoutToken,
+                            locked: true,
+                            onCopyLink,
+                            onDelete,
+                            onOpenHere,
+                            onOpenInNewTab,
+                            onUpdateItemCollections,
+                            pendingCollectionItemIds,
+                            pendingDeleteItemId,
+                        })}
+                    </div>
+                </div>
+            ) : null}
+        </div>
     );
 }
 
@@ -591,7 +722,6 @@ export function ExtensionLibrarySection({
     items,
     layoutToken,
     onCopyLink,
-    onCreateCollectionRequest,
     onDelete,
     onOpenHere,
     onOpenInNewTab,
@@ -620,7 +750,6 @@ export function ExtensionLibrarySection({
                 items={items}
                 layoutToken={layoutToken}
                 onCopyLink={onCopyLink}
-                onCreateCollectionRequest={onCreateCollectionRequest}
                 onDelete={onDelete}
                 onOpenHere={onOpenHere}
                 onOpenInNewTab={onOpenInNewTab}
@@ -634,52 +763,42 @@ export function ExtensionLibrarySection({
     return (
         <section className="flex w-full flex-col gap-3">
             <div
-                className={cn(stickyHeader && "sticky z-10")}
+                className={cn(
+                    "flex items-center justify-between gap-3 py-1 pr-5",
+                    stickyHeader &&
+                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50",
+                )}
                 style={
                     stickyHeader
                         ? ({
+                              background: headerGradient,
                               top: "var(--library-section-sticky-top)",
                           } as CSSProperties)
                         : undefined
                 }
             >
-                <div
-                    className={cn(
-                        "flex items-center justify-between gap-3 pr-5 shadow-xs",
-                        stickyHeader &&
-                            "rounded-xl bg-background/92 backdrop-blur-sm supports-backdrop-filter:bg-background/80"
-                    )}
-                    style={
-                        stickyHeader
-                            ? ({
-                                  background: headerGradient,
-                              } as CSSProperties)
-                            : undefined
-                    }
-                >
-                    {canToggle ? (
-                        <Button
-                            className="min-w-0 flex-1 justify-start rounded-xl px-4"
-                            onClick={onToggle}
-                            size="lg"
-                            variant="ghost"
-                        >
-                            {collapsed ? (
-                                <ChevronRightIcon className="size-4" />
-                            ) : (
-                                <ChevronDownIcon className="size-4" />
-                            )}
-                            <span className="ml-1 truncate font-medium">
-                                {title}
-                            </span>
-                        </Button>
-                    ) : (
-                        <h2 className="font-medium text-lg">{title}</h2>
-                    )}
-                    <span className="font-medium text-foreground text-xs tabular-nums">
-                        {items.length}
-                    </span>
-                </div>
+                {canToggle ? (
+                    <Button
+                        className="min-w-0 flex-1 justify-start rounded-xl px-4"
+                        onClick={onToggle}
+                        size="lg"
+                        variant="ghost"
+                    >
+                        {collapsed ? (
+                            <ChevronRightIcon className="size-4" />
+                        ) : (
+                            <ChevronDownIcon className="size-4" />
+                        )}
+                        <span className="ml-1 truncate font-medium">
+                            {title}
+                        </span>
+                    </Button>
+                ) : (
+                    <h2 className="font-medium text-lg">{title}</h2>
+                )}
+                <span className="font-medium text-foreground text-xs tabular-nums">
+                    {items.length}
+                </span>
             </div>
             {body}
         </section>

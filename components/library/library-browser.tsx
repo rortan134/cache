@@ -19,6 +19,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useClientOnlyValue } from "@/components/ui/client-only";
 import {
     Command,
     CommandCollection,
@@ -32,7 +33,10 @@ import {
     CommandShortcut,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { UnprivilegedOnly } from "@/components/ui/privilege";
+import { InlinePromotionBanner } from "@/components/ui/promotion-banner";
 import { TruncateAfter } from "@/components/ui/truncate-after";
+import { useAccess } from "@/hooks/use-access";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type {
     LibraryCollectionSummary,
@@ -83,9 +87,15 @@ const SEARCH_HOTKEYS = [
 const SEARCH_CANCEL_KEYS = ["esc", "tab"] as const;
 const LIBRARY_COMMAND_PANEL_TOP_PX = 12;
 const LIBRARY_SECTION_STICKY_GAP_PX = 8;
+const FREE_LIBRARY_PREVIEW_ITEMS = 12;
 type LibraryItem = LibraryItemWithCollections;
 
-type GroupByMode = "none" | "domain" | "month-added" | "month-created";
+type GroupByMode =
+    | "none"
+    | "source"
+    | "domain"
+    | "month-added"
+    | "month-created";
 type SortMode =
     | "added-newest"
     | "added-oldest"
@@ -133,6 +143,8 @@ interface CommandPaletteGroup {
 interface LibraryBrowserSection {
     readonly items: LibraryItemWithCollections[];
     readonly key: string;
+    readonly paywallPreviewCount?: number;
+    readonly showPaywallBanner?: boolean;
     readonly title: string | null;
 }
 
@@ -212,6 +224,9 @@ function sourceLabel(source: LibraryItemSource): string {
 }
 
 function formatGroupHeading(mode: GroupByMode, key: string): string {
+    if (mode === "source") {
+        return sourceLabel(key as LibraryItemSource);
+    }
     if (mode === "month-added" || mode === "month-created") {
         const [ys, ms] = key.split("-");
         const y = Number(ys);
@@ -293,6 +308,12 @@ function compareSectionKeys(
             sortMode === "added-oldest" || sortMode === "created-oldest";
         return isOldest ? a.localeCompare(b) : b.localeCompare(a);
     }
+    if (groupBy === "source") {
+        return TEXT_COLLATOR.compare(
+            formatGroupHeading(groupBy, a),
+            formatGroupHeading(groupBy, b)
+        );
+    }
     return TEXT_COLLATOR.compare(a, b);
 }
 
@@ -313,6 +334,24 @@ function appendUniqueSearchTerm(
     )
         ? [...values]
         : [...values, normalized];
+}
+
+function matchesCommandPaletteItem(item: unknown, query: string): boolean {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+        return true;
+    }
+
+    if (!item || typeof item !== "object") {
+        return false;
+    }
+
+    const candidate = item as Partial<CommandPaletteItem>;
+
+    return [candidate.label, candidate.description, candidate.value].some(
+        (field) => field?.toLowerCase().includes(normalizedQuery)
+    );
 }
 
 function removeValue<T>(values: readonly T[], value: T): T[] {
@@ -387,8 +426,11 @@ function sortModeLabel(mode: SortMode): string {
 }
 
 function groupByLabel(mode: GroupByMode): string {
-    if (mode === "domain") {
+    if (mode === "source") {
         return "Source";
+    }
+    if (mode === "domain") {
+        return "Domain";
     }
     if (mode === "month-added") {
         return "Month Added";
@@ -451,12 +493,12 @@ function renderLibraryGridBody({
     enableSectionCollapse,
     layoutRefreshToken,
     onCopyLink,
-    onCreateCollectionRequest,
     onDelete,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
     onToggleSection,
+    paywallTotalCount,
     pendingCollectionItemIds,
     pendingDeleteItemId,
     sections,
@@ -470,7 +512,6 @@ function renderLibraryGridBody({
     readonly enableSectionCollapse: boolean;
     readonly layoutRefreshToken: number;
     readonly onCopyLink: (item: LibraryItem) => void;
-    readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onDelete: (item: LibraryItem) => void;
     readonly onOpenHere: (item: LibraryItem) => void;
     readonly onOpenInNewTab: (item: LibraryItem) => void;
@@ -479,6 +520,7 @@ function renderLibraryGridBody({
         collectionIds: string[]
     ) => void;
     readonly onToggleSection: (key: string) => void;
+    readonly paywallTotalCount?: number;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId: string | null;
     readonly sections: readonly LibraryBrowserSection[];
@@ -519,14 +561,16 @@ function renderLibraryGridBody({
                 key={section.key}
                 layoutToken={layoutRefreshToken}
                 onCopyLink={onCopyLink}
-                onCreateCollectionRequest={onCreateCollectionRequest}
                 onDelete={onDelete}
                 onOpenHere={onOpenHere}
                 onOpenInNewTab={onOpenInNewTab}
                 onToggle={() => onToggleSection(section.key)}
                 onUpdateItemCollections={onUpdateItemCollections}
+                paywallPreviewCount={section.paywallPreviewCount}
+                paywallTotalCount={paywallTotalCount}
                 pendingCollectionItemIds={pendingCollectionItemIds}
                 pendingDeleteItemId={pendingDeleteItemId}
+                showPaywallBanner={section.showPaywallBanner}
                 title={section.title ?? "Results"}
             />
         ) : (
@@ -548,13 +592,15 @@ function renderLibraryGridBody({
                     items={section.items}
                     layoutToken={layoutRefreshToken}
                     onCopyLink={onCopyLink}
-                    onCreateCollectionRequest={onCreateCollectionRequest}
                     onDelete={onDelete}
                     onOpenHere={onOpenHere}
                     onOpenInNewTab={onOpenInNewTab}
                     onUpdateItemCollections={onUpdateItemCollections}
+                    paywallPreviewCount={section.paywallPreviewCount}
+                    paywallTotalCount={paywallTotalCount}
                     pendingCollectionItemIds={pendingCollectionItemIds}
                     pendingDeleteItemId={pendingDeleteItemId}
+                    showPaywallBanner={section.showPaywallBanner}
                 />
             </section>
         )
@@ -775,6 +821,7 @@ function LibraryPaletteTrailing({
     columnCountMode,
     domainFilters,
     groupBy,
+    hasActiveSearchFilterGroupOrSort,
     isPaletteFocused,
     paletteInput,
     searchTerms,
@@ -795,6 +842,7 @@ function LibraryPaletteTrailing({
     readonly columnCountMode: ColumnCountMode;
     readonly domainFilters: string[];
     readonly groupBy: GroupByMode;
+    readonly hasActiveSearchFilterGroupOrSort: boolean;
     readonly isPaletteFocused: boolean;
     readonly paletteInput: string;
     readonly searchTerms: string[];
@@ -925,12 +973,14 @@ function LibraryPaletteTrailing({
 
     const canReset = chips.length > 0 || paletteInput.trim().length > 0;
 
+    const systemControlKey = useClientOnlyValue(getSystemControlKey());
+
     return (
         <>
             <TruncateAfter after={2}>{chips}</TruncateAfter>
-            {isPaletteFocused ? null : (
+            {isPaletteFocused || hasActiveSearchFilterGroupOrSort ? null : (
                 <KbdGroup>
-                    <Kbd>{getSystemControlKey()}</Kbd>
+                    <Kbd>{systemControlKey}</Kbd>
                     <Kbd>K</Kbd>
                 </KbdGroup>
             )}
@@ -955,7 +1005,6 @@ interface Props {
     readonly items: LibraryItemWithCollections[];
     readonly locale: string;
     readonly onClearCollectionFilters: () => void;
-    readonly onCreateCollectionRequest: (itemId?: string) => void;
     readonly onItemsChange: (
         value:
             | LibraryItemWithCollections[]
@@ -1111,12 +1160,12 @@ export function LibraryBrowser({
     items,
     locale,
     onClearCollectionFilters,
-    onCreateCollectionRequest,
     onItemsChange,
     onUpdateItemCollections,
     pendingCollectionItemIds,
     selectedCollectionIds,
 }: Props) {
+    const { hasAccess, isLoading: isAccessLoading } = useAccess();
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const [paletteInput, setPaletteInput] = useState("");
     const [sourceFilters, setSourceFilters] = useState<SourceFilterValue[]>([]);
@@ -1192,7 +1241,8 @@ export function LibraryBrowser({
     const groupOptions = useMemo(
         () => [
             { label: "No grouping", value: "none" },
-            { label: "Source", value: "domain" },
+            { label: "Source", value: "source" },
+            { label: "Domain", value: "domain" },
             { label: "Month Added", value: "month-added" },
             { label: "Month Created", value: "month-created" },
         ],
@@ -1721,9 +1771,22 @@ export function LibraryBrowser({
         selectedCollectionIds.length,
     ]);
 
+    const visiblePaletteGroups = useMemo(
+        () =>
+            paletteGroups
+                .map((group) => ({
+                    ...group,
+                    items: group.items.filter((item) =>
+                        matchesCommandPaletteItem(item, paletteInput)
+                    ),
+                }))
+                .filter((group) => group.items.length > 0),
+        [paletteGroups, paletteInput]
+    );
+
     let inputPlaceholder = "Change the layout…";
     if (paletteSection === "search") {
-        inputPlaceholder = "Search or jump to a command…";
+        inputPlaceholder = "Search, filter, group, sort, and more…";
     } else if (paletteSection === "filter") {
         inputPlaceholder = "Filter the library…";
     } else if (paletteSection === "group") {
@@ -1815,7 +1878,9 @@ export function LibraryBrowser({
         const buckets = new Map<string, LibraryItemWithCollections[]>();
         for (const item of sortedItems) {
             let key = "Other";
-            if (groupBy === "domain") {
+            if (groupBy === "source") {
+                key = item.source;
+            } else if (groupBy === "domain") {
                 key = itemDomain(item.url);
             } else if (groupBy === "month-added") {
                 key = itemMonthKey(item, "added");
@@ -1845,6 +1910,45 @@ export function LibraryBrowser({
                 title: formatGroupHeading(groupBy, key),
             }));
     }, [groupBy, sortMode, sortedItems]);
+    const shouldGateResults =
+        !(isAccessLoading || hasAccess) &&
+        filteredItems.length > FREE_LIBRARY_PREVIEW_ITEMS;
+    const gatedSections = useMemo(() => {
+        if (!shouldGateResults) {
+            return sections;
+        }
+
+        let remainingPreviewItems = FREE_LIBRARY_PREVIEW_ITEMS;
+        let shouldShowPaywallBanner = true;
+
+        return sections.map((section) => {
+            const paywallPreviewCount = Math.min(
+                section.items.length,
+                remainingPreviewItems
+            );
+            const hasLockedItems = paywallPreviewCount < section.items.length;
+
+            remainingPreviewItems = Math.max(
+                0,
+                remainingPreviewItems - paywallPreviewCount
+            );
+
+            if (hasLockedItems && shouldShowPaywallBanner) {
+                shouldShowPaywallBanner = false;
+
+                return {
+                    ...section,
+                    paywallPreviewCount,
+                    showPaywallBanner: true,
+                };
+            }
+
+            return {
+                ...section,
+                paywallPreviewCount,
+            };
+        });
+    }, [sections, shouldGateResults]);
 
     const hasActiveFilters = useMemo(
         () =>
@@ -1885,7 +1989,7 @@ export function LibraryBrowser({
     } = useSectionCollapseState({
         groupBy,
         hasActiveFilters,
-        sections,
+        sections: gatedSections,
         showEmptyLibraryPeek,
         showNoFilteredResults,
     });
@@ -1905,6 +2009,8 @@ export function LibraryBrowser({
         [commandPanelShellHeight]
     );
 
+    const systemControlKey = useClientOnlyValue(getSystemControlKey());
+
     const libraryGridBody = renderLibraryGridBody({
         clearLibraryPalette,
         collapsedSectionKeys: new Set(collapsedSectionKeys),
@@ -1913,15 +2019,15 @@ export function LibraryBrowser({
         enableSectionCollapse,
         layoutRefreshToken,
         onCopyLink: handleCopyLink,
-        onCreateCollectionRequest,
         onDelete: handleRequestDelete,
         onOpenHere: handleOpenHere,
         onOpenInNewTab: handleOpenInNewTab,
         onToggleSection: toggleSection,
         onUpdateItemCollections,
+        paywallTotalCount: filteredItems.length,
         pendingCollectionItemIds,
         pendingDeleteItemId: pendingDeleteItem?.id ?? null,
-        sections,
+        sections: gatedSections,
         showEmptyLibraryPeek,
         showNoFilteredResults,
     });
@@ -1972,6 +2078,10 @@ export function LibraryBrowser({
             >
                 <CommandPanel className="w-full" unstyled>
                     <Command
+                        filter={null}
+                        filteredItems={visiblePaletteGroups.map((group) => ({
+                            items: group.items,
+                        }))}
                         items={paletteGroups.map((group) => ({
                             items: group.items,
                         }))}
@@ -2000,6 +2110,11 @@ export function LibraryBrowser({
                                     columnCountMode={columnCountMode}
                                     domainFilters={domainFilters}
                                     groupBy={groupBy}
+                                    hasActiveSearchFilterGroupOrSort={
+                                        hasActiveFilters ||
+                                        groupBy !== "none" ||
+                                        sortMode !== DEFAULT_SORT_MODE
+                                    }
                                     isPaletteFocused={isPaletteFocused}
                                     paletteInput={paletteInput}
                                     searchTerms={searchTerms}
@@ -2019,10 +2134,10 @@ export function LibraryBrowser({
                             wrapperClassName="min-h-11 w-full max-w-md rounded-full bg-muted/94 backdrop-blur-xs px-2 py-1.5 ring-1 ring-border/40 shadow-[0_0_0_rgba(15,23,42,0)] transition-[box-shadow,background-color] duration-200 has-focus-within:bg-background/96 has-focus-within:shadow-[0_10px_30px_rgba(15,23,42,0.10),0_1px_0_rgba(255,255,255,0.24)_inset] dark:ring-border/50 dark:shadow-[0_0_0_rgba(0,0,0,0)] dark:has-focus-within:shadow-[0_12px_32px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.05)_inset]"
                         />
                         <p className="sr-only">
-                            Press {`${getSystemControlKey()}K`},{" "}
-                            {`${getSystemControlKey()}P`}, or slash to focus
-                            search. Use arrow keys to navigate results and
-                            Escape to clear, go back, or close the command list.
+                            Press {`${systemControlKey}K`},{" "}
+                            {`${systemControlKey}P`}, or slash to focus search.
+                            Use arrow keys to navigate results and Escape to
+                            clear, go back, or close the command list.
                         </p>
                         <div
                             className={cn(
@@ -2034,7 +2149,7 @@ export function LibraryBrowser({
                                 No matching commands found.
                             </CommandEmpty>
                             <CommandList className="max-h-[min(26rem,70vh)] overflow-y-auto">
-                                {paletteGroups.map((group) => (
+                                {visiblePaletteGroups.map((group) => (
                                     <CommandGroup
                                         items={group.items}
                                         key={group.label}
@@ -2138,9 +2253,9 @@ export function LibraryBrowser({
                     ) : null}
                 </div>
             </div>
-            {/* <UnprivilegedOnly>
+            <UnprivilegedOnly>
                 <InlinePromotionBanner />
-            </UnprivilegedOnly> */}
+            </UnprivilegedOnly>
             {libraryGridBody}
         </div>
     );

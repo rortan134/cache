@@ -155,80 +155,80 @@ export async function upsertLibraryItemsFromIngest(
     items: IngestItemInput[]
 ): Promise<number> {
     let count = 0;
-    await prisma.$transaction(async (tx) => {
-        const libraryItemDelegate = tx.libraryItem as unknown as {
-            upsert(args: {
-                create: {
+    const libraryItemDelegate = prisma.libraryItem as unknown as {
+        upsert(args: {
+            create: {
+                browserProfileId: string;
+                caption: string | null;
+                externalId: string;
+                kind: "bookmark" | "folder";
+                parentExternalId: string | null;
+                postedAt: Date | null;
+                scrapedAt: Date | null;
+                source: LibraryItemSource;
+                sourceDeviceId: string | null;
+                sourceDeviceName: string | null;
+                sourceMetadata: Record<string, unknown> | null;
+                thumbnailUrl: string | null;
+                url: string;
+                userId: string;
+            };
+            update: {
+                browserProfileId: string;
+                caption: string | null;
+                kind: "bookmark" | "folder";
+                parentExternalId: string | null;
+                postedAt: Date | null;
+                scrapedAt: Date | null;
+                sourceDeviceId: string | null;
+                sourceDeviceName: string | null;
+                sourceMetadata: Record<string, unknown> | null;
+                thumbnailUrl: string | null;
+                url: string;
+            };
+            where: {
+                userId_source_browserProfileId_externalId: {
                     browserProfileId: string;
-                    caption: string | null;
                     externalId: string;
-                    kind: "bookmark" | "folder";
-                    parentExternalId: string | null;
-                    postedAt: Date | null;
-                    scrapedAt: Date | null;
                     source: LibraryItemSource;
-                    sourceDeviceId: string | null;
-                    sourceDeviceName: string | null;
-                    sourceMetadata: Record<string, unknown> | null;
-                    thumbnailUrl: string | null;
-                    url: string;
                     userId: string;
                 };
-                update: {
-                    browserProfileId: string;
-                    caption: string | null;
-                    kind: "bookmark" | "folder";
-                    parentExternalId: string | null;
-                    postedAt: Date | null;
-                    scrapedAt: Date | null;
-                    sourceDeviceId: string | null;
-                    sourceDeviceName: string | null;
-                    sourceMetadata: Record<string, unknown> | null;
-                    thumbnailUrl: string | null;
-                    url: string;
-                };
-                where: {
-                    userId_source_browserProfileId_externalId: {
-                        browserProfileId: string;
-                        externalId: string;
-                        source: LibraryItemSource;
-                        userId: string;
-                    };
-                };
-            }): Promise<unknown>;
-        };
-        for (const item of items) {
-            const externalId = externalIdForIngestItem(source, item);
-            if (!externalId) {
-                continue;
-            }
-            const browserProfileId =
-                item.browserProfileId?.trim() || DEFAULT_BROWSER_PROFILE_ID;
-            await libraryItemDelegate.upsert({
-                create: buildIngestCreateRow(
-                    browserProfileId,
-                    externalId,
-                    item,
-                    source,
-                    userId
-                ),
-                update: buildIngestUpdateRow(
-                    browserProfileId,
-                    externalId,
-                    item,
-                    source
-                ),
-                where: {
-                    userId_source_browserProfileId_externalId: {
-                        browserProfileId,
-                        externalId,
-                        source,
-                        userId,
-                    },
-                },
-            });
-            count += 1;
+            };
+        }): Promise<unknown>;
+    };
+
+    for (const item of items) {
+        const externalId = externalIdForIngestItem(source, item);
+        if (!externalId) {
+            continue;
         }
-    });
+        const browserProfileId =
+            item.browserProfileId?.trim() || DEFAULT_BROWSER_PROFILE_ID;
+        await libraryItemDelegate.upsert({
+            create: buildIngestCreateRow(
+                browserProfileId,
+                externalId,
+                item,
+                source,
+                userId
+            ),
+            update: buildIngestUpdateRow(
+                browserProfileId,
+                externalId,
+                item,
+                source
+            ),
+            where: {
+                userId_source_browserProfileId_externalId: {
+                    browserProfileId,
+                    externalId,
+                    source,
+                    userId,
+                },
+            },
+        });
+        count += 1;
+    }
+
     return count;
 }
