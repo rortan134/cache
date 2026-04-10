@@ -22,9 +22,10 @@ function InlinePromotionBanner() {
         <aside className="flex items-center gap-2 rounded-xl bg-muted px-4 py-2">
             <Badge>PRO</Badge>
             <div className="flex items-center font-medium text-sm">
-                Upgrade for full access to Cache&nbsp;—&nbsp;
+                Upgrade for full access to Cache and all
+                integrations&nbsp;—&nbsp;
                 <PricingUpgradeButton
-                    className="p-0"
+                    className="p-0 underline"
                     fullWidth={false}
                     locale={locale}
                     size="sm"

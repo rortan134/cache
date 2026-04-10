@@ -25,7 +25,7 @@ export async function generateMetadata({
         description: gtPublicString(
             locale,
             "pricing.metadata.description",
-            "Simple pricing for power users who want one place to organize and rediscover everything they save."
+            "Simple pricing for power users who want one place to organize and rediscover everything they save.",
         ),
         title: gtPublicString(locale, "pricing.metadata.title", "Pricing"),
     };
@@ -45,7 +45,7 @@ export default async function PricingPage({
                 <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
                     <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
                         <T context="Pricing page hero copy">
-                            <h1 className="max-w-readable font-medium text-4xl leading-[0.95] tracking-[-0.05em] md:text-5xl">
+                            <h1 className="font-medium text-4xl leading-[0.95] tracking-[-0.05em] md:text-5xl">
                                 Give your every bookmark more meaning.
                             </h1>
                             <p className="max-w-2xl text-base text-muted-foreground leading-[1.35] md:text-[1.15rem]">

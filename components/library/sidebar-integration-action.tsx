@@ -59,7 +59,7 @@ function openExternal(url: string) {
 }
 
 function isExtensionIntegration(
-    id: IntegrationId
+    id: IntegrationId,
 ): id is ExtensionIntegrationId {
     return (
         id === "chrome" ||
@@ -134,7 +134,7 @@ export function SidebarIntegrationAction({
         openExternal(
             extensionInstalled
                 ? EXTENSION_OPEN_URL[id]
-                : CACHE_EXTENSION_DOWNLOAD_URL
+                : CACHE_EXTENSION_DOWNLOAD_URL,
         );
     }, [extensionInstalled, id]);
 
@@ -155,19 +155,19 @@ export function SidebarIntegrationAction({
                 throw new Error(
                     "error" in payload
                         ? payload.error
-                        : "Could not purge Chrome bookmarks right now."
+                        : "Could not purge Chrome bookmarks right now.",
                 );
             }
 
             setSuccessMessage(
-                `Purged ${payload.purged} Chrome item${payload.purged === 1 ? "" : "s"} from Cache.`
+                `Purged ${payload.purged} Chrome item${payload.purged === 1 ? "" : "s"} from Cache.`,
             );
             router.refresh();
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not purge Chrome bookmarks right now."
+                    : "Could not purge Chrome bookmarks right now.",
             );
         } finally {
             setIsConnecting(false);
@@ -189,14 +189,14 @@ export function SidebarIntegrationAction({
             if (result.error) {
                 setErrorMessage(
                     result.error.message ??
-                        "Could not start the Google connection flow."
+                        "Could not start the Google connection flow.",
                 );
             }
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the Google connection flow."
+                    : "Could not start the Google connection flow.",
             );
         } finally {
             setIsConnecting(false);
@@ -234,7 +234,7 @@ export function SidebarIntegrationAction({
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the account connection flow."
+                    : "Could not start the account connection flow.",
             );
         } finally {
             setIsConnecting(false);
@@ -262,19 +262,19 @@ export function SidebarIntegrationAction({
             if (!(response.ok && "importedCount" in payload)) {
                 throw new Error(
                     payload.error ??
-                        "Could not import pins from Pinterest right now."
+                        "Could not import pins from Pinterest right now.",
                 );
             }
 
             setSuccessMessage(
-                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`
+                `Imported ${payload.importedCount} pin${payload.importedCount === 1 ? "" : "s"} from ${payload.boardsCount} board${payload.boardsCount === 1 ? "" : "s"}.`,
             );
             router.refresh();
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not import pins from Pinterest right now."
+                    : "Could not import pins from Pinterest right now.",
             );
         } finally {
             setIsImportingPinterest(false);
@@ -302,19 +302,19 @@ export function SidebarIntegrationAction({
             if (!(response.ok && "importedCount" in payload)) {
                 throw new Error(
                     payload.error ??
-                        "Could not import bookmarks from X right now."
+                        "Could not import bookmarks from X right now.",
                 );
             }
 
             setSuccessMessage(
-                `Synced ${payload.importedCount + payload.updatedCount} X bookmark${payload.importedCount + payload.updatedCount === 1 ? "" : "s"}${payload.prunedCount > 0 ? ` and pruned ${payload.prunedCount}` : ""}.`
+                `Synced ${payload.importedCount + payload.updatedCount} X bookmark${payload.importedCount + payload.updatedCount === 1 ? "" : "s"}${payload.prunedCount > 0 ? ` and pruned ${payload.prunedCount}` : ""}.`,
             );
             router.refresh();
         } catch (error) {
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not import bookmarks from X right now."
+                    : "Could not import bookmarks from X right now.",
             );
         } finally {
             setIsImportingX(false);
@@ -372,7 +372,7 @@ export function SidebarIntegrationAction({
                     type="button"
                     variant="ghost"
                 >
-                    {parked ? "Pending" : connectLabel}
+                    {parked ? "Soon" : connectLabel}
                 </Button>
                 {isGooglePhotosIntegration && connected ? (
                     <GooglePhotosImportButton variant="outline" />

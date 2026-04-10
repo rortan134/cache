@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/preview-drawer";
 import { BlockPromotionBanner } from "@/components/ui/promotion-banner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Ticker } from "@/components/ui/ticker";
 import { getSubtleColorGradientFromName } from "@/lib/colors";
 import { getNoteExcerpt } from "@/lib/library/notes";
 import type {
@@ -83,7 +84,7 @@ interface GridProps {
     readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly paywallPreviewCount?: number;
     readonly paywallTotalCount?: number;
@@ -116,7 +117,7 @@ interface LibraryGridCardProps {
     readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -219,7 +220,7 @@ function PreviewMedia({
         // biome-ignore lint/a11y/noNoninteractiveElementInteractions: image load failures drive the visual fallback state
         <img
             alt={alt}
-            className="size-full object-cover transition-transform duration-200 group-focus-within:scale-[1.025] group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
+            className="size-full object-cover"
             height={400}
             loading="lazy"
             onError={() => setDidFail(true)}
@@ -241,7 +242,7 @@ function CollectionComboboxPicker({
     readonly item: LibraryItemWithCollections;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly open?: boolean;
@@ -253,7 +254,7 @@ function CollectionComboboxPicker({
 
     const inputRef = useRef<HTMLInputElement>(null);
     const selectedCollectionIds = item.collections.map(
-        (collection) => collection.id
+        (collection) => collection.id,
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
@@ -292,17 +293,16 @@ function CollectionComboboxPicker({
                                 ? `Edit collections (${selectedCount} selected)`
                                 : "Add to collections"
                         }
-                        className="rounded-full opacity-80 hover:opacity-100"
-                        loading={isPending}
+                        className="rounded-full mix-blend-difference invert hover:brightness-125"
                         size="icon-sm"
                         variant="ghost"
                     />
                 }
             >
                 {selectedCount > 0 ? (
-                    <CircleDot className="size-4" />
+                    <CircleDot className="size-4.5" />
                 ) : (
-                    <CircleDashed className="size-4" />
+                    <CircleDashed className="size-4.5" />
                 )}
             </ComboboxTrigger>
             <ComboboxPopup>
@@ -436,20 +436,15 @@ function LibraryGridCard({
                         target={isNote ? undefined : "_blank"}
                     >
                         {isNote ? (
-                            <div className="relative flex min-h-72 flex-col justify-between overflow-hidden bg-linear-to-br from-amber-50 via-background to-stone-100 px-4 py-4">
+                            <div className="relative flex aspect-3/4 h-auto min-h-72 w-full flex-col justify-between overflow-hidden bg-linear-to-br from-amber-50 via-background to-stone-100 p-3">
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.18),transparent_45%)]" />
-                                <div className="relative flex items-start justify-end gap-3">
-                                    <span className="text-[11px] text-muted-foreground">
-                                        {addedLabel}
-                                    </span>
-                                </div>
-                                <div className="relative flex flex-1 flex-col gap-3 pt-6">
+                                <div className="relative flex flex-1 flex-col gap-2 pt-1.5">
                                     <h3 className="line-clamp-3 font-semibold text-base text-foreground leading-tight">
                                         {displayTitle}
                                     </h3>
-                                    <p className="line-clamp-8 whitespace-pre-wrap text-muted-foreground text-sm leading-6">
+                                    <p className="whitespace-pre-wrap text-muted-foreground text-xs leading-relaxed opacity-90">
                                         {noteExcerpt ||
-                                            "Tap to start writing in this note."}
+                                            "Tap to start writing in this note"}
                                     </p>
                                 </div>
                             </div>
@@ -460,22 +455,22 @@ function LibraryGridCard({
                                     key={previewImageUrl ?? `empty-${item.id}`}
                                     src={previewImageUrl}
                                 />
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                                <div className="pointer-events-none absolute inset-x-0 bottom-8 px-3 py-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
                                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                        <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                        <span className="rounded-full border border-border/50 bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                             {domain}
                                         </span>
                                         {hasBothDates ? (
                                             <>
-                                                <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                                <span className="rounded-full border border-border/50 bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                                     Posted: {postedLabel}
                                                 </span>
-                                                <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                                <span className="rounded-full border border-border/50 bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                                     Added: {addedLabel}
                                                 </span>
                                             </>
                                         ) : (
-                                            <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                            <span className="rounded-full border border-border/50 bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
                                                 {postedLabel || addedLabel}
                                             </span>
                                         )}
@@ -484,7 +479,7 @@ function LibraryGridCard({
                             </div>
                         )}
                     </a>
-                    <div className="flex items-center gap-0.5 px-2.5 py-2">
+                    <div className="overflow-fade-top absolute inset-x-0 bottom-0 flex items-center gap-1 overflow-hidden bg-black/35 px-1.5 pt-2 pb-1 backdrop-blur-[2.5px]">
                         <CollectionComboboxPicker
                             collections={collections}
                             item={item}
@@ -494,12 +489,14 @@ function LibraryGridCard({
                             pendingCollectionItemIds={pendingCollectionItemIds}
                         />
                         <p
-                            className="line-clamp-2 truncate text-foreground text-xs leading-tight"
+                            className="truncate py-px font-medium text-white text-xs leading-none mix-blend-difference"
                             title={displayTitle}
                         >
-                            {isNote
-                                ? displayTitle
-                                : item.caption?.trim() || item.url}
+                            <Ticker>
+                                {isNote
+                                    ? displayTitle
+                                    : item.caption?.trim() || item.url}
+                            </Ticker>
                         </p>
                     </div>
                 </article>
@@ -657,7 +654,7 @@ function renderLibraryMasonry({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -666,7 +663,7 @@ function renderLibraryMasonry({
                     ))}
                 </div>
             }
-            gap={4}
+            gap={6}
             linear
         >
             {items.map((item) => {
@@ -677,7 +674,7 @@ function renderLibraryMasonry({
                 const previewDescription =
                     domain === "Other" ? item.url : domain;
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt
+                    item.scrapedAt ?? item.createdAt,
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
@@ -745,7 +742,7 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
     );
 
     return (
-        <Masonry columnCount={5} fallback={fallback} gap={4} linear>
+        <Masonry columnCount={5} fallback={fallback} gap={6} linear>
             {EMPTY_LIBRARY_PEEK_PLACEHOLDERS.map(({ aspect, id }, index) => {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
                 return (
@@ -789,7 +786,7 @@ export function ExtensionLibraryGrid({
 
     const resolvedPreviewCount = Math.max(
         0,
-        Math.min(paywallPreviewCount ?? items.length, items.length)
+        Math.min(paywallPreviewCount ?? items.length, items.length),
     );
     const showPaywall = resolvedPreviewCount < items.length;
     const previewItems = showPaywall
@@ -919,7 +916,7 @@ export function ExtensionLibrarySection({
                 className={cn(
                     "flex items-center justify-between gap-3 py-1 pr-5",
                     stickyHeader &&
-                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50"
+                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50",
                 )}
                 style={
                     stickyHeader

@@ -2,7 +2,7 @@
  * BCP-47 locales enabled in General Translation.
  * Keep in sync with `locales` in `gt.config.json`.
  */
-export const SUPPORTED_GT_LOCALES = [
+export const SUPPORTED_LOCALES = [
     "en-US",
     "fr-FR",
     "de-DE",
@@ -21,9 +21,9 @@ export const SUPPORTED_GT_LOCALES = [
     "tr-TR",
 ] as const;
 
-export type SupportedGTLocale = (typeof SUPPORTED_GT_LOCALES)[number];
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-export const DEFAULT_GT_LOCALE: SupportedGTLocale = "en-US";
+export const DEFAULT_LOCALE: SupportedLocale = "en-US";
 
 /** Shown after the page-specific title, e.g. "Settings | Cache". */
 export const SITE_APP_NAME = "Cache App";

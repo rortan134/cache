@@ -47,7 +47,7 @@ export function SoundcloudConnectButton({
 
     let buttonLabel = "Connect";
     if (parked) {
-        buttonLabel = "Pending";
+        buttonLabel = "Soon";
     } else if (connected) {
         buttonLabel = "Reconnect";
     }
@@ -70,7 +70,7 @@ export function SoundcloudConnectButton({
             const redirectUrl = readRedirectUrl(response);
             if (!redirectUrl) {
                 setErrorMessage(
-                    "Could not start the SoundCloud connection flow."
+                    "Could not start the SoundCloud connection flow.",
                 );
                 return;
             }
@@ -80,7 +80,7 @@ export function SoundcloudConnectButton({
             setErrorMessage(
                 error instanceof Error
                     ? error.message
-                    : "Could not start the SoundCloud connection flow."
+                    : "Could not start the SoundCloud connection flow.",
             );
         } finally {
             setLoading(false);
@@ -228,7 +228,7 @@ export function SoundcloudLikes({
                         "flex items-start gap-3 rounded-2xl border px-4 py-4 text-sm",
                         result.status === "RECONNECT_REQUIRED"
                             ? "border-[#ff5500]/20 bg-[#ff5500]/6 text-foreground"
-                            : "border-border/60 bg-background/50 text-muted-foreground"
+                            : "border-border/60 bg-background/50 text-muted-foreground",
                     )}
                 >
                     <RefreshCw
@@ -237,7 +237,7 @@ export function SoundcloudLikes({
                             "mt-0.5 size-4 shrink-0",
                             result.status === "RECONNECT_REQUIRED"
                                 ? "text-[#ff5500]"
-                                : "text-muted-foreground"
+                                : "text-muted-foreground",
                         )}
                     />
                     <p>{result.message}</p>

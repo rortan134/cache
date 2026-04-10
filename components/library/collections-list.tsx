@@ -36,11 +36,13 @@ import {
     Trash2Icon,
 } from "lucide-react";
 import type { CSSProperties, ReactElement } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const COLLECTIONS_PREVIEW_OPEN_DELAY_MS = 450;
 
 function getCollectionButtonStyle(
     name: string,
-    isSelected: boolean
+    isSelected: boolean,
 ): CSSProperties {
     const assignedColor = getColorFromName(name);
     const backgroundOpacity = isSelected ? 20 : 7;
@@ -60,31 +62,101 @@ export function CollectionsList({
 
 export function CollectionsListTrigger({
     className,
+    collectionLabels,
+    isPreviewEnabled = true,
+    onMouseEnter,
+    onMouseLeave,
+    onPointerDown,
     ...props
-}: React.ComponentProps<typeof CollapsibleTrigger>): ReactElement {
+}: React.ComponentProps<typeof CollapsibleTrigger> & {
+    collectionLabels: string[];
+    isPreviewEnabled?: boolean;
+}): ReactElement {
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isTriggerHovered, setIsTriggerHovered] = useState(false);
+    const hoverOpenTimeoutRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (hoverOpenTimeoutRef.current) {
+            clearTimeout(hoverOpenTimeoutRef.current);
+            hoverOpenTimeoutRef.current = null;
+        }
+
+        if (!(isPreviewEnabled && isTriggerHovered)) {
+            setIsPreviewOpen(false);
+            return;
+        }
+
+        hoverOpenTimeoutRef.current = window.setTimeout(() => {
+            setIsPreviewOpen(true);
+            hoverOpenTimeoutRef.current = null;
+        }, COLLECTIONS_PREVIEW_OPEN_DELAY_MS);
+
+        return () => {
+            if (hoverOpenTimeoutRef.current) {
+                clearTimeout(hoverOpenTimeoutRef.current);
+                hoverOpenTimeoutRef.current = null;
+            }
+        };
+    }, [isPreviewEnabled, isTriggerHovered]);
+
     return (
-        <CollapsibleTrigger
-            className={cn(
-                "flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight",
-                className
-            )}
-            type="button"
-            {...props}
-        >
-            <Component
-                aria-hidden
-                className="inline-block size-5 shrink-0"
-                focusable="false"
+        <Popover open={isPreviewOpen}>
+            <PopoverTrigger
+                render={
+                    <CollapsibleTrigger
+                        className={cn(
+                            "flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight",
+                            className,
+                        )}
+                        onMouseEnter={(event) => {
+                            onMouseEnter?.(event);
+                            setIsTriggerHovered(true);
+                        }}
+                        onMouseLeave={(event) => {
+                            onMouseLeave?.(event);
+                            setIsTriggerHovered(false);
+                        }}
+                        onPointerDown={(event) => {
+                            onPointerDown?.(event);
+                            if (hoverOpenTimeoutRef.current) {
+                                clearTimeout(hoverOpenTimeoutRef.current);
+                                hoverOpenTimeoutRef.current = null;
+                            }
+                            setIsPreviewOpen(false);
+                        }}
+                        type="button"
+                        {...props}
+                    >
+                        <div className="relative">
+                            <Component
+                                aria-hidden
+                                className="inline-block size-5 shrink-0"
+                                focusable="false"
+                            />
+                            {collectionLabels.length > 0 ? (
+                                <span className="absolute -bottom-[7px] left-[17px] text-nowrap text-[10px] tabular-nums opacity-80 transition-opacity group-data-panel-open:opacity-100">
+                                    {collectionLabels.length}
+                                </span>
+                            ) : null}
+                        </div>
+                        <span className="min-w-0 flex-1 font-medium text-sm">
+                            Collections
+                        </span>
+                        <ChevronDown
+                            aria-hidden
+                            className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
+                            focusable="false"
+                        />
+                    </CollapsibleTrigger>
+                }
             />
-            <span className="min-w-0 flex-1 font-medium text-sm">
-                Collections
-            </span>
-            <ChevronDown
-                aria-hidden
-                className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
-                focusable="false"
-            />
-        </CollapsibleTrigger>
+            <PopoverPopup align="start" tooltipStyle>
+                <span className="font-medium">
+                    {collectionLabels.join(", ")}
+                </span>
+            </PopoverPopup>
+        </Popover>
     );
 }
 
@@ -132,7 +204,7 @@ export function CollectionsListItem({
         <div className="group relative flex select-none items-center">
             <Button
                 className={cn(
-                    "min-w-0 flex-1 justify-start rounded-full pr-10 pl-3.5 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]"
+                    "min-w-0 flex-1 justify-start rounded-full border-[var(--focus-ring-color)]/7 pr-10 pl-3.5 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]",
                 )}
                 onClick={onSelect}
                 style={getCollectionButtonStyle(collection.name, isSelected)}
@@ -225,7 +297,7 @@ export function CollectionsListFeedback({
                     "text-xs",
                     tone === "error"
                         ? "text-destructive"
-                        : "text-muted-foreground"
+                        : "text-muted-foreground",
                 )}
             >
                 {message}
@@ -307,8 +379,7 @@ export function SmartCollectionsCallout(): ReactElement {
                                         <p className="text-foreground">
                                             Let Cache do the organizing: AI now
                                             groups your related saves into
-                                            focused, contextual ready-to-use
-                                            collections.
+                                            focused, contextual collections.
                                         </p>
                                         <Button
                                             className="ml-auto"

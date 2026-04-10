@@ -3,6 +3,7 @@
 import { IntegrationsSetupWizardButton } from "@/components/library/integrations-setup";
 import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
     Collapsible,
     CollapsiblePanel,
@@ -16,6 +17,8 @@ import {
 } from "@/lib/integrations/supports";
 import type { LibraryItemSource } from "@/prisma/client/enums";
 import { Info } from "lucide-react";
+import type { ReactElement } from "react";
+import { useState } from "react";
 
 interface LibrarySidebarIntegrationsProps {
     items: { source: LibraryItemSource }[];
@@ -50,14 +53,16 @@ function IntegrationsList({
     items,
     parkedIntegrationIds = [],
     serverConnectedIntegrationIds,
-}: LibrarySidebarIntegrationsProps) {
+}: LibrarySidebarIntegrationsProps): ReactElement {
     const extensionInstalled = useExtensionInstalled();
     const parkedIntegrationIdSet = new Set(parkedIntegrationIds);
     const serverConnectedIds = new Set(serverConnectedIntegrationIds);
+    const [isConnectAccountNoteOpen, setIsConnectAccountNoteOpen] =
+        useState(true);
     const connectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
         isConnectedOnClient({ extensionInstalled, id, serverConnectedIds })
             ? [id]
-            : []
+            : [],
     );
 
     return (
@@ -98,14 +103,32 @@ function IntegrationsList({
                         />
                     </div>
                 ))}
-                <div className="mt-1.5 flex gap-1.5 pl-1">
-                    <Info className="mt-0.5 inline-block size-3.5 shrink-0" />
-                    <p className="text-[11px] text-muted-foreground leading-tight">
-                        Please only connect accounts you trust. Cache can access
-                        what you choose to save with connected apps. You can
-                        always change your mind.
-                    </p>
-                </div>
+                <Collapsible
+                    onOpenChange={setIsConnectAccountNoteOpen}
+                    open={isConnectAccountNoteOpen}
+                >
+                    <CollapsiblePanel className="mt-1.5 pl-1">
+                        <div className="flex gap-1.5">
+                            <Info className="mt-0.5 inline-block size-3.5 shrink-0" />
+                            <p className="text-[11px] text-muted-foreground leading-tight">
+                                Please only connect accounts you trust. Cache
+                                can access what you choose to save with
+                                connected apps. You can always change your mind.
+                                <Button
+                                    className="h-fit! leading-tight sm:text-[11px]"
+                                    onClick={() =>
+                                        setIsConnectAccountNoteOpen(false)
+                                    }
+                                    size="xs"
+                                    type="button"
+                                    variant="link"
+                                >
+                                    Dismiss
+                                </Button>
+                            </p>
+                        </div>
+                    </CollapsiblePanel>
+                </Collapsible>
             </CollapsiblePanel>
         </Collapsible>
     );
