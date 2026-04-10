@@ -43,7 +43,7 @@ import type {
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
-import { LibraryItemSource } from "@/prisma/client/enums";
+import type { LibraryItemSource } from "@/prisma/client/enums";
 import AppIconSmall from "@/public/cache-icon-small.png";
 import { ChevronRight, PlusIcon } from "lucide-react";
 import Image from "next/image";

@@ -62,7 +62,7 @@ function sourceLabel(source: LibraryItemSource): string {
 
 function getCollectionButtonStyle(
     name: string,
-    isSelected: boolean,
+    isSelected: boolean
 ): CSSProperties {
     const assignedColor = getColorFromName(name);
     const backgroundOpacity = isSelected ? 20 : 6;
@@ -89,7 +89,7 @@ export function CollectionsListTrigger({
         <CollapsibleTrigger
             className={cn(
                 "flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight",
-                className,
+                className
             )}
             type="button"
             {...props}
@@ -155,7 +155,7 @@ export function CollectionsListItem({
         <div className="group relative flex select-none items-center">
             <Button
                 className={cn(
-                    "min-w-0 flex-1 select-none justify-start rounded-full pr-11 pl-3.5 text-left transition-[filter,box-shadow] hover:brightness-95",
+                    "min-w-0 flex-1 select-none justify-start rounded-full pr-11 pl-3.5 text-left transition-[filter,box-shadow] hover:brightness-95"
                 )}
                 onClick={onSelect}
                 style={getCollectionButtonStyle(collection.name, isSelected)}
@@ -248,7 +248,7 @@ export function CollectionsListFeedback({
                     "text-xs",
                     tone === "error"
                         ? "text-destructive"
-                        : "text-muted-foreground",
+                        : "text-muted-foreground"
                 )}
             >
                 {message}
