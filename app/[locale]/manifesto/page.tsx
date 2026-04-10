@@ -7,8 +7,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/ui/footer";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
-import { PageShell, PageSidebarShell } from "@/components/ui/layouts";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
+import { PageShell } from "@/components/ui/page-shell";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { gtPublicString } from "@/lib/gt-public-json";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector, T } from "gt-next";
@@ -42,48 +43,45 @@ export default async function Manifesto({
     return (
         <PageShell>
             <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
-                <PageSidebarShell
-                    bottom={<LocaleSelector />}
-                    top={
-                        <>
-                            <LogoContextMenu
-                                href="/library"
-                                src={LogoIconImage}
-                            />
-                            <div className="flex flex-col gap-3 text-balance">
-                                <T context="Manifesto title">
-                                    <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
-                                        <GradientWaveText ariaLabel="Manifesto">
-                                            Manifesto.
-                                        </GradientWaveText>
-                                    </h1>
-                                    <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                        Why we built Cache.
-                                    </p>
+                <Sidebar>
+                    <SidebarHeader>
+                        <LogoContextMenu href="/library" src={LogoIconImage} />
+                        <div className="flex flex-col gap-3">
+                            <T context="Manifesto title">
+                                <h1 className="font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
+                                    <GradientWaveText ariaLabel="Manifesto">
+                                        Manifesto.
+                                    </GradientWaveText>
+                                </h1>
+                                <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
+                                    Why we built Cache.
+                                </p>
+                            </T>
+                        </div>
+                        <SignedOutOnly>
+                            <GoogleSignInButton locale={locale}>
+                                <T context="Sign in/up CTA button">
+                                    Continue with Google
                                 </T>
-                            </div>
-                            <SignedOutOnly>
-                                <GoogleSignInButton locale={locale}>
-                                    <T context="Sign in/up CTA button">
-                                        Continue with Google
-                                    </T>
-                                </GoogleSignInButton>
-                            </SignedOutOnly>
-                            <SignedInOnly>
-                                <Button
-                                    render={
-                                        <Link href="/library">
-                                            Go to my library
-                                            <ChevronRight className="size-4" />
-                                        </Link>
-                                    }
-                                    size="xl"
-                                />
-                            </SignedInOnly>
-                            <SessionHint />
-                        </>
-                    }
-                />
+                            </GoogleSignInButton>
+                        </SignedOutOnly>
+                        <SignedInOnly>
+                            <Button
+                                render={
+                                    <Link href="/library">
+                                        Go to my library
+                                        <ChevronRight className="size-4" />
+                                    </Link>
+                                }
+                                size="xl"
+                            />
+                        </SignedInOnly>
+                        <SessionHint />
+                    </SidebarHeader>
+                    <SidebarFooter>
+                        <LocaleSelector />
+                    </SidebarFooter>
+                </Sidebar>
                 <div className="flex w-full max-w-[800px] flex-col gap-16 px-8 py-16 2xl:mx-auto">
                     <article className="flex flex-col gap-12 text-[#0A0B0D]">
                         <section className="flex flex-col gap-6">

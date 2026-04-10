@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/ui/footer";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
 import { Chrome } from "@/components/ui/integration-icons";
-import { PageShell, PageSidebarShell } from "@/components/ui/layouts";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
+import { PageShell } from "@/components/ui/page-shell";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
@@ -50,79 +51,71 @@ export default async function Home({
     return (
         <PageShell>
             <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
-                <PageSidebarShell
-                    bottom={
-                        <>
-                            <div className="hidden items-center gap-3 lg:flex">
-                                <Image
-                                    alt="Download QR Code"
-                                    className="size-20"
-                                    height={80}
-                                    src={QRCodeDownloadImage}
-                                    width={80}
-                                />
-                                <div className="flex flex-col gap-1.5 pb-[2px]">
-                                    <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
-                                        <T context="Chrome web store browser extension">
-                                            Install the extension
-                                        </T>
-                                    </p>
-                                    <p className="flex shrink-0 flex-row items-center gap-1.5 truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
-                                        <span>
-                                            <Chrome className="size-4" />
-                                        </span>
-                                        <span className="opacity-50">
-                                            Chrome Web Store
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                            <LocaleSelector />
-                        </>
-                    }
-                    top={
-                        <>
-                            <LogoContextMenu
-                                href="/library"
-                                src={LogoIconImage}
-                            />
-                            <div className="flex flex-col gap-3 text-balance">
-                                <T context="'Cache' is the product's name">
-                                    <h1 className="text-balance font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
-                                        <GradientWaveText ariaLabel="Unify your bookmarks">
-                                            Unify your bookmarks.
-                                        </GradientWaveText>
-                                    </h1>
-                                    <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
-                                        Meet Cache – one place to collect,
-                                        organize, and rediscover everything
-                                        you’ve saved across platforms, right in
-                                        your browser.
-                                    </p>
+                <Sidebar>
+                    <SidebarHeader>
+                        <LogoContextMenu href="/library" src={LogoIconImage} />
+                        <div className="flex flex-col gap-3">
+                            <T context="'Cache' is the product's name">
+                                <h1 className="font-medium text-[3rem] leading-[98%] md:text-[4rem] md:tracking-[-0.21875rem]">
+                                    <GradientWaveText ariaLabel="Unify your bookmarks">
+                                        Unify your bookmarks.
+                                    </GradientWaveText>
+                                </h1>
+                                <p className="font-medium text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%] opacity-50 lg:max-w-[320px]">
+                                    Meet Cache – one place to collect, organize,
+                                    and rediscover everything you’ve saved
+                                    across platforms, right in your browser.
+                                </p>
+                            </T>
+                        </div>
+                        <SignedOutOnly>
+                            <GoogleSignInButton locale={locale}>
+                                <T context="Sign in/up CTA button">
+                                    Continue with Google
                                 </T>
-                            </div>
-                            <SignedOutOnly>
-                                <GoogleSignInButton locale={locale}>
-                                    <T context="Sign in/up CTA button">
-                                        Continue with Google
+                            </GoogleSignInButton>
+                        </SignedOutOnly>
+                        <SignedInOnly>
+                            <Button
+                                render={
+                                    <Link href="/library">
+                                        Go to my library
+                                        <ChevronRight className="size-4" />
+                                    </Link>
+                                }
+                                size="xl"
+                            />
+                        </SignedInOnly>
+                        <SessionHint />
+                    </SidebarHeader>
+                    <SidebarFooter>
+                        <div className="hidden items-center gap-3 lg:flex">
+                            <Image
+                                alt="Download QR Code"
+                                className="size-20"
+                                height={80}
+                                src={QRCodeDownloadImage}
+                                width={80}
+                            />
+                            <div className="flex flex-col gap-1.5 pb-[2px]">
+                                <p className="font-medium font-regular text-[#0A0B0D] text-[18px] tracking-[-3%]">
+                                    <T context="Chrome web store browser extension">
+                                        Install the extension
                                     </T>
-                                </GoogleSignInButton>
-                            </SignedOutOnly>
-                            <SignedInOnly>
-                                <Button
-                                    render={
-                                        <Link href="/library">
-                                            Go to my library
-                                            <ChevronRight className="size-4" />
-                                        </Link>
-                                    }
-                                    size="xl"
-                                />
-                            </SignedInOnly>
-                            <SessionHint />
-                        </>
-                    }
-                />
+                                </p>
+                                <p className="flex shrink-0 flex-row items-center gap-1.5 truncate text-[#0A0B0D] text-[1rem] leading-[1.22] tracking-[-3%]">
+                                    <span>
+                                        <Chrome className="size-4" />
+                                    </span>
+                                    <span className="opacity-50">
+                                        Chrome Web Store
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <LocaleSelector />
+                    </SidebarFooter>
+                </Sidebar>
                 <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
                     <div className="aspect-video h-auto w-full rounded-2xl bg-muted" />
                     <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-[40px]">

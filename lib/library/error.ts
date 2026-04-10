@@ -9,3 +9,12 @@ export const LibraryCollectionError = NamedError.create(
         operation: z.string(),
     })
 );
+
+export const LibraryNoteError = NamedError.create(
+    "LibraryNoteError",
+    z.object({
+        code: z.enum(["invalid_note", "not_found"]),
+        message: z.string(),
+        operation: z.string(),
+    })
+);

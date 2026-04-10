@@ -8,6 +8,7 @@ generator client {
 }
 
 enum LibraryItemSource {
+    cache_note
     chrome_bookmarks
     google_photos
     instagram
@@ -21,6 +22,7 @@ enum LibraryItemSource {
 enum LibraryItemKind {
     bookmark
     folder
+    note
 }
 
 model User {
@@ -74,6 +76,8 @@ model LibraryItem {
     sourceDeviceName String?
     url              String
     caption          String?
+    noteContentHtml  String?
+    noteContentText  String?
     thumbnailUrl     String?
     sourceMetadata   Json?
     postedAt         DateTime?

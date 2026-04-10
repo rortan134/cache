@@ -10,6 +10,7 @@
 */
 
 export const LibraryItemSource = {
+  cache_note: 'cache_note',
   chrome_bookmarks: 'chrome_bookmarks',
   google_photos: 'google_photos',
   instagram: 'instagram',
@@ -25,7 +26,8 @@ export type LibraryItemSource = (typeof LibraryItemSource)[keyof typeof LibraryI
 
 export const LibraryItemKind = {
   bookmark: 'bookmark',
-  folder: 'folder'
+  folder: 'folder',
+  note: 'note'
 } as const
 
 export type LibraryItemKind = (typeof LibraryItemKind)[keyof typeof LibraryItemKind]

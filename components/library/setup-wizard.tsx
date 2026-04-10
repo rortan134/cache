@@ -8,8 +8,7 @@ import { cn } from "@/lib/utils";
 import type { LibraryItemSource } from "@/prisma/client/enums";
 import { ChevronDown } from "lucide-react";
 
-/** Baseline fill so the ring reads as progress; attributes the first step to signing up. */
-const SIGNUP_BASELINE_PERCENT = 10;
+const SIGNUP_PROGRESS_BASELINE_PERCENT = 10;
 
 function integrationSetupProgressPercent(
     connectedCount: number,
@@ -20,8 +19,8 @@ function integrationSetupProgressPercent(
     }
     const clamped = Math.min(connectedCount, syncable);
     const integrationPortion =
-        (clamped / syncable) * (100 - SIGNUP_BASELINE_PERCENT);
-    return Math.round(SIGNUP_BASELINE_PERCENT + integrationPortion);
+        (clamped / syncable) * (100 - SIGNUP_PROGRESS_BASELINE_PERCENT);
+    return Math.round(SIGNUP_PROGRESS_BASELINE_PERCENT + integrationPortion);
 }
 
 function syncableLibrarySourceTotal(): number {
@@ -100,6 +99,7 @@ export function IntegrationSetupWizardButton({
         items,
         connectedIntegrationIds
     );
+
     const connectedCount = connectedLabels.length;
     const text = integrationSetupHeadingText({
         connectedCount,
@@ -116,7 +116,7 @@ export function IntegrationSetupWizardButton({
         <button
             {...props}
             className={cn(
-                "flex items-center gap-2 rounded-full bg-muted/94 py-1.5 pr-3 pl-2.5 text-left leading-tight",
+                "flex select-none items-center gap-2 rounded-full bg-muted/94 px-3 py-1.5 text-left text-foreground leading-tight",
                 className
             )}
             type="button"
@@ -124,7 +124,7 @@ export function IntegrationSetupWizardButton({
             <span aria-hidden="true" className="shrink-0 leading-none">
                 <RadialChart size={36} value={progressPercent} />
             </span>
-            <span className="select-none font-medium text-sm">{text}</span>
+            <span className="min-w-0 flex-1 font-medium text-sm">{text}</span>
             <ChevronDown
                 aria-hidden
                 className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"

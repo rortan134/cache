@@ -1,6 +1,5 @@
 "use client";
 
-import type * as React from "react";
 import {
     AlertDialog,
     AlertDialogClose,
@@ -13,15 +12,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import type * as React from "react";
 
-export function LogoutConfirmButton(): React.ReactElement {
+function LogoutDialogButton(
+    props: React.ComponentProps<typeof AlertDialogTrigger>
+) {
     const router = useRouter();
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger render={<Button size="xs" variant="link" />}>
-                Log out
-            </AlertDialogTrigger>
+            <AlertDialogTrigger {...props} />
             <AlertDialogPopup>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Log out?</AlertDialogTitle>
@@ -48,3 +48,5 @@ export function LogoutConfirmButton(): React.ReactElement {
         </AlertDialog>
     );
 }
+
+export { LogoutDialogButton };

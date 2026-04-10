@@ -8,7 +8,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Footer } from "@/components/ui/footer";
-import { PageShell } from "@/components/ui/layouts";
+import { PageShell } from "@/components/ui/page-shell";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { T } from "gt-next";
 import { Check, Lock, ShieldCheck, TrendingDown } from "lucide-react";

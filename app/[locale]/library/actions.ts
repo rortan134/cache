@@ -3,14 +3,21 @@
 import { AccountError } from "@/lib/auth/error";
 import { auth } from "@/lib/auth/server";
 import { extractNamedErrorMessage } from "@/lib/error";
-import { LibraryCollectionError } from "@/lib/library/error";
+import { LibraryCollectionError, LibraryNoteError } from "@/lib/library/error";
+import {
+    extractNoteText,
+    normalizeNoteTitle,
+    sanitizeNoteHtml,
+} from "@/lib/library/notes";
 import { normalizeCollectionName } from "@/lib/library/utils";
 import type {
     LibraryCollectionSummary,
     LibraryCollectionTag,
+    LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { createLogger } from "@/lib/logs/console/logger";
 import { prisma } from "@/prisma";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import { headers } from "next/headers";
 import { z } from "zod";
 
@@ -18,6 +25,8 @@ const log = createLogger("library:actions");
 const SOUNDCLOUD_PROVIDER_ID = "soundcloud";
 const SOUNDCLOUD_LIKES_LIMIT = 6;
 const COLLECTION_NAME_MAX_LENGTH = 64;
+const NOTE_TITLE_MAX_LENGTH = 160;
+const NOTE_CONTENT_HTML_MAX_LENGTH = 100_000;
 
 const CreateCollectionInputSchema = z.object({
     assignToItemId: z.string().trim().min(1).optional(),
@@ -39,6 +48,17 @@ const UpdateLibraryItemCollectionsInputSchema = z.object({
 
 const DeleteCollectionInputSchema = z.object({
     collectionId: z.string().trim().min(1, "Select a collection to delete."),
+});
+
+const CreateNoteInputSchema = z.object({
+    contentHtml: z.string().max(NOTE_CONTENT_HTML_MAX_LENGTH).optional(),
+    title: z.string().trim().max(NOTE_TITLE_MAX_LENGTH).optional(),
+});
+
+const UpdateNoteInputSchema = z.object({
+    contentHtml: z.string().max(NOTE_CONTENT_HTML_MAX_LENGTH),
+    itemId: z.string().trim().min(1),
+    title: z.string().trim().max(NOTE_TITLE_MAX_LENGTH).optional(),
 });
 
 export interface SoundcloudLikeTrack {
@@ -121,10 +141,76 @@ export type DownloadMediaResult =
           status: "ERROR" | "INVALID" | "UNAUTHORIZED";
       };
 
+export type NoteMutationResult =
+    | {
+          item: LibraryItemWithCollections;
+          status: "SUCCESS";
+      }
+    | {
+          message: string;
+          status: "ERROR" | "INVALID" | "NOT_FOUND" | "UNAUTHORIZED";
+      };
+
 function asRecord(value: unknown): Record<string, unknown> | null {
     return typeof value === "object" && value !== null
         ? (value as Record<string, unknown>)
         : null;
+}
+
+async function getSessionUserId(): Promise<string | null> {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({
+        headers: requestHeaders,
+    });
+
+    return session?.user?.id ?? null;
+}
+
+function normalizeNotePayload(input: {
+    contentHtml?: string;
+    title?: string;
+}): {
+    contentHtml: string;
+    contentText: string;
+    title: string;
+} {
+    const contentHtml = sanitizeNoteHtml(input.contentHtml ?? "");
+    const contentText = extractNoteText(contentHtml);
+    const title = normalizeNoteTitle(input.title ?? "", contentText).slice(
+        0,
+        NOTE_TITLE_MAX_LENGTH
+    );
+
+    return {
+        contentHtml,
+        contentText,
+        title,
+    };
+}
+
+async function getNoteItemForUser(
+    userId: string,
+    itemId: string
+): Promise<LibraryItemWithCollections | null> {
+    return (await prisma.libraryItem.findFirst({
+        include: {
+            collections: {
+                orderBy: {
+                    name: "asc",
+                },
+                select: {
+                    description: true,
+                    id: true,
+                    name: true,
+                },
+            },
+        },
+        where: {
+            id: itemId,
+            kind: "note",
+            userId,
+        },
+    })) as LibraryItemWithCollections | null;
 }
 
 function readString(value: unknown): string | null {
@@ -327,12 +413,8 @@ export async function deleteLibraryItem(
         };
     }
 
-    const requestHeaders = await headers();
-    const session = await auth.api.getSession({
-        headers: requestHeaders,
-    });
-
-    if (!session?.user?.id) {
+    const userId = await getSessionUserId();
+    if (!userId) {
         return {
             message: "Sign in again to manage saved items.",
             status: "UNAUTHORIZED",
@@ -352,7 +434,7 @@ export async function deleteLibraryItem(
         const result = await libraryItemDelegate.deleteMany({
             where: {
                 id: normalizedItemId,
-                userId: session.user.id,
+                userId,
             },
         });
 
@@ -371,6 +453,145 @@ export async function deleteLibraryItem(
         log.error("Unexpected library item delete failure", error);
         return {
             message: "We couldn't delete this saved item right now.",
+            status: "ERROR",
+        };
+    }
+}
+
+export async function createNote(
+    input: { contentHtml?: string; title?: string } = {}
+): Promise<NoteMutationResult> {
+    const parsed = CreateNoteInputSchema.safeParse(input);
+    if (!parsed.success) {
+        return {
+            message:
+                parsed.error.issues[0]?.message ??
+                "We couldn't create this note.",
+            status: "INVALID",
+        };
+    }
+
+    const userId = await getSessionUserId();
+    if (!userId) {
+        return {
+            message: "Sign in again to create notes.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    const note = normalizeNotePayload(parsed.data);
+
+    try {
+        const created = await prisma.libraryItem.create({
+            data: {
+                browserProfileId: "default",
+                caption: note.title,
+                externalId: `note_${crypto.randomUUID()}`,
+                kind: "note",
+                noteContentHtml: note.contentHtml,
+                noteContentText: note.contentText,
+                source: LibraryItemSource.cache_note,
+                url: "about:blank",
+                userId,
+            },
+        });
+
+        const item = await getNoteItemForUser(userId, created.id);
+        if (!item) {
+            throw new LibraryNoteError({
+                code: "not_found",
+                message: "We created the note but couldn't load it back.",
+                operation: "createNote",
+            });
+        }
+
+        return {
+            item,
+            status: "SUCCESS",
+        };
+    } catch (error) {
+        const details = extractNamedErrorMessage(error);
+        log.error("Unexpected note create failure", error);
+        return {
+            message:
+                details.message || "We couldn't create this note right now.",
+            status: "ERROR",
+        };
+    }
+}
+
+export async function updateNote(input: {
+    contentHtml: string;
+    itemId: string;
+    title?: string;
+}): Promise<NoteMutationResult> {
+    const parsed = UpdateNoteInputSchema.safeParse(input);
+    if (!parsed.success) {
+        return {
+            message:
+                parsed.error.issues[0]?.message ??
+                "We couldn't save this note.",
+            status: "INVALID",
+        };
+    }
+
+    const userId = await getSessionUserId();
+    if (!userId) {
+        return {
+            message: "Sign in again to save notes.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    const note = normalizeNotePayload(parsed.data);
+
+    try {
+        const updated = await prisma.libraryItem.updateMany({
+            data: {
+                caption: note.title,
+                noteContentHtml: note.contentHtml,
+                noteContentText: note.contentText,
+            },
+            where: {
+                id: parsed.data.itemId,
+                kind: "note",
+                userId,
+            },
+        });
+
+        if (updated.count === 0) {
+            throw new LibraryNoteError({
+                code: "not_found",
+                message: "This note no longer exists.",
+                operation: "updateNote",
+            });
+        }
+
+        const item = await getNoteItemForUser(userId, parsed.data.itemId);
+        if (!item) {
+            throw new LibraryNoteError({
+                code: "not_found",
+                message: "We couldn't reload this note after saving it.",
+                operation: "updateNote",
+            });
+        }
+
+        return {
+            item,
+            status: "SUCCESS",
+        };
+    } catch (error) {
+        const details = extractNamedErrorMessage(error);
+        if (details.name === "LibraryNoteError") {
+            return {
+                message: details.message,
+                status: "NOT_FOUND",
+            };
+        }
+
+        log.error("Unexpected note update failure", error);
+        return {
+            message: "We couldn't save this note right now.",
             status: "ERROR",
         };
     }

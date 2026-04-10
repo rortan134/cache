@@ -36,7 +36,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PageSidebarShell } from "@/components/ui/layouts";
 import {
     Menu,
     MenuItem,
@@ -47,6 +46,7 @@ import {
     MenuSubTrigger,
     MenuTrigger,
 } from "@/components/ui/menu";
+import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { getColorFromName } from "@/lib/colors";
@@ -84,7 +84,6 @@ interface Props {
     readonly initialItems: readonly LibraryItemWithCollections[];
     readonly locale: string;
     readonly sidebarBottom?: ReactNode;
-    sidebarContent: ReactNode;
     readonly sidebarHeader?: ReactNode;
 }
 
@@ -241,7 +240,6 @@ export function LibraryWorkspace({
     locale,
     sidebarBottom,
     sidebarHeader,
-    sidebarContent,
 }: Props): ReactElement {
     const [items, setItems] = useState<LibraryItemWithCollections[]>([
         ...initialItems,
@@ -258,7 +256,6 @@ export function LibraryWorkspace({
     const [selectedCollectionIds, setSelectedCollectionIds] = useState<
         string[]
     >([]);
-    const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [createDialogDraft, setCreateDialogDraft] = useState("");
     const [createDialogDescriptionDraft, setCreateDialogDescriptionDraft] =
@@ -289,10 +286,8 @@ export function LibraryWorkspace({
         },
     });
 
-    const collectionSummaries = useMemo(
-        () => deriveCollectionSummaries(collections, items),
-        [collections, items]
-    );
+    const collectionSummaries = deriveCollectionSummaries(collections, items);
+
     const itemsByCollectionId = useMemo(() => {
         const map = new Map<string, LibraryItemWithCollections[]>();
 
@@ -620,270 +615,246 @@ export function LibraryWorkspace({
     );
 
     return (
-        <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
-            <AlertDialog
-                onOpenChange={handleDeleteCollectionDialogOpenChange}
-                open={pendingDeleteCollection !== null}
-            >
-                <AlertDialogPopup>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete collection?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Remove{" "}
-                            {pendingDeleteCollection?.name || "this collection"}{" "}
-                            from Cache. Saved items will remain in your library,
-                            but they won't belong to this collection anymore.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogClose
-                            disabled={isDeletePending}
-                            render={<Button size="sm" variant="ghost" />}
-                        >
-                            Cancel
-                        </AlertDialogClose>
-                        <Button
-                            loading={isDeletePending}
-                            onClick={handleConfirmDeleteCollection}
-                            size="sm"
-                            variant="destructive"
-                        >
-                            Delete
-                        </Button>
-                    </AlertDialogFooter>
-                </AlertDialogPopup>
-            </AlertDialog>
-            <PageSidebarShell bottom={sidebarBottom} top={sidebarHeader}>
-                {sidebarContent}
-                <Collapsible
-                    className="flex flex-col gap-3"
-                    onOpenChange={setIsCollectionsOpen}
-                    open={isCollectionsOpen}
-                >
-                    <div className="flex w-full items-center gap-1.5">
-                        <CollapsibleTrigger className="flex select-none items-center gap-3 rounded-[1.35rem] bg-muted/94 py-2.5 pr-3 pl-3.5 text-left text-foreground">
-                            <Component
-                                aria-hidden
-                                className="inline-block size-5 shrink-0"
-                                focusable="false"
-                            />
-                            <span className="min-w-0 flex-1 truncate font-medium text-sm leading-tight">
-                                Collections
-                            </span>
-                            <ChevronDown
-                                aria-hidden
-                                className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
-                                focusable="false"
-                            />
-                        </CollapsibleTrigger>
-                        <Button
-                            aria-label="Create new collection"
-                            className="rounded-full"
-                            onClick={() => handleCreateCollectionRequest()}
-                            size="icon-xl"
-                            variant="secondary"
-                        >
-                            <PlusIcon
-                                aria-hidden
-                                className="inline-block size-4 shrink-0"
-                                focusable="false"
-                            />
-                            <span className="sr-only">
-                                Create new collection
-                            </span>
-                        </Button>
-                    </div>
-                    <CollapsiblePanel className="flex flex-col gap-1">
-                        <SmartCollectionsCallout />
-                        {collectionSummaries.length > 0 ? (
-                            <>
-                                {collectionSummaries.map((collection) => {
-                                    const isSelected =
-                                        selectedCollectionIds.includes(
-                                            collection.id
-                                        );
-                                    const hasItems = collection.itemCount > 0;
+        <>
+            <Sidebar>
+                <SidebarHeader>
+                    {sidebarHeader}
+                    <Collapsible>
+                        <div className="flex w-full items-center gap-1.5">
+                            <CollapsibleTrigger
+                                className="flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight"
+                                type="button"
+                            >
+                                <Component
+                                    aria-hidden
+                                    className="inline-block size-5 shrink-0"
+                                    focusable="false"
+                                />
+                                <span className="min-w-0 flex-1 font-medium text-sm">
+                                    Collections
+                                </span>
+                                <ChevronDown
+                                    aria-hidden
+                                    className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
+                                    focusable="false"
+                                />
+                            </CollapsibleTrigger>
+                            <Button
+                                aria-label="Create new collection"
+                                className="rounded-full"
+                                onClick={() => handleCreateCollectionRequest()}
+                                size="icon-xl"
+                                variant="secondary"
+                            >
+                                <PlusIcon
+                                    aria-hidden
+                                    className="inline-block size-4 shrink-0"
+                                    focusable="false"
+                                />
+                                <span className="sr-only">
+                                    Create new collection
+                                </span>
+                            </Button>
+                        </div>
+                        <CollapsiblePanel>
+                            <SmartCollectionsCallout />
+                            {collectionSummaries.length > 0 ? (
+                                <>
+                                    {collectionSummaries.map((collection) => {
+                                        const isSelected =
+                                            selectedCollectionIds.includes(
+                                                collection.id
+                                            );
+                                        const hasItems =
+                                            collection.itemCount > 0;
 
-                                    return (
-                                        <div
-                                            className="group relative flex select-none items-center"
-                                            key={collection.id}
-                                        >
-                                            <Button
-                                                className={cn(
-                                                    "min-w-0 flex-1 select-none justify-start rounded-full pr-11 pl-3.5 text-left transition-[filter,box-shadow] hover:brightness-95"
-                                                )}
-                                                onClick={() =>
-                                                    setSelectedCollectionIds(
-                                                        (current) =>
-                                                            current.includes(
-                                                                collection.id
-                                                            )
-                                                                ? current.filter(
-                                                                      (id) =>
-                                                                          id !==
-                                                                          collection.id
-                                                                  )
-                                                                : [
-                                                                      ...current,
-                                                                      collection.id,
-                                                                  ]
-                                                    )
-                                                }
-                                                style={getCollectionButtonStyle(
-                                                    collection.name,
-                                                    isSelected
-                                                )}
-                                                type="button"
-                                                variant="ghost"
+                                        return (
+                                            <div
+                                                className="group relative flex select-none items-center"
+                                                key={collection.id}
                                             >
-                                                <span className="min-w-0 flex-1 truncate font-medium text-sm leading-tight">
-                                                    {collection.name}
-                                                </span>
-                                            </Button>
-                                            <div className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center">
-                                                <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-50 transition-opacity duration-200 group-hover:opacity-0">
+                                                <Button
+                                                    className={cn(
+                                                        "min-w-0 flex-1 select-none justify-start rounded-full pr-11 pl-3.5 text-left transition-[filter,box-shadow] hover:brightness-95"
+                                                    )}
+                                                    onClick={() =>
+                                                        setSelectedCollectionIds(
+                                                            (current) =>
+                                                                current.includes(
+                                                                    collection.id
+                                                                )
+                                                                    ? current.filter(
+                                                                          (
+                                                                              id
+                                                                          ) =>
+                                                                              id !==
+                                                                              collection.id
+                                                                      )
+                                                                    : [
+                                                                          ...current,
+                                                                          collection.id,
+                                                                      ]
+                                                        )
+                                                    }
+                                                    style={getCollectionButtonStyle(
+                                                        collection.name,
+                                                        isSelected
+                                                    )}
+                                                    type="button"
+                                                    variant="ghost"
+                                                >
+                                                    <span className="min-w-0 flex-1 truncate font-medium text-sm leading-tight">
+                                                        {collection.name}
+                                                    </span>
+                                                </Button>
+                                                <div className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center">
+                                                    <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-50 transition-opacity duration-200 group-hover:opacity-0">
+                                                        {collection.itemCount}
+                                                    </span>
+                                                    <Menu>
+                                                        <MenuTrigger
+                                                            render={
+                                                                <Button
+                                                                    aria-label={`Collection actions for ${collection.name}`}
+                                                                    className="absolute rounded-full opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:translate-x-0 group-hover:opacity-100"
+                                                                    size="icon-sm"
+                                                                    variant="ghost"
+                                                                />
+                                                            }
+                                                        >
+                                                            <EllipsisIcon className="size-4" />
+                                                        </MenuTrigger>
+                                                        <MenuPopup className="min-w-48">
+                                                            <MenuSub>
+                                                                <MenuSubTrigger
+                                                                    disabled={
+                                                                        !hasItems
+                                                                    }
+                                                                >
+                                                                    Export to...
+                                                                </MenuSubTrigger>
+                                                                <MenuSubPopup className="min-w-48">
+                                                                    <MenuItem
+                                                                        closeOnClick
+                                                                        onClick={() =>
+                                                                            handleCopyCollectionLinks(
+                                                                                collection
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <CopyIcon className="size-4 text-muted-foreground" />
+                                                                        Copy all
+                                                                        links
+                                                                    </MenuItem>
+                                                                    <MenuItem
+                                                                        closeOnClick
+                                                                        onClick={() =>
+                                                                            handleOpenCollectionLinks(
+                                                                                collection
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <ExternalLinkIcon className="size-4 text-muted-foreground" />
+                                                                        Open all
+                                                                        links
+                                                                    </MenuItem>
+                                                                    <MenuItem
+                                                                        closeOnClick
+                                                                        onClick={() =>
+                                                                            handleExportCollectionToCsv(
+                                                                                collection
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <FileSpreadsheetIcon className="size-4 text-muted-foreground" />
+                                                                        Export
+                                                                        to CSV
+                                                                    </MenuItem>
+                                                                    <MenuItem
+                                                                        disabled
+                                                                    >
+                                                                        Send to
+                                                                        Notion
+                                                                    </MenuItem>
+                                                                </MenuSubPopup>
+                                                            </MenuSub>
+                                                            <MenuSeparator />
+                                                            <MenuItem
+                                                                closeOnClick
+                                                                onClick={() =>
+                                                                    handleRequestDeleteCollection(
+                                                                        collection
+                                                                    )
+                                                                }
+                                                                variant="destructive"
+                                                            >
+                                                                <Trash2Icon className="size-4" />
+                                                                Delete
+                                                            </MenuItem>
+                                                        </MenuPopup>
+                                                    </Menu>
+                                                </div>
+                                                <span className="sr-only">
                                                     {collection.itemCount}
                                                 </span>
-                                                <Menu>
-                                                    <MenuTrigger
-                                                        render={
-                                                            <Button
-                                                                aria-label={`Collection actions for ${collection.name}`}
-                                                                className="absolute rounded-full opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:translate-x-0 group-hover:opacity-100"
-                                                                size="icon-sm"
-                                                                variant="ghost"
-                                                            />
-                                                        }
-                                                    >
-                                                        <EllipsisIcon className="size-4" />
-                                                    </MenuTrigger>
-                                                    <MenuPopup className="min-w-48">
-                                                        <MenuSub>
-                                                            <MenuSubTrigger
-                                                                disabled={
-                                                                    !hasItems
-                                                                }
-                                                            >
-                                                                Export to...
-                                                            </MenuSubTrigger>
-                                                            <MenuSubPopup className="min-w-48">
-                                                                <MenuItem
-                                                                    closeOnClick
-                                                                    onClick={() =>
-                                                                        handleCopyCollectionLinks(
-                                                                            collection
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <CopyIcon className="size-4 text-muted-foreground" />
-                                                                    Copy all
-                                                                    links
-                                                                </MenuItem>
-                                                                <MenuItem
-                                                                    closeOnClick
-                                                                    onClick={() =>
-                                                                        handleOpenCollectionLinks(
-                                                                            collection
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <ExternalLinkIcon className="size-4 text-muted-foreground" />
-                                                                    Open all
-                                                                    links
-                                                                </MenuItem>
-                                                                <MenuItem
-                                                                    closeOnClick
-                                                                    onClick={() =>
-                                                                        handleExportCollectionToCsv(
-                                                                            collection
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <FileSpreadsheetIcon className="size-4 text-muted-foreground" />
-                                                                    Export to
-                                                                    CSV
-                                                                </MenuItem>
-                                                                <MenuItem
-                                                                    disabled
-                                                                >
-                                                                    Send to
-                                                                    Notion
-                                                                </MenuItem>
-                                                            </MenuSubPopup>
-                                                        </MenuSub>
-                                                        <MenuSeparator />
-                                                        <MenuItem
-                                                            closeOnClick
-                                                            onClick={() =>
-                                                                handleRequestDeleteCollection(
-                                                                    collection
-                                                                )
-                                                            }
-                                                            variant="destructive"
-                                                        >
-                                                            <Trash2Icon className="size-4" />
-                                                            Delete
-                                                        </MenuItem>
-                                                    </MenuPopup>
-                                                </Menu>
                                             </div>
-                                            <span className="sr-only">
-                                                {collection.itemCount}
-                                            </span>
+                                        );
+                                    })}
+                                    {collectionActionFeedback ? (
+                                        <div className="flex items-center justify-between gap-2 pt-1 pr-1 pl-3.5">
+                                            <p
+                                                className={cn(
+                                                    "text-xs",
+                                                    collectionActionFeedback.tone ===
+                                                        "error"
+                                                        ? "text-destructive"
+                                                        : "text-muted-foreground"
+                                                )}
+                                            >
+                                                {
+                                                    collectionActionFeedback.message
+                                                }
+                                            </p>
+                                            <Button
+                                                onClick={() =>
+                                                    setCollectionActionFeedback(
+                                                        null
+                                                    )
+                                                }
+                                                size="xs"
+                                                variant="ghost"
+                                            >
+                                                Dismiss
+                                            </Button>
                                         </div>
-                                    );
-                                })}
-                                {collectionActionFeedback ? (
-                                    <div className="flex items-center justify-between gap-2 pt-1 pr-1 pl-3.5">
-                                        <p
-                                            className={cn(
-                                                "text-xs",
-                                                collectionActionFeedback.tone ===
-                                                    "error"
-                                                    ? "text-destructive"
-                                                    : "text-muted-foreground"
-                                            )}
-                                        >
-                                            {collectionActionFeedback.message}
-                                        </p>
-                                        <Button
-                                            onClick={() =>
-                                                setCollectionActionFeedback(
-                                                    null
-                                                )
-                                            }
-                                            size="xs"
-                                            variant="ghost"
-                                        >
-                                            Dismiss
-                                        </Button>
-                                    </div>
-                                ) : null}
-                                {selectedCollectionIds.length > 0 ? (
-                                    <div className="flex items-center justify-between gap-2 pr-1 pl-3.5">
-                                        <p className="text-muted-foreground text-xs">
-                                            Filtering by any selected collection
-                                        </p>
-                                        <Button
-                                            onClick={clearCollectionFilters}
-                                            size="xs"
-                                            variant="ghost"
-                                        >
-                                            Clear
-                                        </Button>
-                                    </div>
-                                ) : null}
-                            </>
-                        ) : (
-                            <div className="rounded-xl border border-border/60 border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
-                                Create your first collection to start grouping
-                                saved items.
-                            </div>
-                        )}
-                    </CollapsiblePanel>
-                </Collapsible>
-            </PageSidebarShell>
+                                    ) : null}
+                                    {selectedCollectionIds.length > 0 ? (
+                                        <div className="flex items-center justify-between gap-2 pr-1 pl-3.5">
+                                            <p className="text-muted-foreground text-xs">
+                                                Filtering by any selected
+                                                collection
+                                            </p>
+                                            <Button
+                                                onClick={clearCollectionFilters}
+                                                size="xs"
+                                                variant="ghost"
+                                            >
+                                                Clear
+                                            </Button>
+                                        </div>
+                                    ) : null}
+                                </>
+                            ) : (
+                                <p className="rounded-xl border border-border/60 border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
+                                    Create your first collection to start
+                                    grouping saved items.
+                                </p>
+                            )}
+                        </CollapsiblePanel>
+                    </Collapsible>
+                </SidebarHeader>
+                <SidebarFooter>{sidebarBottom}</SidebarFooter>
+            </Sidebar>
             <div className="flex w-full max-w-[1024px] flex-col items-center gap-12 p-8 2xl:mx-auto">
                 <LibraryBrowser
                     collections={collectionSummaries}
@@ -994,6 +965,38 @@ export function LibraryWorkspace({
                     </form>
                 </DialogPopup>
             </Dialog>
-        </div>
+            <AlertDialog
+                onOpenChange={handleDeleteCollectionDialogOpenChange}
+                open={pendingDeleteCollection !== null}
+            >
+                <AlertDialogPopup>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete collection?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Remove{" "}
+                            {pendingDeleteCollection?.name || "this collection"}{" "}
+                            from Cache. Saved items will remain in your library,
+                            but they won't belong to this collection anymore.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogClose
+                            disabled={isDeletePending}
+                            render={<Button size="sm" variant="ghost" />}
+                        >
+                            Cancel
+                        </AlertDialogClose>
+                        <Button
+                            loading={isDeletePending}
+                            onClick={handleConfirmDeleteCollection}
+                            size="sm"
+                            variant="destructive"
+                        >
+                            Delete
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogPopup>
+            </AlertDialog>
+        </>
     );
 }

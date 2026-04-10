@@ -19,7 +19,7 @@ const initialFeedbackActionState: FeedbackActionState = {
     status: "idle",
 } satisfies FeedbackActionState;
 
-export function FeedbackWidget(): React.ReactElement {
+export function FeedbackFloatingWidget(): React.ReactElement {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const [state, formAction] = useActionState(
@@ -47,7 +47,7 @@ export function FeedbackWidget(): React.ReactElement {
                 <PopoverTrigger
                     render={
                         <Button
-                            className="pointer-events-auto rounded-full border-border/80 bg-background/95 pr-2 pl-4 shadow-black/5 shadow-lg backdrop-blur"
+                            className="pointer-events-auto rounded-full bg-background/95 shadow-black/5 shadow-lg backdrop-blur-xs"
                             size="sm"
                             type="button"
                             variant="outline"
@@ -60,7 +60,6 @@ export function FeedbackWidget(): React.ReactElement {
                 <PopoverPopup
                     align="end"
                     className="w-[min(calc(100vw-2rem),24rem)] rounded-[1.6rem]"
-                    sideOffset={10}
                 >
                     <div className="space-y-4">
                         <form

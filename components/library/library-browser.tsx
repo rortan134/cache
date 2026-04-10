@@ -1,14 +1,18 @@
 "use client";
 
 import {
+    createNote,
     deleteLibraryItem,
+    updateNote,
     type DeleteLibraryItemResult,
+    type NoteMutationResult,
 } from "@/app/[locale]/library/actions";
 import {
     ExtensionLibraryEmptyMasonryPeek,
     ExtensionLibraryGrid,
     ExtensionLibrarySection,
 } from "@/components/library/library-grid";
+import { LibraryNoteDrawer } from "@/components/library/library-note-drawer";
 import {
     AlertDialog,
     AlertDialogClose,
@@ -45,7 +49,7 @@ import type {
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import { LibraryItemSource } from "@/prisma/client/enums";
-import { SearchIcon, SparklesIcon, XIcon } from "lucide-react";
+import { FilePenLineIcon, SearchIcon, SparklesIcon, XIcon } from "lucide-react";
 import type {
     CSSProperties,
     KeyboardEvent as ReactKeyboardEvent,
@@ -116,6 +120,7 @@ type PaletteSection = "search" | "filter" | "group" | "sort" | "layout";
 const DEFAULT_SORT_MODE: SortMode = "added-newest";
 const DEFAULT_COLUMN_COUNT_MODE: ColumnCountMode = "auto";
 const FILTERABLE_LIBRARY_SOURCES = [
+    LibraryItemSource.cache_note,
     LibraryItemSource.chrome_bookmarks,
     LibraryItemSource.google_photos,
     LibraryItemSource.instagram,
@@ -195,11 +200,21 @@ function itemMonthKey(
 }
 
 function itemPrimaryText(item: LibraryItem): string {
+    if (item.kind === "note") {
+        return (
+            item.noteContentText?.trim() ||
+            item.caption?.trim() ||
+            "Untitled note"
+        );
+    }
     const caption = item.caption?.trim();
     return caption && caption.length > 0 ? caption : item.url;
 }
 
 function sourceLabel(source: LibraryItemSource): string {
+    if (source === LibraryItemSource.cache_note) {
+        return "Notes";
+    }
     if (source === LibraryItemSource.chrome_bookmarks) {
         return "Chrome";
     }
@@ -495,6 +510,7 @@ function renderLibraryGridBody({
     layoutRefreshToken,
     onCopyLink,
     onDelete,
+    onOpenNote,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
@@ -514,6 +530,7 @@ function renderLibraryGridBody({
     readonly layoutRefreshToken: number;
     readonly onCopyLink: (item: LibraryItem) => void;
     readonly onDelete: (item: LibraryItem) => void;
+    readonly onOpenNote: (item: LibraryItem) => void;
     readonly onOpenHere: (item: LibraryItem) => void;
     readonly onOpenInNewTab: (item: LibraryItem) => void;
     readonly onUpdateItemCollections: (
@@ -565,6 +582,7 @@ function renderLibraryGridBody({
                 onDelete={onDelete}
                 onOpenHere={onOpenHere}
                 onOpenInNewTab={onOpenInNewTab}
+                onOpenNote={onOpenNote}
                 onToggle={() => onToggleSection(section.key)}
                 onUpdateItemCollections={onUpdateItemCollections}
                 paywallPreviewCount={section.paywallPreviewCount}
@@ -596,6 +614,7 @@ function renderLibraryGridBody({
                     onDelete={onDelete}
                     onOpenHere={onOpenHere}
                     onOpenInNewTab={onOpenInNewTab}
+                    onOpenNote={onOpenNote}
                     onUpdateItemCollections={onUpdateItemCollections}
                     paywallPreviewCount={section.paywallPreviewCount}
                     paywallTotalCount={paywallTotalCount}
@@ -1036,6 +1055,14 @@ interface UseLibraryItemActionsResult {
     readonly handleRequestDelete: (item: LibraryItem) => void;
     readonly isDeletePending: boolean;
     readonly pendingDeleteItem: LibraryItem | null;
+    readonly setActionFeedback: (
+        value:
+            | LibraryActionFeedback
+            | null
+            | ((
+                  current: LibraryActionFeedback | null
+              ) => LibraryActionFeedback | null)
+    ) => void;
 }
 
 function openSavedItemInNewTab(url: string) {
@@ -1152,6 +1179,7 @@ function useLibraryItemActions(
         handleRequestDelete,
         isDeletePending,
         pendingDeleteItem,
+        setActionFeedback,
     };
 }
 
@@ -1185,6 +1213,9 @@ export function LibraryBrowser({
     );
     const [paletteSection, setPaletteSection] =
         useState<PaletteSection>("search");
+    const [activeNote, setActiveNote] =
+        useState<LibraryItemWithCollections | null>(null);
+    const [isNoteDrawerOpen, setIsNoteDrawerOpen] = useState(false);
     const [commandListOpen, setCommandListOpen] = useState(false);
     const [isPaletteFocused, setIsPaletteFocused] = useState(false);
     const [commandPanelShellHeight, setCommandPanelShellHeight] = useState(0);
@@ -1202,7 +1233,9 @@ export function LibraryBrowser({
         handleRequestDelete,
         isDeletePending,
         pendingDeleteItem,
+        setActionFeedback,
     } = useLibraryItemActions(onItemsChange);
+    const [isSavingNote, startSavingNoteTransition] = useTransition();
 
     const sourceOptions = useMemo(
         () => [
@@ -1851,9 +1884,13 @@ export function LibraryBrowser({
         if (normalizedSearchTerms.length > 0) {
             list = list.filter((item) => {
                 const cap = item.caption?.toLowerCase() ?? "";
+                const noteText = item.noteContentText?.toLowerCase() ?? "";
                 const url = item.url.toLowerCase();
                 return normalizedSearchTerms.some(
-                    (term) => cap.includes(term) || url.includes(term)
+                    (term) =>
+                        cap.includes(term) ||
+                        noteText.includes(term) ||
+                        url.includes(term)
                 );
             });
         }
@@ -2040,6 +2077,81 @@ export function LibraryBrowser({
         filteredItems.length === items.length
             ? `${items.length} item${items.length === 1 ? "" : "s"}`
             : `${filteredItems.length} of ${items.length} items`;
+
+    const handleCreateNote = useCallback(() => {
+        setActionFeedback(null);
+        setActiveNote(null);
+        setIsNoteDrawerOpen(true);
+    }, [setActionFeedback]);
+
+    const handleOpenNote = useCallback(
+        (item: LibraryItemWithCollections) => {
+            setActionFeedback(null);
+            setActiveNote(item);
+            setIsNoteDrawerOpen(true);
+        },
+        [setActionFeedback]
+    );
+
+    const handleSaveNote = useCallback(
+        (draft: { contentHtml: string; title: string }) => {
+            startSavingNoteTransition(async () => {
+                let result: NoteMutationResult;
+
+                try {
+                    result = activeNote
+                        ? await updateNote({
+                              contentHtml: draft.contentHtml,
+                              itemId: activeNote.id,
+                              title: draft.title,
+                          })
+                        : await createNote({
+                              contentHtml: draft.contentHtml,
+                              title: draft.title,
+                          });
+                } catch {
+                    result = {
+                        message: activeNote
+                            ? "We couldn't save this note right now."
+                            : "We couldn't create this note right now.",
+                        status: "ERROR",
+                    };
+                }
+
+                if (result.status !== "SUCCESS") {
+                    setActionFeedback({
+                        message: result.message,
+                        tone: "error",
+                    });
+                    return;
+                }
+
+                onItemsChange((current) => {
+                    const existingIndex = current.findIndex(
+                        (item) => item.id === result.item.id
+                    );
+
+                    if (existingIndex === -1) {
+                        return [result.item, ...current];
+                    }
+
+                    return current.map((item) =>
+                        item.id === result.item.id ? result.item : item
+                    );
+                });
+                setActiveNote(result.item);
+                setIsNoteDrawerOpen(false);
+                setActionFeedback({
+                    message: activeNote
+                        ? "Note saved."
+                        : "Note created in your library.",
+                    tone: "success",
+                });
+            });
+        },
+        [activeNote, onItemsChange, setActionFeedback]
+    );
+
     const libraryBrowserStyle = useMemo(
         () =>
             ({
@@ -2059,6 +2171,7 @@ export function LibraryBrowser({
         onDelete: handleRequestDelete,
         onOpenHere: handleOpenHere,
         onOpenInNewTab: handleOpenInNewTab,
+        onOpenNote: handleOpenNote,
         onToggleSection: toggleSection,
         onUpdateItemCollections,
         paywallTotalCount: filteredItems.length,
@@ -2252,6 +2365,14 @@ export function LibraryBrowser({
                     <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs tabular-nums">
                         {resultsSummary}
                     </span>
+                    <Button
+                        onClick={handleCreateNote}
+                        size="xs"
+                        variant="outline"
+                    >
+                        <FilePenLineIcon className="size-4" />
+                        New note
+                    </Button>
                     {groupBy === "none" ? null : (
                         <span className="inline-flex h-8 items-center rounded-full border border-border/60 bg-card/60 px-3 font-medium text-muted-foreground text-xs">
                             {sections.length} group
@@ -2294,6 +2415,13 @@ export function LibraryBrowser({
                 <InlinePromotionBanner />
             </UnprivilegedOnly>
             {libraryGridBody}
+            <LibraryNoteDrawer
+                note={activeNote}
+                onOpenChange={setIsNoteDrawerOpen}
+                onSave={handleSaveNote}
+                open={isNoteDrawerOpen}
+                saving={isSavingNote}
+            />
         </div>
     );
 }

@@ -19,7 +19,6 @@ import { Info } from "lucide-react";
 
 interface LibrarySidebarIntegrationsProps {
     items: readonly { readonly source: LibraryItemSource }[];
-    locale: string;
     parkedIntegrationIds?: readonly IntegrationId[];
     serverConnectedIntegrationIds: readonly IntegrationId[];
 }
@@ -47,9 +46,8 @@ function isConnectedOnClient(args: {
     );
 }
 
-export function LibrarySidebarIntegrations({
+export function IntegrationsList({
     items,
-    locale,
     parkedIntegrationIds = [],
     serverConnectedIntegrationIds,
 }: LibrarySidebarIntegrationsProps) {
@@ -63,7 +61,7 @@ export function LibrarySidebarIntegrations({
     );
 
     return (
-        <Collapsible className="flex flex-col gap-3" defaultOpen>
+        <Collapsible defaultOpen>
             <CollapsibleTrigger
                 render={
                     <IntegrationSetupWizardButton
@@ -72,7 +70,7 @@ export function LibrarySidebarIntegrations({
                     />
                 }
             />
-            <CollapsiblePanel className="flex flex-col gap-1">
+            <CollapsiblePanel>
                 {INTEGRATIONS.map(({ id, label, description, Icon }) => (
                     <div className="flex items-center gap-2" key={id}>
                         <Avatar
@@ -93,7 +91,6 @@ export function LibrarySidebarIntegrations({
                             connected={connectedIntegrationIds.includes(id)}
                             extensionInstalled={extensionInstalled}
                             id={id}
-                            locale={locale}
                             parked={parkedIntegrationIdSet.has(id)}
                         />
                     </div>

@@ -131,12 +131,10 @@ async function importSelectedMedia(sessionId: string): Promise<ImportResponse> {
 }
 
 export function GooglePhotosImportButton({
-    locale,
     size = "icon",
     variant = "ghost",
 }: Readonly<{
     buttonLabel?: string;
-    locale: string;
     size?: React.ComponentProps<typeof Button>["size"];
     variant?: React.ComponentProps<typeof Button>["variant"];
 }>) {
@@ -175,7 +173,7 @@ export function GooglePhotosImportButton({
             setSuccessMessage(
                 `Imported ${importPayload.importedCount} item${importPayload.importedCount === 1 ? "" : "s"}.`
             );
-            router.push(`/${locale}/library`);
+            router.push("/library");
         } catch (error) {
             const message =
                 error instanceof Error
@@ -185,7 +183,7 @@ export function GooglePhotosImportButton({
         } finally {
             setIsImporting(false);
         }
-    }, [locale, router]);
+    }, [router]);
 
     if (!isSignedIn) {
         return null;

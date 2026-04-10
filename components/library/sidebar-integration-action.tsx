@@ -9,13 +9,12 @@ import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-type SidebarIntegrationActionProps = Readonly<{
+interface SidebarIntegrationActionProps {
     connected: boolean;
     extensionInstalled?: boolean;
     id: IntegrationId;
-    locale: string;
     parked?: boolean;
-}>;
+}
 
 type ExtensionIntegrationId = Extract<
     IntegrationId,
@@ -104,7 +103,6 @@ export function SidebarIntegrationAction({
     connected,
     extensionInstalled = false,
     id,
-    locale,
     parked = false,
 }: SidebarIntegrationActionProps) {
     const router = useRouter();
@@ -183,8 +181,8 @@ export function SidebarIntegrationAction({
 
         try {
             const result = await authClient.signIn.social({
-                callbackURL: `/${locale}/library`,
-                errorCallbackURL: `/${locale}/library`,
+                callbackURL: "/library",
+                errorCallbackURL: "/library",
                 provider: "google",
             });
 
@@ -203,7 +201,7 @@ export function SidebarIntegrationAction({
         } finally {
             setIsConnecting(false);
         }
-    }, [locale]);
+    }, []);
 
     const handleGenericOAuthConnect = useCallback(async () => {
         if (!isOAuthIntegration(id) || id === "google-photos") {
@@ -217,9 +215,9 @@ export function SidebarIntegrationAction({
         try {
             const response = await authClient.$fetch("/oauth2/link", {
                 body: {
-                    callbackURL: `/${locale}/library`,
+                    callbackURL: "/library",
                     disableRedirect: true,
-                    errorCallbackURL: `/${locale}/library`,
+                    errorCallbackURL: "/library",
                     providerId: providerIdForIntegration(id),
                 },
                 method: "POST",
@@ -241,7 +239,7 @@ export function SidebarIntegrationAction({
         } finally {
             setIsConnecting(false);
         }
-    }, [id, locale]);
+    }, [id]);
 
     const handlePinterestImport = useCallback(async () => {
         setErrorMessage(null);
@@ -377,10 +375,7 @@ export function SidebarIntegrationAction({
                     {parked ? "Pending" : connectLabel}
                 </Button>
                 {isGooglePhotosIntegration && connected ? (
-                    <GooglePhotosImportButton
-                        locale={locale}
-                        variant="outline"
-                    />
+                    <GooglePhotosImportButton variant="outline" />
                 ) : null}
                 {isXIntegration && connected ? (
                     <Button

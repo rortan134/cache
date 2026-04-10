@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
 import type * as React from "react";
-import { cn } from "@/lib/utils";
 
 export function Avatar({
     className,
@@ -47,4 +47,11 @@ export function AvatarFallback({
             {...props}
         />
     );
+}
+
+export function AvatarGroup({
+    className,
+    ...props
+}: React.ComponentProps<"div">) {
+    return <div {...props} className={cn("flex -space-x-3", className)} />;
 }

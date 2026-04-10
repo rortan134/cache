@@ -23,7 +23,9 @@ export async function getLibraryItemsForUser(userId: string) {
             },
             orderBy: [{ scrapedAt: "desc" }, { updatedAt: "desc" }],
             where: {
-                kind: "bookmark",
+                kind: {
+                    not: "folder",
+                },
                 userId,
             },
         }) as Promise<LibraryItemWithCollections[]>,

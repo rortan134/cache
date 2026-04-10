@@ -33,7 +33,7 @@ function GoogleMark() {
     );
 }
 
-export function GoogleSignInButton({
+function GoogleSignInButton({
     children = "Continue with Google",
     locale,
 }: Readonly<{
@@ -93,3 +93,5 @@ export function GoogleSignInButton({
         </div>
     );
 }
+
+export { GoogleSignInButton };

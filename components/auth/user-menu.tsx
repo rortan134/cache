@@ -1,38 +1,21 @@
 "use client";
 
+import { LogoutDialogButton } from "@/components/auth/logout-dialog-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { XSocial } from "@/components/ui/integration-icons";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAccess } from "@/hooks/use-access";
 import { authClient } from "@/lib/auth/client";
-import { cn } from "@/lib/utils";
-import { LocaleSelector } from "gt-next";
+import { LocaleSelector, T, Var, useLocale } from "gt-next";
 import { ArrowUpRight, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { type ReactNode, useState, useTransition } from "react";
 
 const WHITESPACE_PATTERN = /\s+/;
-
-interface UserMenuSubscription {
-    billingInterval: string | null;
-    cancelAtPeriodEnd: boolean;
-    periodEnd: string | null;
-    plan: string;
-    status: string | null;
-}
-
-interface UserMenuProps {
-    locale: string;
-    subscription: UserMenuSubscription | null;
-    user: {
-        email: string;
-        image: string | null;
-        name: string | null;
-    };
-}
 
 function getInitials(name: string | null, email: string): string {
     const source = name?.trim() || email.trim();
@@ -45,26 +28,26 @@ function getInitials(name: string | null, email: string): string {
     return source.slice(0, 2).toUpperCase();
 }
 
-function formatSubscriptionLabel(subscription: UserMenuSubscription | null): {
-    detail: string;
-    tone: "default" | "muted" | "warn";
-} {
+function SubscriptionBadge() {
+    const { subscription } = useAccess();
+
     if (!subscription) {
-        return {
-            detail: "Free plan",
-            tone: "muted",
-        };
+        return (
+            <Badge className="h-6! w-full" variant="secondary">
+                <T context="Free plan label">Free plan</T>
+            </Badge>
+        );
     }
 
     const planLabel = subscription.plan
         ? subscription.plan[0]?.toUpperCase() + subscription.plan.slice(1)
         : "Subscription";
 
-    let intervalLabel: string | null = null;
+    let intervalLabel: ReactNode | null = null;
     if (subscription.billingInterval === "year") {
-        intervalLabel = "yearly";
+        intervalLabel = <T>yearly</T>;
     } else if (subscription.billingInterval === "month") {
-        intervalLabel = "monthly";
+        intervalLabel = <T>monthly</T>;
     }
 
     const expiresAt = subscription.periodEnd
@@ -75,71 +58,67 @@ function formatSubscriptionLabel(subscription: UserMenuSubscription | null): {
         : null;
 
     if (subscription.cancelAtPeriodEnd) {
-        return {
-            detail: expiresAt
-                ? `${planLabel} ends ${expiresAt}`
-                : `${planLabel} ends soon`,
-            tone: "warn",
-        };
+        return (
+            <Badge
+                className="h-6! w-full bg-amber-100 text-amber-900"
+                variant="secondary"
+            >
+                <T context="Subscription ends message">
+                    <Var>{planLabel}</Var> ends <Var>{expiresAt ?? "soon"}</Var>
+                </T>
+            </Badge>
+        );
     }
 
     if (subscription.status === "trialing") {
-        return {
-            detail: intervalLabel
-                ? `${planLabel} trial, then ${intervalLabel}`
-                : `${planLabel} trial`,
-            tone: "default",
-        };
+        return (
+            <Badge
+                className="h-6! w-full bg-primary/10 text-primary"
+                variant="secondary"
+            >
+                <T context="Trialing status label">
+                    <Var>{planLabel}</Var> trial, then{" "}
+                    <Var>{intervalLabel}</Var>
+                </T>
+            </Badge>
+        );
     }
 
     if (subscription.status === "active") {
-        return {
-            detail: intervalLabel ? `${planLabel} ${intervalLabel}` : planLabel,
-            tone: "default",
-        };
+        return (
+            <Badge
+                className="h-6! w-full bg-primary/10 text-primary"
+                variant="secondary"
+            >
+                <T context="Active status label">
+                    <Var>{planLabel}</Var> <Var>{intervalLabel}</Var>
+                </T>
+            </Badge>
+        );
     }
 
-    return {
-        detail: subscription.status
-            ? `${planLabel} ${subscription.status.replaceAll("_", " ")}`
-            : planLabel,
-        tone: "muted",
-    };
+    return (
+        <Badge
+            className="h-6! w-full bg-muted text-muted-foreground"
+            variant="secondary"
+        >
+            <T context="Other subscription status">
+                <Var>{planLabel}</Var>{" "}
+                <Var>
+                    {subscription.status?.replaceAll("_", " ") ?? "Unknown"}
+                </Var>
+            </T>
+        </Badge>
+    );
 }
 
-function getToneClassName(
-    tone: ReturnType<typeof formatSubscriptionLabel>["tone"]
-): string {
-    if (tone === "warn") {
-        return "bg-amber-100 text-amber-900";
-    }
-
-    if (tone === "muted") {
-        return "bg-muted text-muted-foreground";
-    }
-
-    return "bg-primary/10 text-primary";
-}
-
-export function UserMenu({
-    locale,
-    subscription,
-    user,
-}: UserMenuProps): React.ReactElement {
-    const router = useRouter();
+function UpgradeButton({ returnPath }: { returnPath: string }) {
     const [isPending, startTransition] = useTransition();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-    const subscriptionLabel = formatSubscriptionLabel(subscription);
-    const returnPath = `${typeof window === "undefined" ? "" : window.location.origin}/${locale}/library`;
-    const hasManagedSubscription =
-        subscription?.status === "active" ||
-        subscription?.status === "trialing";
 
     const handleUpgrade = () => {
         startTransition(async () => {
             setErrorMessage(null);
-
             try {
                 const { data, error } = await authClient.subscription.upgrade({
                     cancelUrl: returnPath,
@@ -166,10 +145,30 @@ export function UserMenu({
         });
     };
 
+    return (
+        <>
+            <Button
+                className="justify-start"
+                loading={isPending}
+                onClick={handleUpgrade}
+                variant="ghost"
+            >
+                <T>Upgrade to Pro</T>
+            </Button>
+            {errorMessage && (
+                <p className="px-2 text-destructive text-xs">{errorMessage}</p>
+            )}
+        </>
+    );
+}
+
+function BillingPortalButton({ returnPath }: { returnPath: string }) {
+    const [isPending, startTransition] = useTransition();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
     const handleBillingPortal = () => {
         startTransition(async () => {
             setErrorMessage(null);
-
             try {
                 const { data, error } =
                     await authClient.subscription.billingPortal({
@@ -195,9 +194,191 @@ export function UserMenu({
         });
     };
 
-    const handleLogout = () => {
-        router.push(`/${locale}/logout`);
-    };
+    return (
+        <>
+            <Button
+                className="justify-start"
+                loading={isPending}
+                onClick={handleBillingPortal}
+                variant="ghost"
+            >
+                <T>Billing</T>
+            </Button>
+            {errorMessage && (
+                <p className="px-2 text-destructive text-xs">{errorMessage}</p>
+            )}
+        </>
+    );
+}
+
+function MenuSection({ children }: { children: ReactNode }) {
+    return (
+        <>
+            <div className="relative -my-1">
+                <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+            </div>
+            <div className="-mx-2 flex flex-col gap-1">{children}</div>
+        </>
+    );
+}
+
+function UserMenuSkeleton() {
+    return (
+        <div className="flex w-full items-center justify-between px-4 py-2">
+            <div className="flex items-center gap-3">
+                <Skeleton className="size-8 rounded-full" />
+                <div className="flex flex-col gap-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                </div>
+            </div>
+            <Skeleton className="size-4" />
+        </div>
+    );
+}
+
+export function UserMenuHeader() {
+    const { session } = useAccess();
+
+    if (!session?.user) {
+        return null;
+    }
+
+    const { user } = session;
+
+    return (
+        <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-sm">
+                {user.name ?? <T>Cache account</T>}
+            </p>
+            <p className="truncate text-muted-foreground text-sm">
+                {user.email}
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+                <SubscriptionBadge />
+            </div>
+        </div>
+    );
+}
+
+export function UserMenuContent() {
+    const locale = useLocale();
+    const { session, hasAccess } = useAccess();
+
+    if (!session?.user) {
+        return null;
+    }
+
+    const returnPath = `${typeof window === "undefined" ? "" : window.location.origin}/${locale}/library`;
+
+    return (
+        <>
+            <MenuSection>
+                <Button className="justify-between" disabled variant="ghost">
+                    <T>Theme</T>
+                    <T className="opacity-50">Soon</T>
+                </Button>
+            </MenuSection>
+            <MenuSection>
+                {hasAccess ? (
+                    <BillingPortalButton returnPath={returnPath} />
+                ) : (
+                    <>
+                        <Button
+                            className="justify-start"
+                            render={<Link href="/pricing" />}
+                            variant="ghost"
+                        >
+                            <T>Pricing</T>
+                        </Button>
+                        <UpgradeButton returnPath={returnPath} />
+                    </>
+                )}
+                <Button
+                    className="justify-between"
+                    render={<Link href="/changelog" />}
+                    variant="ghost"
+                >
+                    <T>Changelog</T>
+                    <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
+                </Button>
+                <Button
+                    className="justify-between"
+                    render={<Link href="mailto:gsmt.dev@gmail.com" />}
+                    variant="ghost"
+                >
+                    <T>Support</T>
+                    <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
+                </Button>
+                <LogoutDialogButton
+                    render={
+                        <Button className="justify-start" variant="ghost" />
+                    }
+                >
+                    <T>Log out</T>
+                </LogoutDialogButton>
+            </MenuSection>
+        </>
+    );
+}
+
+export function UserMenuFooter() {
+    return (
+        <>
+            <div className="relative -my-1">
+                <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+            </div>
+            <LocaleSelector />
+
+            <div className="relative -my-1">
+                <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
+            </div>
+            <div className="-mx-1 flex flex-wrap opacity-80">
+                <Button
+                    render={<Link href="/legal/privacy-policy" />}
+                    size="xs"
+                    variant="ghost"
+                >
+                    <T>Privacy</T>
+                </Button>
+                <Button
+                    render={<Link href="/legal/terms-of-service" />}
+                    size="xs"
+                    variant="ghost"
+                >
+                    <T>Terms</T>
+                </Button>
+                <Button
+                    className="ml-auto"
+                    render={
+                        <Link
+                            href="https://x.com/gsmmtt_"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                        />
+                    }
+                    size="icon-xs"
+                    variant="ghost"
+                >
+                    <XSocial className="size-4" />
+                </Button>
+            </div>
+        </>
+    );
+}
+
+export function UserMenu({ children }: { children: ReactNode }) {
+    const { isLoading, session } = useAccess();
+
+    if (isLoading) {
+        return <UserMenuSkeleton />;
+    }
+
+    if (!session?.user) {
+        return null;
+    }
+
+    const { user } = session;
 
     return (
         <Popover>
@@ -217,7 +398,7 @@ export function UserMenu({
                     </Avatar>
                     <span className="flex min-w-0 flex-col items-start text-left">
                         <span className="truncate font-medium text-sm">
-                            {user.name ?? "Account"}
+                            {user.name ?? <T>Account</T>}
                         </span>
                         <span className="truncate text-muted-foreground text-xs">
                             {user.email}
@@ -230,138 +411,7 @@ export function UserMenu({
                 />
             </PopoverTrigger>
             <PopoverPopup align="start" positionMethod="fixed" side="top">
-                <div className="flex flex-col gap-4">
-                    <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-sm">
-                            {user.name ?? "Cache account"}
-                        </p>
-                        <p className="truncate text-muted-foreground text-sm">
-                            {user.email}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                            <Badge
-                                className={cn(
-                                    "h-6! w-full",
-                                    getToneClassName(subscriptionLabel.tone)
-                                )}
-                                variant="secondary"
-                            >
-                                {subscriptionLabel.detail}
-                            </Badge>
-                        </div>
-                    </div>
-                    <div className="relative -my-1">
-                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
-                    </div>
-                    <div className="-mx-2 flex flex-col gap-1">
-                        <Button
-                            className="justify-between"
-                            disabled
-                            variant="ghost"
-                        >
-                            Theme
-                            <span>Soon</span>
-                        </Button>
-                    </div>
-                    <div className="relative -my-1">
-                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
-                    </div>
-                    <div className="-mx-2 flex flex-col gap-1">
-                        {hasManagedSubscription ? (
-                            <Button
-                                className="justify-start"
-                                loading={isPending}
-                                onClick={handleBillingPortal}
-                                variant="ghost"
-                            >
-                                Billing
-                            </Button>
-                        ) : (
-                            <>
-                                <Button
-                                    className="justify-start"
-                                    render={<Link href="/pricing" />}
-                                    variant="ghost"
-                                >
-                                    Pricing
-                                </Button>
-                                <Button
-                                    className="justify-start"
-                                    loading={isPending}
-                                    onClick={handleUpgrade}
-                                    variant="ghost"
-                                >
-                                    Upgrade to Pro
-                                </Button>
-                            </>
-                        )}
-                        <Button
-                            className="justify-between"
-                            render={<Link href="/changelog" />}
-                            variant="ghost"
-                        >
-                            Changelog
-                            <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
-                        </Button>
-                        <Button
-                            className="justify-between"
-                            render={<Link href="mailto:gsmt.dev@gmail.com" />}
-                            variant="ghost"
-                        >
-                            Support
-                            <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
-                        </Button>
-                        <Button
-                            className="justify-start"
-                            onClick={handleLogout}
-                            variant="ghost"
-                        >
-                            Log out
-                        </Button>
-                    </div>
-                    {errorMessage ? (
-                        <p className="text-destructive text-xs">
-                            {errorMessage}
-                        </p>
-                    ) : null}
-                    <div className="relative -my-1">
-                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
-                    </div>
-                    <LocaleSelector />
-                    <div className="relative -my-1">
-                        <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
-                    </div>
-                    <div className="-mx-1 flex flex-wrap opacity-80">
-                        <Button
-                            render={<Link href="/legal/privacy-policy" />}
-                            size="xs"
-                            variant="ghost"
-                        >
-                            Privacy
-                        </Button>
-                        <Button
-                            render={<Link href="/legal/terms-of-service" />}
-                            size="xs"
-                            variant="ghost"
-                        >
-                            Terms
-                        </Button>
-                        <Button
-                            className="ml-auto"
-                            render={
-                                <Link
-                                    href="https://x.com/gsmmtt_"
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                />
-                            }
-                            size="icon-xs"
-                            variant="ghost"
-                        >
-                            <XSocial className="size-4" />
-                        </Button>
-                    </div>
-                </div>
+                <div className="flex flex-col gap-4">{children}</div>
             </PopoverPopup>
         </Popover>
     );

@@ -2,9 +2,9 @@ import dynamic from "next/dynamic";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type * as React from "react";
 
-const FeedbackWidget = dynamic(() =>
-    import("@/components/feedback/feedback-widget").then(
-        (mod) => mod.FeedbackWidget
+const FeedbackFloatingWidget = dynamic(() =>
+    import("@/components/feedback/feedback-floating-widget").then(
+        (mod) => mod.FeedbackFloatingWidget
     )
 );
 
@@ -12,7 +12,7 @@ export default function LibraryLayout({ children }: React.PropsWithChildren) {
     return (
         <NuqsAdapter>
             {children}
-            <FeedbackWidget />
+            <FeedbackFloatingWidget />
         </NuqsAdapter>
     );
 }

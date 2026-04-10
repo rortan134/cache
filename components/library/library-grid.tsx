@@ -28,11 +28,13 @@ import {
 import { BlockPromotionBanner } from "@/components/ui/promotion-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSubtleColorGradientFromName } from "@/lib/colors";
+import { getNoteExcerpt } from "@/lib/library/notes";
 import type {
     LibraryCollectionSummary,
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import { cn } from "@/lib/utils";
 import fscreen from "fscreen";
 import {
@@ -44,8 +46,10 @@ import {
     CopyIcon,
     DownloadIcon,
     ExternalLinkIcon,
+    FilePenLineIcon,
     EyeIcon,
     MaximizeIcon,
+    NotebookPenIcon,
     Trash2Icon,
 } from "lucide-react";
 import type { CSSProperties, MouseEvent, ReactElement } from "react";
@@ -76,6 +80,7 @@ interface GridProps {
     readonly onDelete?: (item: LibraryItemWithCollections) => void;
     readonly onOpenHere?: (item: LibraryItemWithCollections) => void;
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
+    readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
         collectionIds: string[]
@@ -108,6 +113,7 @@ interface LibraryGridCardProps {
     readonly onDelete?: (item: LibraryItemWithCollections) => void;
     readonly onOpenHere?: (item: LibraryItemWithCollections) => void;
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
+    readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
         collectionIds: string[]
@@ -122,6 +128,12 @@ interface LibraryGridCardProps {
 interface LockedLibraryGridCardProps {
     readonly alt: string;
     readonly item: LibraryItemWithCollections;
+}
+
+interface PreviewMediaProps {
+    readonly alt: string;
+    readonly fallbackLabel?: string;
+    readonly src: string | null;
 }
 
 function itemDomain(url: string): string {
@@ -154,6 +166,67 @@ function fallbackGridStyle(columnCount?: number): CSSProperties | undefined {
     return {
         gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
     };
+}
+
+function itemTitle(item: LibraryItemWithCollections): string {
+    const caption = item.caption?.trim();
+    if (caption) {
+        return caption;
+    }
+
+    if (item.kind === "note") {
+        return "Untitled note";
+    }
+
+    return item.url;
+}
+
+function opengraphPreviewUrl(item: LibraryItemWithCollections): string | null {
+    if (item.thumbnailUrl) {
+        return item.thumbnailUrl;
+    }
+
+    if (item.source !== LibraryItemSource.chrome_bookmarks) {
+        return null;
+    }
+
+    const href = normalizeURL(item.url);
+    if (href === "about:blank") {
+        return null;
+    }
+
+    return `/api/library/opengraph-image?url=${encodeURIComponent(href)}`;
+}
+
+function PreviewMedia({
+    alt,
+    fallbackLabel = "No preview",
+    src,
+}: PreviewMediaProps): ReactElement {
+    const [didFail, setDidFail] = useState(false);
+    const imageSrc = src ?? undefined;
+    const canRenderImage = Boolean(imageSrc) && !didFail;
+
+    if (!canRenderImage) {
+        return (
+            <div className="flex size-full items-center justify-center bg-muted/30 text-muted-foreground text-xs">
+                {fallbackLabel}
+            </div>
+        );
+    }
+
+    return (
+        // biome-ignore lint/a11y/noNoninteractiveElementInteractions: image load failures drive the visual fallback state
+        <img
+            alt={alt}
+            className="size-full object-cover transition-transform duration-200 group-focus-within:scale-[1.025] group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
+            height={400}
+            loading="lazy"
+            onError={() => setDidFail(true)}
+            src={imageSrc}
+            width={300}
+        />
+    );
 }
 
 function CollectionComboboxPicker({
@@ -277,6 +350,7 @@ function LibraryGridCard({
     item,
     onCopyLink,
     onDelete,
+    onOpenNote,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
@@ -286,14 +360,18 @@ function LibraryGridCard({
     previewDescription,
     previewTitle,
 }: LibraryGridCardProps): ReactElement {
+    const isNote = item.kind === "note";
     const isDeletePending = pendingDeleteItemId === item.id;
     const [isDownloading, setIsDownloading] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [isCollectionPickerOpen, setIsCollectionPickerOpen] = useState(false);
+    const previewImageUrl = opengraphPreviewUrl(item);
 
     const cardRef = useRef<HTMLDivElement>(null);
-    const canPreview = href !== "about:blank";
+    const canPreview = !isNote && href !== "about:blank";
+    const noteExcerpt = getNoteExcerpt(item.noteContentText);
+    const displayTitle = itemTitle(item);
 
     useHotkeys("s", () => setIsCollectionPickerOpen(true), {
         enabled: isHovered && !isCollectionPickerOpen,
@@ -302,6 +380,10 @@ function LibraryGridCard({
 
     const handlePrimaryClick = (event: MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault();
+        if (isNote) {
+            onOpenNote?.(item);
+            return;
+        }
         onOpenInNewTab?.(item);
     };
 
@@ -351,45 +433,60 @@ function LibraryGridCard({
                         href={href}
                         onClick={handlePrimaryClick}
                         rel="noopener noreferrer"
-                        target="_blank"
+                        target={isNote ? undefined : "_blank"}
                     >
-                        <div className="relative aspect-3/4 w-full overflow-hidden">
-                            {item.thumbnailUrl ? (
-                                <img
-                                    alt={alt}
-                                    className="size-full object-cover transition-transform duration-200 group-focus-within:scale-[1.025] group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
-                                    height={400}
-                                    loading="lazy"
-                                    src={item.thumbnailUrl}
-                                    width={300}
-                                />
-                            ) : (
-                                <div className="flex size-full items-center justify-center bg-muted/30 text-muted-foreground text-xs">
-                                    No preview
-                                </div>
-                            )}
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-                                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                    <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
-                                        {domain}
+                        {isNote ? (
+                            <div className="relative flex min-h-72 flex-col justify-between overflow-hidden bg-linear-to-br from-amber-50 via-background to-stone-100 px-4 py-4">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.18),transparent_45%)]" />
+                                <div className="relative flex items-start justify-between gap-3">
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-white/70 px-2.5 py-1 font-medium text-[11px] text-stone-700 backdrop-blur-xs">
+                                        <NotebookPenIcon className="size-3.5" />
+                                        Note
                                     </span>
-                                    {hasBothDates ? (
-                                        <>
-                                            <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
-                                                Posted: {postedLabel}
-                                            </span>
-                                            <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
-                                                Added: {addedLabel}
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
-                                            {postedLabel || addedLabel}
-                                        </span>
-                                    )}
+                                    <span className="text-[11px] text-muted-foreground">
+                                        {addedLabel}
+                                    </span>
+                                </div>
+                                <div className="relative flex flex-1 flex-col gap-3 pt-6">
+                                    <h3 className="line-clamp-3 font-semibold text-base text-foreground leading-tight">
+                                        {displayTitle}
+                                    </h3>
+                                    <p className="line-clamp-8 whitespace-pre-wrap text-muted-foreground text-sm leading-6">
+                                        {noteExcerpt ||
+                                            "Tap to start writing in this note."}
+                                    </p>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="relative aspect-3/4 w-full overflow-hidden">
+                                <PreviewMedia
+                                    alt={alt}
+                                    key={previewImageUrl ?? `empty-${item.id}`}
+                                    src={previewImageUrl}
+                                />
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                        <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                            {domain}
+                                        </span>
+                                        {hasBothDates ? (
+                                            <>
+                                                <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                                    Posted: {postedLabel}
+                                                </span>
+                                                <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                                    Added: {addedLabel}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="rounded-full bg-white/90 px-2 py-0.5 font-medium text-black backdrop-blur-xs">
+                                                {postedLabel || addedLabel}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </a>
                     <div className="flex items-center gap-0.5 px-2.5 py-2">
                         <CollectionComboboxPicker
@@ -402,18 +499,28 @@ function LibraryGridCard({
                         />
                         <p
                             className="line-clamp-2 truncate text-foreground text-xs leading-tight"
-                            title={item.caption?.trim() || item.url}
+                            title={displayTitle}
                         >
-                            {item.caption?.trim() || item.url}
+                            {isNote
+                                ? displayTitle
+                                : item.caption?.trim() || item.url}
                         </p>
                     </div>
                 </article>
             </ContextMenuTrigger>
             <ContextMenuPopup>
                 <div className="relative mx-auto flex max-w-56 items-center gap-2 pt-2 pb-1.5 pl-2.5 opacity-50">
-                    <span className="block truncate text-xs">{item.url}</span>
+                    <span className="block truncate text-xs">
+                        {isNote ? displayTitle : item.url}
+                    </span>
                 </div>
                 <ContextMenuSeparator />
+                {isNote ? (
+                    <ContextMenuItem onClick={() => onOpenNote?.(item)}>
+                        <FilePenLineIcon className="size-4 text-muted-foreground" />
+                        Edit note
+                    </ContextMenuItem>
+                ) : null}
                 {canPreview ? (
                     <>
                         <ContextMenuItem
@@ -438,30 +545,36 @@ function LibraryGridCard({
                         </PreviewDrawer>
                     </>
                 ) : null}
-                <ContextMenuItem onClick={() => onOpenInNewTab?.(item)}>
-                    <ExternalLinkIcon className="size-4 text-muted-foreground" />
-                    Open in new tab
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => onOpenHere?.(item)}>
-                    <ArrowUpRightIcon className="size-4 text-muted-foreground" />
-                    Open here
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => onCopyLink?.(item)}>
-                    <CopyIcon className="size-4 text-muted-foreground" />
-                    Copy link
-                </ContextMenuItem>
-                <ContextMenuItem onClick={handleFullscreen}>
-                    <MaximizeIcon className="size-4 text-muted-foreground" />
-                    View fullscreen
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={isDownloading}
-                    onClick={handleDownload}
-                >
-                    <DownloadIcon className="size-4 text-muted-foreground" />
-                    {isDownloading ? "Downloading..." : "Download media"}
-                </ContextMenuItem>
-                <ContextMenuSeparator />
+                {isNote ? null : (
+                    <>
+                        <ContextMenuItem onClick={() => onOpenInNewTab?.(item)}>
+                            <ExternalLinkIcon className="size-4 text-muted-foreground" />
+                            Open in new tab
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => onOpenHere?.(item)}>
+                            <ArrowUpRightIcon className="size-4 text-muted-foreground" />
+                            Open here
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => onCopyLink?.(item)}>
+                            <CopyIcon className="size-4 text-muted-foreground" />
+                            Copy link
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={handleFullscreen}>
+                            <MaximizeIcon className="size-4 text-muted-foreground" />
+                            View fullscreen
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            disabled={isDownloading}
+                            onClick={handleDownload}
+                        >
+                            <DownloadIcon className="size-4 text-muted-foreground" />
+                            {isDownloading
+                                ? "Downloading..."
+                                : "Download media"}
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                    </>
+                )}
                 <ContextMenuItem
                     className="text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive"
                     disabled={isDeletePending}
@@ -479,28 +592,38 @@ function LockedLibraryGridCard({
     alt,
     item,
 }: LockedLibraryGridCardProps): ReactElement {
+    const isNote = item.kind === "note";
+    const previewImageUrl = opengraphPreviewUrl(item);
+
     return (
         <div className="relative flex flex-col overflow-hidden rounded-xl ring-1 ring-border/30">
-            <div className="relative aspect-3/4 w-full overflow-hidden bg-muted/30">
-                {item.thumbnailUrl ? (
-                    <img
-                        alt={alt}
-                        className="size-full object-cover"
-                        height={400}
-                        loading="lazy"
-                        src={item.thumbnailUrl}
-                        width={300}
-                    />
-                ) : (
-                    <div className="flex size-full items-center justify-center bg-muted/40 text-muted-foreground text-xs">
-                        Locked preview
+            {isNote ? (
+                <div className="relative min-h-72 bg-linear-to-br from-amber-50 via-background to-stone-100 px-4 py-4">
+                    <div className="absolute inset-0 bg-background/45 backdrop-blur-md" />
+                    <div className="relative flex flex-col gap-3">
+                        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/20 bg-white/70 px-2.5 py-1 font-medium text-[11px] text-stone-700">
+                            <NotebookPenIcon className="size-3.5" />
+                            Note
+                        </span>
+                        <p className="line-clamp-3 font-semibold text-base text-foreground">
+                            {itemTitle(item)}
+                        </p>
                     </div>
-                )}
-                <div className="absolute inset-0 bg-background/35 backdrop-blur-md" />
-            </div>
+                </div>
+            ) : (
+                <div className="relative aspect-3/4 w-full overflow-hidden bg-muted/30">
+                    <PreviewMedia
+                        alt={alt}
+                        fallbackLabel="Locked preview"
+                        key={previewImageUrl ?? `locked-empty-${item.id}`}
+                        src={previewImageUrl}
+                    />
+                    <div className="absolute inset-0 bg-background/35 backdrop-blur-md" />
+                </div>
+            )}
             <div className="relative flex flex-col gap-2 bg-background/75 px-3 py-2">
                 <p className="line-clamp-2 truncate text-foreground text-xs leading-tight">
-                    {item.caption?.trim() || item.url}
+                    {itemTitle(item)}
                 </p>
             </div>
         </div>
@@ -515,6 +638,7 @@ function renderLibraryMasonry({
     locked = false,
     onCopyLink,
     onDelete,
+    onOpenNote,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
@@ -580,6 +704,7 @@ function renderLibraryMasonry({
                                 onDelete={onDelete}
                                 onOpenHere={onOpenHere}
                                 onOpenInNewTab={onOpenInNewTab}
+                                onOpenNote={onOpenNote}
                                 onUpdateItemCollections={
                                     onUpdateItemCollections
                                 }
@@ -652,6 +777,7 @@ export function ExtensionLibraryGrid({
     layoutToken,
     onCopyLink,
     onDelete,
+    onOpenNote,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
@@ -685,6 +811,7 @@ export function ExtensionLibraryGrid({
             onDelete,
             onOpenHere,
             onOpenInNewTab,
+            onOpenNote,
             onUpdateItemCollections,
             pendingCollectionItemIds,
             pendingDeleteItemId,
@@ -703,6 +830,7 @@ export function ExtensionLibraryGrid({
                       onDelete,
                       onOpenHere,
                       onOpenInNewTab,
+                      onOpenNote,
                       onUpdateItemCollections,
                       pendingCollectionItemIds,
                       pendingDeleteItemId,
@@ -727,6 +855,7 @@ export function ExtensionLibraryGrid({
                             onDelete,
                             onOpenHere,
                             onOpenInNewTab,
+                            onOpenNote,
                             onUpdateItemCollections,
                             pendingCollectionItemIds,
                             pendingDeleteItemId,
@@ -749,6 +878,7 @@ export function ExtensionLibrarySection({
     layoutToken,
     onCopyLink,
     onDelete,
+    onOpenNote,
     onOpenHere,
     onOpenInNewTab,
     onUpdateItemCollections,
@@ -779,6 +909,7 @@ export function ExtensionLibrarySection({
                 onDelete={onDelete}
                 onOpenHere={onOpenHere}
                 onOpenInNewTab={onOpenInNewTab}
+                onOpenNote={onOpenNote}
                 onUpdateItemCollections={onUpdateItemCollections}
                 pendingCollectionItemIds={pendingCollectionItemIds}
                 pendingDeleteItemId={pendingDeleteItemId}

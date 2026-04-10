@@ -1,8 +1,13 @@
-import { UserMenu } from "@/components/auth/user-menu";
-import { LibrarySidebarIntegrations } from "@/components/library/integrations";
+import {
+    UserMenu,
+    UserMenuContent,
+    UserMenuFooter,
+    UserMenuHeader,
+} from "@/components/auth/user-menu";
+import { IntegrationsList } from "@/components/library/integrations-list";
 import { LibraryWorkspace } from "@/components/library/library-workspace";
-import { PageShell } from "@/components/ui/layouts";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
+import { PageShell } from "@/components/ui/page-shell";
 import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
@@ -36,61 +41,40 @@ export default async function LibraryPage({
     params: Promise<{ locale: string }>;
 }) {
     const { locale } = await params;
-    const soundcloudParked = !(
-        process.env.SOUNDCLOUD_CLIENT_ID && process.env.SOUNDCLOUD_CLIENT_SECRET
-    );
-    const xParked = !(process.env.X_CLIENT_ID && process.env.X_CLIENT_SECRET);
     const session = await getServerSession();
     const userId = session?.user?.id;
-
     if (!userId) {
         return redirect("/");
     }
 
-    const [
-        { collections, items },
-        linkedAccounts,
-        soundcloudLikes,
-        subscriptions,
-    ] = await Promise.all([
-        getLibraryItemsForUser(userId),
-        prisma.account.findMany({
-            select: { providerId: true },
-            where: {
-                providerId: {
-                    in: ["google", "pinterest", "soundcloud", "x"],
+    const isSoundCloudParked = !(
+        process.env.SOUNDCLOUD_CLIENT_ID && process.env.SOUNDCLOUD_CLIENT_SECRET
+    );
+    const isXParked = !(process.env.X_CLIENT_ID && process.env.X_CLIENT_SECRET);
+
+    const [{ collections, items }, linkedAccounts, soundcloudLikes] =
+        await Promise.all([
+            getLibraryItemsForUser(userId),
+            prisma.account.findMany({
+                select: { providerId: true },
+                where: {
+                    providerId: {
+                        in: ["google", "pinterest", "soundcloud", "x"],
+                    },
+                    userId,
                 },
-                userId,
-            },
-        }),
-        soundcloudParked ? Promise.resolve(null) : getLatestSoundcloudLikes(),
-        prisma.subscription.findMany({
-            select: {
-                billingInterval: true,
-                cancelAtPeriodEnd: true,
-                periodEnd: true,
-                plan: true,
-                status: true,
-            },
-            where: {
-                referenceId: userId,
-            },
-        }),
-    ]);
+            }),
+            isSoundCloudParked
+                ? Promise.resolve(null)
+                : getLatestSoundcloudLikes(),
+        ]);
 
     const linkedProviderIds = new Set(
         linkedAccounts.map((account) => account.providerId)
     );
+
     const soundcloudConnected =
-        !soundcloudParked && soundcloudLikes?.status !== "NOT_CONNECTED";
-    const prioritizedSubscription =
-        subscriptions.find(
-            (subscription) =>
-                subscription.status === "active" ||
-                subscription.status === "trialing"
-        ) ??
-        subscriptions[0] ??
-        null;
+        !isSoundCloudParked && soundcloudLikes?.status !== "NOT_CONNECTED";
 
     const isIntegrationConnected = (
         id: (typeof INTEGRATIONS)[number]["id"]
@@ -119,14 +103,16 @@ export default async function LibraryPage({
         }
         return false;
     };
-    const serverConnectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
+
+    const connectedIntegrationIDs = INTEGRATIONS.flatMap(({ id }) =>
         isIntegrationConnected(id) ? [id] : []
     );
+
     const parkedIntegrationIds = INTEGRATIONS.flatMap(({ id }) => {
-        if (id === "soundcloud" && soundcloudParked) {
+        if (id === "soundcloud" && isSoundCloudParked) {
             return [id];
         }
-        if (id === "x" && xParked) {
+        if (id === "x" && isXParked) {
             return [id];
         }
         return [];
@@ -134,50 +120,35 @@ export default async function LibraryPage({
 
     return (
         <PageShell>
-            <LibraryWorkspace
-                initialCollections={collections}
-                initialItems={items}
-                locale={locale}
-                sidebarBottom={
-                    <UserMenu
-                        locale={locale}
-                        subscription={
-                            prioritizedSubscription
-                                ? {
-                                      billingInterval:
-                                          prioritizedSubscription.billingInterval,
-                                      cancelAtPeriodEnd:
-                                          prioritizedSubscription.cancelAtPeriodEnd ??
-                                          false,
-                                      periodEnd:
-                                          prioritizedSubscription.periodEnd?.toISOString() ??
-                                          null,
-                                      plan: prioritizedSubscription.plan,
-                                      status: prioritizedSubscription.status,
-                                  }
-                                : null
-                        }
-                        user={{
-                            email: session.user.email,
-                            image: session.user.image ?? null,
-                            name: session.user.name ?? null,
-                        }}
-                    />
-                }
-                sidebarContent={
-                    <LibrarySidebarIntegrations
-                        items={items}
-                        locale={locale}
-                        parkedIntegrationIds={parkedIntegrationIds}
-                        serverConnectedIntegrationIds={
-                            serverConnectedIntegrationIds
-                        }
-                    />
-                }
-                sidebarHeader={
-                    <LogoContextMenu href="/library" src={LogoIconImage} />
-                }
-            />
+            <div className="flex flex-1 flex-col gap-8 lg:flex-row lg:justify-between">
+                <LibraryWorkspace
+                    initialCollections={collections}
+                    initialItems={items}
+                    locale={locale}
+                    sidebarBottom={
+                        <UserMenu>
+                            <UserMenuHeader />
+                            <UserMenuContent />
+                            <UserMenuFooter />
+                        </UserMenu>
+                    }
+                    sidebarHeader={
+                        <>
+                            <LogoContextMenu
+                                href="/library"
+                                src={LogoIconImage}
+                            />
+                            <IntegrationsList
+                                items={items}
+                                parkedIntegrationIds={parkedIntegrationIds}
+                                serverConnectedIntegrationIds={
+                                    connectedIntegrationIDs
+                                }
+                            />
+                        </>
+                    }
+                />
+            </div>
         </PageShell>
     );
 }

@@ -44,7 +44,7 @@ function useAccess() {
 
     const isLoading = isPending || _isLoading;
 
-    return { hasAccess, isLoading, mutate, subscription };
+    return { hasAccess, isLoading, mutate, session, subscription };
 }
 
 export { useAccess };
