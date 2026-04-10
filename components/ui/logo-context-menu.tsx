@@ -49,24 +49,26 @@ function LogoContextMenu({
 
     return (
         <ContextMenu>
-            <ContextMenuTrigger render={<div className="contents" />}>
-                <Link
-                    className="group inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-                    draggable={false}
-                    href={href}
-                >
-                    <Image
-                        alt="App Icon"
-                        className="block h-auto select-none"
+            <ContextMenuTrigger
+                render={
+                    <Link
+                        className="group w-fit rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                         draggable={false}
-                        fetchPriority="high"
-                        height={50}
-                        loading="eager"
-                        priority
-                        src={src}
-                        width={200}
+                        href={href}
                     />
-                </Link>
+                }
+            >
+                <Image
+                    alt="App Icon"
+                    className="block h-auto select-none"
+                    draggable={false}
+                    fetchPriority="high"
+                    height={50}
+                    loading="eager"
+                    priority
+                    src={src}
+                    width={200}
+                />
             </ContextMenuTrigger>
             <ContextMenuPopup className="min-w-44">
                 <ContextMenuItem onClick={handleSaveLogo}>

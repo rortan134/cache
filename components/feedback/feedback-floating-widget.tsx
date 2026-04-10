@@ -54,7 +54,7 @@ export function FeedbackFloatingWidget(): React.ReactElement {
                         />
                     }
                 >
-                    <span className="font-medium text-sm">Feedback</span>
+                    <span className="font-medium text-xs">Feedback</span>
                     <Kbd>F</Kbd>
                 </PopoverTrigger>
                 <PopoverPopup

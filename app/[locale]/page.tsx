@@ -1,9 +1,5 @@
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import {
-    SessionHint,
-    SignedInOnly,
-    SignedOutOnly,
-} from "@/components/auth/session";
+import { SessionHint } from "@/components/auth/session";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/ui/footer";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
@@ -11,6 +7,7 @@ import { Chrome } from "@/components/ui/integration-icons";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
 import { PageShell } from "@/components/ui/page-shell";
 import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
+import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
@@ -47,6 +44,7 @@ export default async function Home({
     params: Promise<{ locale: string }>;
 }>) {
     const { locale } = await params;
+    const session = await getServerSession();
 
     return (
         <PageShell>
@@ -68,14 +66,7 @@ export default async function Home({
                                 </p>
                             </T>
                         </div>
-                        <SignedOutOnly>
-                            <GoogleSignInButton locale={locale}>
-                                <T context="Sign in/up CTA button">
-                                    Continue with Google
-                                </T>
-                            </GoogleSignInButton>
-                        </SignedOutOnly>
-                        <SignedInOnly>
+                        {session ? (
                             <Button
                                 render={
                                     <Link href="/library">
@@ -84,9 +75,16 @@ export default async function Home({
                                     </Link>
                                 }
                                 size="xl"
+                                suppressHydrationWarning
                             />
-                        </SignedInOnly>
-                        <SessionHint />
+                        ) : (
+                            <GoogleSignInButton locale={locale}>
+                                <T context="Sign in/up CTA button">
+                                    Continue with Google
+                                </T>
+                            </GoogleSignInButton>
+                        )}
+                        <SessionHint serverSession={session} />
                     </SidebarHeader>
                     <SidebarFooter>
                         <div className="hidden items-center gap-3 lg:flex">

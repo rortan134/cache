@@ -7,6 +7,7 @@ import {
     CollapsiblePanel,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { GradientWaveText } from "@/components/ui/gradient-wave-text";
 import {
     Menu,
     MenuItem,
@@ -19,9 +20,9 @@ import {
 } from "@/components/ui/menu";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { getColorFromName } from "@/lib/colors";
+import { getSourceLabel } from "@/lib/integrations/supports";
 import type { LibraryCollectionSummary } from "@/lib/library/types";
 import { cn } from "@/lib/utils";
-import { LibraryItemSource } from "@/prisma/client/enums";
 import {
     ChevronDown,
     Component,
@@ -37,41 +38,17 @@ import {
 import type { CSSProperties, ReactElement } from "react";
 import { useState } from "react";
 
-function sourceLabel(source: LibraryItemSource): string {
-    switch (source) {
-        case LibraryItemSource.cache_note:
-            return "Notes";
-        case LibraryItemSource.chrome_bookmarks:
-            return "Chrome";
-        case LibraryItemSource.google_photos:
-            return "Google Photos";
-        case LibraryItemSource.instagram:
-            return "Instagram";
-        case LibraryItemSource.pinterest:
-            return "Pinterest";
-        case LibraryItemSource.tiktok:
-            return "TikTok";
-        case LibraryItemSource.x_bookmarks:
-            return "X";
-        case LibraryItemSource.youtube_watch_later:
-            return "YouTube";
-        default:
-            return "Other";
-    }
-}
-
 function getCollectionButtonStyle(
     name: string,
     isSelected: boolean
 ): CSSProperties {
     const assignedColor = getColorFromName(name);
-    const backgroundOpacity = isSelected ? 20 : 6;
+    const backgroundOpacity = isSelected ? 20 : 7;
 
     return {
+        "--focus-ring-color": `color-mix(in srgb, ${assignedColor}, black 20%)`,
         backgroundColor: `color-mix(in srgb, ${assignedColor} ${backgroundOpacity}%, transparent)`,
-        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.18)",
-        color: "var(--color-foreground)",
-    };
+    } as CSSProperties;
 }
 
 export function CollectionsList({
@@ -155,7 +132,7 @@ export function CollectionsListItem({
         <div className="group relative flex select-none items-center">
             <Button
                 className={cn(
-                    "min-w-0 flex-1 select-none justify-start rounded-full pr-11 pl-3.5 text-left transition-[filter,box-shadow] hover:brightness-95"
+                    "min-w-0 flex-1 justify-start rounded-full pr-10 pl-3.5 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]"
                 )}
                 onClick={onSelect}
                 style={getCollectionButtonStyle(collection.name, isSelected)}
@@ -168,13 +145,13 @@ export function CollectionsListItem({
                     </span>
                     {collection.sources.length > 0 && (
                         <span className="truncate text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                            {collection.sources.map(sourceLabel).join(", ")}
+                            {collection.sources.map(getSourceLabel).join(", ")}
                         </span>
                     )}
                 </div>
             </Button>
             <div className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center">
-                <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-50 transition-opacity group-hover:opacity-0">
+                <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-80 transition-opacity focus-visible:opacity-0 group-focus-within:opacity-0 group-hover:opacity-0">
                     {collection.itemCount}
                 </span>
                 <Menu>
@@ -182,13 +159,13 @@ export function CollectionsListItem({
                         render={
                             <Button
                                 aria-label={`Collection actions for ${collection.name}`}
-                                className="absolute rounded-full opacity-0 transition-opacity focus-visible:opacity-100 group-hover:translate-x-0 group-hover:opacity-100"
+                                className="absolute rounded-full opacity-0 transition-opacity focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:translate-x-0 group-hover:opacity-100 group-focus:opacity-100"
                                 size="icon-sm"
                                 variant="ghost"
                             />
                         }
                     >
-                        <EllipsisIcon className="size-4" />
+                        <EllipsisIcon className="size-4.5" />
                     </MenuTrigger>
                     <MenuPopup className="min-w-48">
                         <MenuSub>
@@ -315,7 +292,13 @@ export function SmartCollectionsCallout(): ReactElement {
                                 className="underline decoration-1 decoration-dotted underline-offset-2"
                                 openOnHover
                             >
-                                Smart Collections
+                                <GradientWaveText
+                                    ariaLabel="Smart Collections"
+                                    delay={0}
+                                    speed={2.2}
+                                >
+                                    Smart Collections
+                                </GradientWaveText>
                             </PopoverTrigger>
                             <PopoverPopup align="start" tooltipStyle>
                                 <div className="flex gap-2">

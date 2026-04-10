@@ -9,6 +9,7 @@ import {
     YouTube,
 } from "@/components/ui/integration-icons";
 import type { ComponentType, SVGProps } from "react";
+import { LibraryItemSource } from "@/prisma/client/enums";
 
 export type IntegrationCategory = "media" | "social";
 
@@ -194,4 +195,27 @@ export function recordHasIntegrationId<K extends string>(
     key: K
 ): record is Record<K, IntegrationId> & typeof record {
     return isIntegrationId(record[key]);
+}
+
+export function getSourceLabel(source: LibraryItemSource): string {
+    switch (source) {
+        case LibraryItemSource.cache_note:
+            return "Notes";
+        case LibraryItemSource.chrome_bookmarks:
+            return "Chrome";
+        case LibraryItemSource.google_photos:
+            return "Google Photos";
+        case LibraryItemSource.instagram:
+            return "Instagram";
+        case LibraryItemSource.pinterest:
+            return "Pinterest";
+        case LibraryItemSource.tiktok:
+            return "TikTok";
+        case LibraryItemSource.x_bookmarks:
+            return "X";
+        case LibraryItemSource.youtube_watch_later:
+            return "YouTube";
+        default:
+            return "Other";
+    }
 }
