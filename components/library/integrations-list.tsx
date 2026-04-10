@@ -57,7 +57,7 @@ function IntegrationsList({
     const connectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
         isConnectedOnClient({ extensionInstalled, id, serverConnectedIds })
             ? [id]
-            : []
+            : [],
     );
 
     return (
@@ -70,12 +70,12 @@ function IntegrationsList({
                     />
                 }
             />
-            <CollapsiblePanel>
+            <CollapsiblePanel className="gap-3">
                 {INTEGRATIONS.map(({ id, label, description, Icon }) => (
-                    <div className="flex items-center gap-2" key={id}>
+                    <div className="flex items-center gap-2 pl-1" key={id}>
                         <Avatar
                             aria-label={label}
-                            className="size-10 rounded-lg ring-1 ring-border/60"
+                            className="size-9 rounded-lg ring-1 ring-border/60"
                         >
                             <AvatarFallback className="rounded-lg bg-card text-foreground">
                                 <Icon aria-hidden className="size-5 shrink-0" />
@@ -95,12 +95,12 @@ function IntegrationsList({
                         />
                     </div>
                 ))}
-                <div className="mt-1 flex items-center gap-2 py-2 pl-3">
-                    <Info className="inline-block size-3.5 shrink-0" />
+                <div className="mt-1.5 flex gap-1.5 pl-1">
+                    <Info className="mt-0.5 inline-block size-3.5 shrink-0" />
                     <p className="text-[11px] text-muted-foreground leading-tight">
-                        Please only connect accounts you fully trust. Cache can
-                        access what you choose to save with connected apps. You
-                        can always change your mind.
+                        Please only connect accounts you trust. Cache can access
+                        what you choose to save with connected apps. You can
+                        always change your mind.
                     </p>
                 </div>
             </CollapsiblePanel>

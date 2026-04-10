@@ -773,6 +773,7 @@ export async function createCollection(input: {
                     id: collection.id,
                     itemCount: assignToItemId ? 1 : 0,
                     name: collection.name,
+                    sources: [],
                 } satisfies LibraryCollectionSummary,
             };
         });

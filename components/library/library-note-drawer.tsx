@@ -123,7 +123,7 @@ export function LibraryNoteDrawer({
             }
 
             const highlightValue = String(
-                document.queryCommandValue("hiliteColor") ?? "",
+                document.queryCommandValue("hiliteColor") ?? ""
             ).toLowerCase();
 
             setFormats({
@@ -255,7 +255,7 @@ export function LibraryNoteDrawer({
                                     "hiliteColor",
                                     formats.highlight
                                         ? "transparent"
-                                        : NOTE_HIGHLIGHT_COLOR,
+                                        : NOTE_HIGHLIGHT_COLOR
                                 );
                             }}
                             size="icon-sm"
@@ -268,7 +268,7 @@ export function LibraryNoteDrawer({
                         <div
                             className={cn(
                                 "prose prose-stone max-w-none flex-1 overflow-y-auto text-[15px] leading-7 outline-none",
-                                "prose-p:my-0 prose-p:min-h-[1.75rem] prose-mark:rounded-sm prose-mark:bg-amber-200/90 prose-mark:px-0.5 prose-strong:font-semibold prose-em:italic prose-u:underline prose-s:line-through",
+                                "prose-p:my-0 prose-p:min-h-[1.75rem] prose-mark:rounded-sm prose-mark:bg-amber-200/90 prose-mark:px-0.5 prose-strong:font-semibold prose-em:italic prose-u:underline prose-s:line-through"
                             )}
                             contentEditable
                             onInput={(event) => {

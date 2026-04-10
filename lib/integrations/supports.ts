@@ -51,7 +51,7 @@ export const INTEGRATIONS = [
     {
         capabilities: { bookmarks: true },
         category: "social",
-        description: "Browser bookmarks from your Chrome profile",
+        description: "Bookmarks from your browser profile",
         Icon: Chrome,
         id: "chrome",
         label: "Chrome",

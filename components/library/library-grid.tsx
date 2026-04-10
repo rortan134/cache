@@ -83,7 +83,7 @@ interface GridProps {
     readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly paywallPreviewCount?: number;
     readonly paywallTotalCount?: number;
@@ -116,7 +116,7 @@ interface LibraryGridCardProps {
     readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -241,7 +241,7 @@ function CollectionComboboxPicker({
     readonly item: LibraryItemWithCollections;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly open?: boolean;
@@ -253,7 +253,7 @@ function CollectionComboboxPicker({
 
     const inputRef = useRef<HTMLInputElement>(null);
     const selectedCollectionIds = item.collections.map(
-        (collection) => collection.id,
+        (collection) => collection.id
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
@@ -657,7 +657,7 @@ function renderLibraryMasonry({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -677,7 +677,7 @@ function renderLibraryMasonry({
                 const previewDescription =
                     domain === "Other" ? item.url : domain;
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt,
+                    item.scrapedAt ?? item.createdAt
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
@@ -789,7 +789,7 @@ export function ExtensionLibraryGrid({
 
     const resolvedPreviewCount = Math.max(
         0,
-        Math.min(paywallPreviewCount ?? items.length, items.length),
+        Math.min(paywallPreviewCount ?? items.length, items.length)
     );
     const showPaywall = resolvedPreviewCount < items.length;
     const previewItems = showPaywall
@@ -919,7 +919,7 @@ export function ExtensionLibrarySection({
                 className={cn(
                     "flex items-center justify-between gap-3 py-1 pr-5",
                     stickyHeader &&
-                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50",
+                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50"
                 )}
                 style={
                     stickyHeader

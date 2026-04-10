@@ -21,6 +21,7 @@ import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { getColorFromName } from "@/lib/colors";
 import type { LibraryCollectionSummary } from "@/lib/library/types";
 import { cn } from "@/lib/utils";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import {
     ChevronDown,
     Component,
@@ -35,6 +36,29 @@ import {
 } from "lucide-react";
 import type { CSSProperties, ReactElement } from "react";
 import { useState } from "react";
+
+function sourceLabel(source: LibraryItemSource): string {
+    switch (source) {
+        case LibraryItemSource.cache_note:
+            return "Notes";
+        case LibraryItemSource.chrome_bookmarks:
+            return "Chrome";
+        case LibraryItemSource.google_photos:
+            return "Google Photos";
+        case LibraryItemSource.instagram:
+            return "Instagram";
+        case LibraryItemSource.pinterest:
+            return "Pinterest";
+        case LibraryItemSource.tiktok:
+            return "TikTok";
+        case LibraryItemSource.x_bookmarks:
+            return "X";
+        case LibraryItemSource.youtube_watch_later:
+            return "YouTube";
+        default:
+            return "Other";
+    }
+}
 
 function getCollectionButtonStyle(
     name: string,
@@ -138,12 +162,19 @@ export function CollectionsListItem({
                 type="button"
                 variant="ghost"
             >
-                <span className="min-w-0 flex-1 truncate font-medium text-sm leading-tight">
-                    {collection.name}
-                </span>
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="truncate font-medium text-sm leading-tight">
+                        {collection.name}
+                    </span>
+                    {collection.sources.length > 0 && (
+                        <span className="truncate text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                            {collection.sources.map(sourceLabel).join(", ")}
+                        </span>
+                    )}
+                </div>
             </Button>
             <div className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center">
-                <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-50 transition-opacity duration-200 group-hover:opacity-0">
+                <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-50 transition-opacity group-hover:opacity-0">
                     {collection.itemCount}
                 </span>
                 <Menu>
@@ -151,7 +182,7 @@ export function CollectionsListItem({
                         render={
                             <Button
                                 aria-label={`Collection actions for ${collection.name}`}
-                                className="absolute rounded-full opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:translate-x-0 group-hover:opacity-100"
+                                className="absolute rounded-full opacity-0 transition-opacity focus-visible:opacity-100 group-hover:translate-x-0 group-hover:opacity-100"
                                 size="icon-sm"
                                 variant="ghost"
                             />
@@ -267,13 +298,13 @@ export function SmartCollectionsCallout(): ReactElement {
         <Collapsible onOpenChange={setIsOpen} open={isOpen}>
             <CollapsiblePanel className="items-center justify-center p-2">
                 <AvatarGroup>
-                    <Avatar className="bg-muted/50">
+                    <Avatar className="bg-muted/90">
                         <Sparkles className="inline-block size-4.5 shrink-0" />
                     </Avatar>
                     <Avatar className="border-2 border-white bg-muted">
                         <Info className="inline-block size-4.5 shrink-0" />
                     </Avatar>
-                    <Avatar className="-z-1 bg-muted/50">
+                    <Avatar className="-z-1 bg-muted/90">
                         <Group className="inline-block size-4.5 shrink-0" />
                     </Avatar>
                 </AvatarGroup>
@@ -291,12 +322,13 @@ export function SmartCollectionsCallout(): ReactElement {
                                     <Info className="mt-0.5 inline-block size-4 shrink-0" />
                                     <div className="flex flex-col gap-2">
                                         <p className="text-foreground">
-                                            Organize better by automatically
-                                            grouping related entries
-                                            contextually with AI.
+                                            Let Cache do the organizing: AI now
+                                            groups your related saves into
+                                            focused, contextual ready-to-use
+                                            collections.
                                         </p>
                                         <Button
-                                            className="mt-2 ml-auto"
+                                            className="ml-auto"
                                             size="xs"
                                             variant="destructive-outline"
                                         >

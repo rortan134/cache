@@ -43,6 +43,7 @@ import type {
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import AppIconSmall from "@/public/cache-icon-small.png";
 import { ChevronRight, PlusIcon } from "lucide-react";
 import Image from "next/image";
@@ -68,17 +69,17 @@ interface CollectionActionFeedback {
 }
 
 function sortCollectionsByName<T extends { readonly name: string }>(
-    collections: readonly T[],
+    collections: readonly T[]
 ): T[] {
     return [...collections].sort((a, b) =>
-        COLLECTION_NAME_COLLATOR.compare(a.name, b.name),
+        COLLECTION_NAME_COLLATOR.compare(a.name, b.name)
     );
 }
 
 function replaceItemCollections(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collections: readonly LibraryCollectionTag[],
+    collections: readonly LibraryCollectionTag[]
 ): LibraryItemWithCollections[] {
     return items.map((item) =>
         item.id === itemId
@@ -86,14 +87,14 @@ function replaceItemCollections(
                   ...item,
                   collections: [...collections],
               }
-            : item,
+            : item
     );
 }
 
 function appendCollectionToItem(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collection: LibraryCollectionTag,
+    collection: LibraryCollectionTag
 ): LibraryItemWithCollections[] {
     return items.map((item) => {
         if (item.id !== itemId) {
@@ -114,12 +115,18 @@ function appendCollectionToItem(
 
 function deriveCollectionSummaries(
     collections: readonly LibraryCollectionTag[],
-    items: readonly LibraryItemWithCollections[],
+    items: readonly LibraryItemWithCollections[]
 ): LibraryCollectionSummary[] {
     const counts = new Map<string, number>();
+    const collectionSources = new Map<string, Set<LibraryItemSource>>();
+
     for (const item of items) {
         for (const collection of item.collections) {
             counts.set(collection.id, (counts.get(collection.id) ?? 0) + 1);
+
+            const sources = collectionSources.get(collection.id) ?? new Set();
+            sources.add(item.source);
+            collectionSources.set(collection.id, sources);
         }
     }
 
@@ -129,7 +136,8 @@ function deriveCollectionSummaries(
             id: collection.id,
             itemCount: counts.get(collection.id) ?? 0,
             name: collection.name,
-        })),
+            sources: Array.from(collectionSources.get(collection.id) ?? []),
+        }))
     );
 }
 
@@ -147,7 +155,7 @@ function openSavedItemInNewTab(url: string): void {
 }
 
 function getCollectionItemUrls(
-    items: readonly LibraryItemWithCollections[],
+    items: readonly LibraryItemWithCollections[]
 ): string[] {
     return items.map((item) => normalizeURL(item.url));
 }
@@ -158,7 +166,7 @@ function escapeCsvCell(value: string): string {
 
 function buildCollectionCsv(
     collection: LibraryCollectionSummary,
-    items: readonly LibraryItemWithCollections[],
+    items: readonly LibraryItemWithCollections[]
 ): string {
     const header = [
         "Collection",
@@ -211,8 +219,8 @@ export function LibraryWorkspace({
                 description: collection.description,
                 id: collection.id,
                 name: collection.name,
-            })),
-        ),
+            }))
+        )
     );
     const [selectedCollectionIds, setSelectedCollectionIds] = useState<
         string[]
@@ -222,7 +230,7 @@ export function LibraryWorkspace({
     const [createDialogDescriptionDraft, setCreateDialogDescriptionDraft] =
         useState("");
     const [createDialogError, setCreateDialogError] = useState<string | null>(
-        null,
+        null
     );
     const [createDialogAssignItemId, setCreateDialogAssignItemId] = useState<
         string | null
@@ -276,7 +284,7 @@ export function LibraryWorkspace({
             }
             setIsCreateDialogOpen(open);
         },
-        [isCreatePending],
+        [isCreatePending]
     );
 
     const handleCreateCollectionRequest = useCallback((itemId?: string) => {
@@ -295,7 +303,7 @@ export function LibraryWorkspace({
         setSelectedCollectionIds((current) =>
             current.includes(id)
                 ? current.filter((entryId) => entryId !== id)
-                : [...current, id],
+                : [...current, id]
         );
     }, []);
 
@@ -304,7 +312,7 @@ export function LibraryWorkspace({
             setCollectionActionFeedback(null);
             setPendingDeleteCollection(collection);
         },
-        [],
+        []
     );
 
     const handleDeleteCollectionDialogOpenChange = useCallback(
@@ -313,7 +321,7 @@ export function LibraryWorkspace({
                 setPendingDeleteCollection(null);
             }
         },
-        [isDeletePending],
+        [isDeletePending]
     );
 
     const handleCopyCollectionLinks = useCallback(
@@ -333,7 +341,7 @@ export function LibraryWorkspace({
             setCollectionActionFeedback(null);
             copyToClipboard(urls.join("\n"));
         },
-        [copyToClipboard, itemsByCollectionId],
+        [copyToClipboard, itemsByCollectionId]
     );
 
     const handleOpenCollectionLinks = useCallback(
@@ -359,7 +367,7 @@ export function LibraryWorkspace({
                 openSavedItemInNewTab(url);
             }
         },
-        [itemsByCollectionId],
+        [itemsByCollectionId]
     );
 
     const handleExportCollectionToCsv = useCallback(
@@ -381,13 +389,13 @@ export function LibraryWorkspace({
                         [buildCollectionCsv(collection, collectionItems)],
                         {
                             type: "text/csv;charset=utf-8",
-                        },
+                        }
                     ),
                     {
                         description: "CSV file",
                         extension: "csv",
                         name: collectionExportFileName(collection.name),
-                    },
+                    }
                 );
 
                 setCollectionActionFeedback({
@@ -401,7 +409,7 @@ export function LibraryWorkspace({
                 });
             }
         },
-        [itemsByCollectionId],
+        [itemsByCollectionId]
     );
 
     const handleConfirmDeleteCollection = useCallback(() => {
@@ -434,19 +442,19 @@ export function LibraryWorkspace({
 
             setCollections((current) =>
                 current.filter(
-                    (collection) => collection.id !== result.collection.id,
-                ),
+                    (collection) => collection.id !== result.collection.id
+                )
             );
             setItems((current) =>
                 current.map((item) => ({
                     ...item,
                     collections: item.collections.filter(
-                        (collection) => collection.id !== result.collection.id,
+                        (collection) => collection.id !== result.collection.id
                     ),
-                })),
+                }))
             );
             setSelectedCollectionIds((current) =>
-                current.filter((id) => id !== result.collection.id),
+                current.filter((id) => id !== result.collection.id)
             );
             setPendingDeleteCollection(null);
             setCollectionActionFeedback({
@@ -486,10 +494,10 @@ export function LibraryWorkspace({
 
             setCollections((current) =>
                 current.some(
-                    (collection) => collection.id === nextCollection.id,
+                    (collection) => collection.id === nextCollection.id
                 )
                     ? current
-                    : sortCollectionsByName([...current, nextCollection]),
+                    : sortCollectionsByName([...current, nextCollection])
             );
 
             if (result.assignedItemId) {
@@ -498,8 +506,8 @@ export function LibraryWorkspace({
                     appendCollectionToItem(
                         current,
                         assignedItemId,
-                        nextCollection,
-                    ),
+                        nextCollection
+                    )
                 );
             }
 
@@ -521,15 +529,15 @@ export function LibraryWorkspace({
                 items.find((item) => item.id === itemId)?.collections ?? [];
             const optimisticCollections = sortCollectionsByName(
                 collections.filter((collection) =>
-                    collectionIds.includes(collection.id),
-                ),
+                    collectionIds.includes(collection.id)
+                )
             );
 
             setItems((current) =>
-                replaceItemCollections(current, itemId, optimisticCollections),
+                replaceItemCollections(current, itemId, optimisticCollections)
             );
             setPendingCollectionItemIds((current) =>
-                current.includes(itemId) ? current : [...current, itemId],
+                current.includes(itemId) ? current : [...current, itemId]
             );
 
             const runUpdate = async () => {
@@ -553,38 +561,34 @@ export function LibraryWorkspace({
                         replaceItemCollections(
                             current,
                             itemId,
-                            result.collections,
-                        ),
+                            result.collections
+                        )
                     );
                 } else {
                     setItems((current) =>
                         replaceItemCollections(
                             current,
                             itemId,
-                            previousCollections,
-                        ),
+                            previousCollections
+                        )
                     );
                 }
 
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId),
+                    current.filter((id) => id !== itemId)
                 );
             };
 
             runUpdate().catch(() => {
                 setItems((current) =>
-                    replaceItemCollections(
-                        current,
-                        itemId,
-                        previousCollections,
-                    ),
+                    replaceItemCollections(current, itemId, previousCollections)
                 );
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId),
+                    current.filter((id) => id !== itemId)
                 );
             });
         },
-        [collections, items],
+        [collections, items]
     );
 
     return (
@@ -617,32 +621,32 @@ export function LibraryWorkspace({
                                         <CollectionsListItem
                                             collection={collection}
                                             isSelected={selectedCollectionIds.includes(
-                                                collection.id,
+                                                collection.id
                                             )}
                                             key={collection.id}
                                             onCopyLinks={() =>
                                                 handleCopyCollectionLinks(
-                                                    collection,
+                                                    collection
                                                 )
                                             }
                                             onDelete={() =>
                                                 handleRequestDeleteCollection(
-                                                    collection,
+                                                    collection
                                                 )
                                             }
                                             onExportCsv={() =>
                                                 handleExportCollectionToCsv(
-                                                    collection,
+                                                    collection
                                                 )
                                             }
                                             onOpenLinks={() =>
                                                 handleOpenCollectionLinks(
-                                                    collection,
+                                                    collection
                                                 )
                                             }
                                             onSelect={() =>
                                                 handleToggleCollectionSelection(
-                                                    collection.id,
+                                                    collection.id
                                                 )
                                             }
                                         />
@@ -727,7 +731,7 @@ export function LibraryWorkspace({
                                     maxLength={64}
                                     onChange={(event) => {
                                         setCreateDialogDraft(
-                                            event.currentTarget.value,
+                                            event.currentTarget.value
                                         );
                                         if (createDialogError) {
                                             setCreateDialogError(null);
@@ -753,7 +757,7 @@ export function LibraryWorkspace({
                                     maxLength={1024}
                                     onChange={(event) => {
                                         setCreateDialogDescriptionDraft(
-                                            event.currentTarget.value,
+                                            event.currentTarget.value
                                         );
                                     }}
                                     placeholder="Add description..."

@@ -4,6 +4,7 @@ import { LogoutDialogButton } from "@/components/auth/logout-dialog-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Group } from "@/components/ui/group";
 import { XSocial } from "@/components/ui/integration-icons";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { authClient } from "@/lib/auth/client";
 import { LocaleSelector, T, Var, useLocale } from "gt-next";
-import { ArrowUpRight, ChevronsUpDown } from "lucide-react";
+import { ArrowUpRight, ChevronsUpDown, Monitor, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 
@@ -128,7 +129,7 @@ function UpgradeButton({ returnPath }: { returnPath: string }) {
 
                 if (error) {
                     setErrorMessage(
-                        error.message ?? "We couldn't open checkout right now.",
+                        error.message ?? "We couldn't open checkout right now."
                     );
                     return;
                 }
@@ -177,7 +178,7 @@ function BillingPortalButton({ returnPath }: { returnPath: string }) {
 
                 if (error) {
                     setErrorMessage(
-                        error.message ?? "We couldn't open billing right now.",
+                        error.message ?? "We couldn't open billing right now."
                     );
                     return;
                 }
@@ -274,21 +275,19 @@ export function UserMenuContent() {
     return (
         <>
             <MenuSection>
-                <div className="flex flex-col gap-2">
-                    <span className="px-2 font-medium text-xs text-muted-foreground">
+                <div className="flex items-center justify-between px-2.5">
+                    <span className="font-medium text-foreground text-sm">
                         <T>Theme</T>
                     </span>
                     <Group>
-                        <Button className="flex-1" size="sm" variant="outline">
-                            <T>Light</T>
+                        <Button className="rounded-full" variant="secondary">
+                            <Sun className="size-4" />
                         </Button>
-                        <GroupSeparator />
-                        <Button className="flex-1" size="sm" variant="outline">
-                            <T>Dark</T>
+                        <Button className="rounded-full" variant="secondary">
+                            <Moon className="size-4" />
                         </Button>
-                        <GroupSeparator />
-                        <Button className="flex-1" size="sm" variant="outline">
-                            <T>System</T>
+                        <Button className="rounded-full" variant="secondary">
+                            <Monitor className="size-4" />
                         </Button>
                     </Group>
                 </div>
@@ -343,7 +342,6 @@ export function UserMenuFooter() {
                 <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
             </div>
             <LocaleSelector />
-
             <div className="relative -my-1">
                 <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
             </div>

@@ -1,4 +1,5 @@
 import type { LibraryItem } from "@/prisma/client/client";
+import type { LibraryItemSource } from "@/prisma/client/enums";
 
 export interface LibraryCollectionTag {
     readonly description?: string | null;
@@ -9,6 +10,7 @@ export interface LibraryCollectionTag {
 export interface LibraryCollectionSummary extends LibraryCollectionTag {
     readonly description: string | null;
     readonly itemCount: number;
+    readonly sources: LibraryItemSource[];
 }
 
 export interface LibraryItemWithCollections extends LibraryItem {
