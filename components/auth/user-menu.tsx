@@ -128,7 +128,7 @@ function UpgradeButton({ returnPath }: { returnPath: string }) {
 
                 if (error) {
                     setErrorMessage(
-                        error.message ?? "We couldn't open checkout right now."
+                        error.message ?? "We couldn't open checkout right now.",
                     );
                     return;
                 }
@@ -177,7 +177,7 @@ function BillingPortalButton({ returnPath }: { returnPath: string }) {
 
                 if (error) {
                     setErrorMessage(
-                        error.message ?? "We couldn't open billing right now."
+                        error.message ?? "We couldn't open billing right now.",
                     );
                     return;
                 }
@@ -274,10 +274,24 @@ export function UserMenuContent() {
     return (
         <>
             <MenuSection>
-                <Button className="justify-between" disabled variant="ghost">
-                    <T>Theme</T>
-                    <T className="opacity-50">Soon</T>
-                </Button>
+                <div className="flex flex-col gap-2">
+                    <span className="px-2 font-medium text-xs text-muted-foreground">
+                        <T>Theme</T>
+                    </span>
+                    <Group>
+                        <Button className="flex-1" size="sm" variant="outline">
+                            <T>Light</T>
+                        </Button>
+                        <GroupSeparator />
+                        <Button className="flex-1" size="sm" variant="outline">
+                            <T>Dark</T>
+                        </Button>
+                        <GroupSeparator />
+                        <Button className="flex-1" size="sm" variant="outline">
+                            <T>System</T>
+                        </Button>
+                    </Group>
+                </div>
             </MenuSection>
             <MenuSection>
                 {hasAccess ? (

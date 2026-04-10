@@ -20,20 +20,12 @@ import {
     SmartCollectionsCallout,
 } from "@/components/library/collections-list";
 import { LibraryBrowser } from "@/components/library/library-browser";
-import {
-    AlertDialog,
-    AlertDialogClose,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogPopup,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogPanel,
@@ -51,7 +43,6 @@ import type {
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
-import { cn } from "@/lib/utils";
 import AppIconSmall from "@/public/cache-icon-small.png";
 import { ChevronRight, PlusIcon } from "lucide-react";
 import Image from "next/image";
@@ -582,7 +573,11 @@ export function LibraryWorkspace({
 
             runUpdate().catch(() => {
                 setItems((current) =>
-                    replaceItemCollections(current, itemId, previousCollections),
+                    replaceItemCollections(
+                        current,
+                        itemId,
+                        previousCollections,
+                    ),
                 );
                 setPendingCollectionItemIds((current) =>
                     current.filter((id) => id !== itemId),
@@ -786,27 +781,27 @@ export function LibraryWorkspace({
                     </form>
                 </DialogPopup>
             </Dialog>
-            <AlertDialog
+            <Dialog
                 onOpenChange={handleDeleteCollectionDialogOpenChange}
                 open={pendingDeleteCollection !== null}
             >
-                <AlertDialogPopup>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete collection?</AlertDialogTitle>
-                        <AlertDialogDescription>
+                <DialogPopup>
+                    <DialogHeader>
+                        <DialogTitle>Delete collection?</DialogTitle>
+                        <DialogDescription>
                             Remove{" "}
                             {pendingDeleteCollection?.name || "this collection"}{" "}
                             from Cache. Saved items will remain in your library,
                             but they won't belong to this collection anymore.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogClose
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter variant="default">
+                        <DialogClose
                             disabled={isDeletePending}
                             render={<Button size="sm" variant="ghost" />}
                         >
                             Cancel
-                        </AlertDialogClose>
+                        </DialogClose>
                         <Button
                             loading={isDeletePending}
                             onClick={handleConfirmDeleteCollection}
@@ -815,9 +810,9 @@ export function LibraryWorkspace({
                         >
                             Delete
                         </Button>
-                    </AlertDialogFooter>
-                </AlertDialogPopup>
-            </AlertDialog>
+                    </DialogFooter>
+                </DialogPopup>
+            </Dialog>
         </>
     );
 }

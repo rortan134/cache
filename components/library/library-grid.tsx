@@ -34,8 +34,8 @@ import type {
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
-import { LibraryItemSource } from "@/prisma/client/enums";
 import { cn } from "@/lib/utils";
+import { LibraryItemSource } from "@/prisma/client/enums";
 import fscreen from "fscreen";
 import {
     ArrowUpRightIcon,
@@ -46,8 +46,8 @@ import {
     CopyIcon,
     DownloadIcon,
     ExternalLinkIcon,
-    FilePenLineIcon,
     EyeIcon,
+    FilePenLineIcon,
     MaximizeIcon,
     NotebookPenIcon,
     Trash2Icon,
@@ -83,7 +83,7 @@ interface GridProps {
     readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly paywallPreviewCount?: number;
     readonly paywallTotalCount?: number;
@@ -116,7 +116,7 @@ interface LibraryGridCardProps {
     readonly onOpenNote?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -241,7 +241,7 @@ function CollectionComboboxPicker({
     readonly item: LibraryItemWithCollections;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[]
+        collectionIds: string[],
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly open?: boolean;
@@ -253,7 +253,7 @@ function CollectionComboboxPicker({
 
     const inputRef = useRef<HTMLInputElement>(null);
     const selectedCollectionIds = item.collections.map(
-        (collection) => collection.id
+        (collection) => collection.id,
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
@@ -438,11 +438,7 @@ function LibraryGridCard({
                         {isNote ? (
                             <div className="relative flex min-h-72 flex-col justify-between overflow-hidden bg-linear-to-br from-amber-50 via-background to-stone-100 px-4 py-4">
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.18),transparent_45%)]" />
-                                <div className="relative flex items-start justify-between gap-3">
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-white/70 px-2.5 py-1 font-medium text-[11px] text-stone-700 backdrop-blur-xs">
-                                        <NotebookPenIcon className="size-3.5" />
-                                        Note
-                                    </span>
+                                <div className="relative flex items-start justify-end gap-3">
                                     <span className="text-[11px] text-muted-foreground">
                                         {addedLabel}
                                     </span>
@@ -661,7 +657,7 @@ function renderLibraryMasonry({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -681,7 +677,7 @@ function renderLibraryMasonry({
                 const previewDescription =
                     domain === "Other" ? item.url : domain;
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt
+                    item.scrapedAt ?? item.createdAt,
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
@@ -793,7 +789,7 @@ export function ExtensionLibraryGrid({
 
     const resolvedPreviewCount = Math.max(
         0,
-        Math.min(paywallPreviewCount ?? items.length, items.length)
+        Math.min(paywallPreviewCount ?? items.length, items.length),
     );
     const showPaywall = resolvedPreviewCount < items.length;
     const previewItems = showPaywall
@@ -923,7 +919,7 @@ export function ExtensionLibrarySection({
                 className={cn(
                     "flex items-center justify-between gap-3 py-1 pr-5",
                     stickyHeader &&
-                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50"
+                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50",
                 )}
                 style={
                     stickyHeader

@@ -1,51 +1,47 @@
 "use client";
 
 import {
-    AlertDialog,
-    AlertDialogClose,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogPopup,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    Dialog,
+    DialogClose,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogPopup,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
 
-function LogoutDialogButton(
-    props: React.ComponentProps<typeof AlertDialogTrigger>
-) {
+function LogoutDialogButton(props: React.ComponentProps<typeof DialogTrigger>) {
     const router = useRouter();
 
     return (
-        <AlertDialog>
-            <AlertDialogTrigger {...props} />
-            <AlertDialogPopup>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Log out?</AlertDialogTitle>
-                    <AlertDialogDescription>
+        <Dialog>
+            <DialogTrigger {...props} />
+            <DialogPopup>
+                <DialogHeader>
+                    <DialogTitle>Log out?</DialogTitle>
+                    <DialogDescription>
                         You will need to sign in again to access your library.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogClose
-                        render={<Button size="sm" variant="ghost" />}
-                    >
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter variant="default">
+                    <DialogClose render={<Button size="sm" variant="ghost" />}>
                         Cancel
-                    </AlertDialogClose>
-                    <AlertDialogClose
+                    </DialogClose>
+                    <DialogClose
                         onClick={() => {
                             router.push("/logout");
                         }}
                         render={<Button size="sm" />}
                     >
                         Log out
-                    </AlertDialogClose>
-                </AlertDialogFooter>
-            </AlertDialogPopup>
-        </AlertDialog>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogPopup>
+        </Dialog>
     );
 }
 

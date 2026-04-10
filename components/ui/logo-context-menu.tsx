@@ -31,7 +31,7 @@ function LogoContextMenu({
                 fetch(src.src).then((response) => {
                     if (!response.ok) {
                         throw new Error(
-                            `Failed to fetch logo image (${response.status})`,
+                            `Failed to fetch logo image (${response.status})`
                         );
                     }
                     return response.blob();
@@ -40,7 +40,7 @@ function LogoContextMenu({
                     description: "PNG image",
                     extension: "png",
                     name: "cache-logo",
-                },
+                }
             );
         } catch (error) {
             log.error("Failed to save logo image", error);

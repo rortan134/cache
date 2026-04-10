@@ -17,7 +17,7 @@ export const badgeVariants = cva(
             size: {
                 default:
                     "h-5.5 min-w-5.5 px-[calc(--spacing(2)-1px)] text-sm sm:h-4.5 sm:min-w-4.5 sm:text-xs",
-                lg: "h-6.5 min-w-6.5 px-[calc(--spacing(2.5)-1px)] text-base sm:h-5.5 sm:min-w-5.5 sm:text-sm",
+                lg: "h-6.5 min-w-6.5 px-[calc(--spacing(2.5)-1px)] text-base sm:h-6 sm:min-w-5.5 sm:text-sm",
                 sm: "h-5 min-w-5 px-[calc(--spacing(1)-1px)] text-xs sm:h-4 sm:min-w-4 sm:text-[.625rem]",
             },
             variant: {
@@ -37,7 +37,7 @@ export const badgeVariants = cva(
                     "bg-warning/8 text-warning-foreground dark:bg-warning/16",
             },
         },
-    }
+    },
 );
 
 export interface BadgeProps extends useRender.ComponentProps<"span"> {

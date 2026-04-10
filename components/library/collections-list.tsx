@@ -30,11 +30,10 @@ import {
     FileSpreadsheetIcon,
     Group,
     Info,
-    PlusIcon,
     Sparkles,
     Trash2Icon,
 } from "lucide-react";
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { useState } from "react";
 
 function getCollectionButtonStyle(
@@ -52,18 +51,10 @@ function getCollectionButtonStyle(
 }
 
 export function CollectionsList({
-    children,
     className,
     ...props
-}: {
-    readonly children: ReactNode;
-    readonly className?: string;
-} & React.ComponentProps<typeof Collapsible>): ReactElement {
-    return (
-        <Collapsible className={cn(className)} {...props}>
-            {children}
-        </Collapsible>
-    );
+}: React.ComponentProps<typeof Collapsible>): ReactElement {
+    return <Collapsible className={cn(className)} {...props} />;
 }
 
 export function CollectionsListTrigger({
@@ -111,18 +102,10 @@ export function CollectionsListAction({
 }
 
 export function CollectionsListContent({
-    children,
     className,
     ...props
-}: {
-    readonly children: ReactNode;
-    readonly className?: string;
-} & React.ComponentProps<typeof CollapsiblePanel>): ReactElement {
-    return (
-        <CollapsiblePanel className={cn(className)} {...props}>
-            {children}
-        </CollapsiblePanel>
-    );
+}: React.ComponentProps<typeof CollapsiblePanel>): ReactElement {
+    return <CollapsiblePanel className={cn(className)} {...props} />;
 }
 
 export function CollectionsListItem({
@@ -232,7 +215,9 @@ export function CollectionsListFeedback({
             <p
                 className={cn(
                     "text-xs",
-                    tone === "error" ? "text-destructive" : "text-muted-foreground",
+                    tone === "error"
+                        ? "text-destructive"
+                        : "text-muted-foreground",
                 )}
             >
                 {message}
@@ -292,7 +277,7 @@ export function SmartCollectionsCallout(): ReactElement {
                         <Group className="inline-block size-4.5 shrink-0" />
                     </Avatar>
                 </AvatarGroup>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                     <span className="font-medium text-xs">
                         <Popover>
                             <PopoverTrigger

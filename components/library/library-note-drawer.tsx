@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
     Drawer,
     DrawerClose,
-    DrawerDescription,
     DrawerFooter,
     DrawerHeader,
     DrawerPanel,
@@ -13,16 +12,18 @@ import {
     DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import type { LibraryItemWithCollections } from "@/lib/library/types";
+import { cn } from "@/lib/utils";
+import AppIconSmall from "@/public/cache-icon-small.png";
 import {
     BoldIcon,
+    ChevronRight,
     HighlighterIcon,
     ItalicIcon,
-    SaveIcon,
     StrikethroughIcon,
     UnderlineIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 
 const NOTE_EMPTY_HTML = "<p></p>";
@@ -122,7 +123,7 @@ export function LibraryNoteDrawer({
             }
 
             const highlightValue = String(
-                document.queryCommandValue("hiliteColor") ?? ""
+                document.queryCommandValue("hiliteColor") ?? "",
             ).toLowerCase();
 
             setFormats({
@@ -157,20 +158,28 @@ export function LibraryNoteDrawer({
 
     return (
         <Drawer onOpenChange={onOpenChange} open={open} position="right">
-            <DrawerPopup className="w-full max-w-3xl" showBar variant="inset">
+            <DrawerPopup
+                className="w-full max-w-3xl"
+                showBar
+                showCloseButton
+                variant="inset"
+            >
                 <DrawerHeader allowSelection>
-                    <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                            {note ? "Note" : "New note"}
+                    <div className="flex items-center gap-1">
+                        <Badge size="lg" variant="outline">
+                            <Image
+                                alt=""
+                                height={12}
+                                src={AppIconSmall}
+                                width={12}
+                            />
+                            Cache
                         </Badge>
+                        <ChevronRight className="inline-block size-3.5 shrink-0" />
+                        <DrawerTitle className="font-medium text-sm">
+                            {note ? "Edit note" : "Create note"}
+                        </DrawerTitle>
                     </div>
-                    <DrawerTitle>
-                        {note ? "Edit note" : "Create note"}
-                    </DrawerTitle>
-                    <DrawerDescription>
-                        A lightweight note inside your library with familiar
-                        formatting controls.
-                    </DrawerDescription>
                 </DrawerHeader>
                 <DrawerPanel
                     allowSelection
@@ -188,7 +197,7 @@ export function LibraryNoteDrawer({
                         unstyled
                         value={title}
                     />
-                    <div className="flex flex-wrap items-center gap-1 rounded-2xl border border-border/60 bg-muted/35 p-1">
+                    <div className="-mx-2 flex flex-wrap items-center gap-1 rounded-2xl border border-border/60 bg-muted/35 p-1">
                         <Button
                             aria-label="Bold"
                             className={cn(formats.bold && "bg-accent")}
@@ -246,7 +255,7 @@ export function LibraryNoteDrawer({
                                     "hiliteColor",
                                     formats.highlight
                                         ? "transparent"
-                                        : NOTE_HIGHLIGHT_COLOR
+                                        : NOTE_HIGHLIGHT_COLOR,
                                 );
                             }}
                             size="icon-sm"
@@ -255,11 +264,11 @@ export function LibraryNoteDrawer({
                             <HighlighterIcon className="size-4" />
                         </Button>
                     </div>
-                    <div className="relative flex min-h-[24rem] flex-1 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card/75 shadow-xs/5">
+                    <div className="relative flex min-h-[24rem] flex-1">
                         <div
                             className={cn(
-                                "prose prose-stone max-w-none flex-1 overflow-y-auto px-5 py-4 text-[15px] leading-7 outline-none sm:px-6",
-                                "prose-p:my-0 prose-p:min-h-[1.75rem] prose-mark:rounded-sm prose-mark:bg-amber-200/90 prose-mark:px-0.5 prose-strong:font-semibold prose-em:italic prose-u:underline prose-s:line-through"
+                                "prose prose-stone max-w-none flex-1 overflow-y-auto text-[15px] leading-7 outline-none",
+                                "prose-p:my-0 prose-p:min-h-[1.75rem] prose-mark:rounded-sm prose-mark:bg-amber-200/90 prose-mark:px-0.5 prose-strong:font-semibold prose-em:italic prose-u:underline prose-s:line-through",
                             )}
                             contentEditable
                             onInput={(event) => {
@@ -269,7 +278,7 @@ export function LibraryNoteDrawer({
                             suppressContentEditableWarning
                         />
                         {contentHtml === NOTE_EMPTY_HTML ? (
-                            <div className="pointer-events-none absolute inset-0 px-5 py-4 text-muted-foreground text-sm sm:px-6">
+                            <div className="pointer-events-none absolute inset-0 text-base text-muted-foreground">
                                 Start writing...
                             </div>
                         ) : null}
@@ -280,8 +289,7 @@ export function LibraryNoteDrawer({
                         Close
                     </DrawerClose>
                     <Button loading={saving} onClick={saveNote} size="sm">
-                        <SaveIcon className="size-4" />
-                        Save note
+                        Save
                     </Button>
                 </DrawerFooter>
             </DrawerPopup>

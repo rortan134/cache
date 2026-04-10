@@ -3,7 +3,7 @@
     "type": "module",
     "version": "1.0.0",
     "private": true,
-    "packageManager": "bun@1.3.11",
+    "packageManager": "bun@1.3.12",
     "scripts": {
         "clean": "find . -name node_modules -o -name .next -o -name .swc -o -name tsconfig.buildinfo -type d -prune | xargs rm -rf",
         "dev": "next dev",
@@ -40,7 +40,7 @@
         "culori": "^4.0.2",
         "dayjs": "^1.11.20",
         "fscreen": "^1.2.0",
-        "gt-next": "^6.16.2",
+        "gt-next": "^6.16.4",
         "lucide-react": "^1.8.0",
         "mcp-handler": "^1.1.0",
         "nanoid": "^5.1.7",
@@ -61,7 +61,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@biomejs/biome": "2.4.10",
+        "@biomejs/biome": "2.4.11",
         "@tailwindcss/postcss": "^4",
         "@types/bun": "^1.3.11",
         "@types/fscreen": "^1.0.4",
@@ -71,7 +71,7 @@
         "babel-plugin-react-compiler": "1.0.0",
         "chalk": "^5.6.2",
         "dotenv": "^17.4.1",
-        "gt": "^2.14.8",
+        "gt": "^2.14.11",
         "husky": "^9.1.7",
         "knip": "^6.3.1",
         "prisma": "^7.7.0",
