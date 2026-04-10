@@ -331,7 +331,7 @@ export function UserMenu({
                     <div className="relative -my-1">
                         <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
                     </div>
-                    <div className="-mx-1 flex flex-wrap opacity-75">
+                    <div className="-mx-1 flex flex-wrap opacity-80">
                         <Button
                             render={<Link href="/legal/privacy-policy" />}
                             size="xs"

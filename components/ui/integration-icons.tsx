@@ -177,7 +177,7 @@ export const YouTube = (props: SVGProps<SVGSVGElement>) => {
     );
 };
 
-const Chrome = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+export const Chrome = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
     <svg
         aria-label="Chrome"
         className={cn("size-6 shrink-0", className)}
@@ -207,5 +207,3 @@ const Chrome = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
         />
     </svg>
 );
-
-export { Chrome };

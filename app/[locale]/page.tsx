@@ -15,7 +15,7 @@ import { INTEGRATIONS } from "@/lib/integrations/supports";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import QRCodeDownloadImage from "@/public/download-qrcode.png";
 import { LocaleSelector, T } from "gt-next";
-import { ChevronRight, Component, Search } from "lucide-react";
+import { ChevronRight, CloudDownload, Component, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -234,6 +234,13 @@ export default async function Home({
                                         <span>
                                             Find anything with associative
                                             search with OCR built-in
+                                        </span>
+                                    </li>
+                                    <li className="flex items-center gap-2 text-xs">
+                                        <CloudDownload className="inline-block size-4 shrink-0" />
+                                        <span>
+                                            Export or move out from Cache at any
+                                            time you want
                                         </span>
                                     </li>
                                 </ul>

@@ -37,7 +37,8 @@ model User {
     accounts             Account[]
     libraryItems         LibraryItem[]
     collections          Collection[]
-    feedbackEntries      Feedback[]
+
+    feedbackEntries Feedback[]
 
     @@unique([email])
     @@map("user")
@@ -54,32 +55,32 @@ model Collection {
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
 
-    @@index([userId])
     @@unique([userId, nameKey])
+    @@index([userId])
     @@map("collection")
 }
 
 model LibraryItem {
-    id           String            @id @default(cuid())
-    userId       String
-    user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-    source       LibraryItemSource
-    kind         LibraryItemKind   @default(bookmark)
-    externalId   String
-    sourceAliasIds String[]        @default([])
-    browserProfileId String        @default("default")
+    id               String            @id @default(cuid())
+    userId           String
+    user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    source           LibraryItemSource
+    kind             LibraryItemKind   @default(bookmark)
+    externalId       String
+    sourceAliasIds   String[]          @default([])
+    browserProfileId String            @default("default")
     parentExternalId String?
-    sourceDeviceId String?
+    sourceDeviceId   String?
     sourceDeviceName String?
-    url          String
-    caption      String?
-    thumbnailUrl String?
-    sourceMetadata Json?
-    postedAt     DateTime?
-    scrapedAt    DateTime?
-    collections  Collection[]
-    createdAt    DateTime          @default(now())
-    updatedAt    DateTime          @updatedAt
+    url              String
+    caption          String?
+    thumbnailUrl     String?
+    sourceMetadata   Json?
+    postedAt         DateTime?
+    scrapedAt        DateTime?
+    collections      Collection[]
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
 
     @@unique([userId, source, browserProfileId, externalId])
     @@index([userId])

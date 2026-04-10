@@ -51,6 +51,7 @@ import type {
     KeyboardEvent as ReactKeyboardEvent,
     ReactNode,
 } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import {
     useCallback,
     useEffect,
@@ -1166,6 +1167,7 @@ export function LibraryBrowser({
     selectedCollectionIds,
 }: Props) {
     const { hasAccess, isLoading: isAccessLoading } = useAccess();
+    const systemControlKey = useClientOnlyValue(getSystemControlKey());
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const [paletteInput, setPaletteInput] = useState("");
     const [sourceFilters, setSourceFilters] = useState<SourceFilterValue[]>([]);
@@ -1771,17 +1773,54 @@ export function LibraryBrowser({
         selectedCollectionIds.length,
     ]);
 
-    const visiblePaletteGroups = useMemo(
-        () =>
-            paletteGroups
-                .map((group) => ({
-                    ...group,
-                    items: group.items.filter((item) =>
-                        matchesCommandPaletteItem(item, paletteInput)
-                    ),
-                }))
-                .filter((group) => group.items.length > 0),
-        [paletteGroups, paletteInput]
+    const visiblePaletteGroups = useMemo(() => {
+        const filtered = paletteGroups
+            .map((group) => ({
+                ...group,
+                items: group.items.filter((item) =>
+                    matchesCommandPaletteItem(item, paletteInput)
+                ),
+            }))
+            .filter((group) => group.items.length > 0);
+
+        let globalIndex = 0;
+        return filtered.map((group) => ({
+            ...group,
+            items: group.items.map((item) => {
+                globalIndex++;
+                if (globalIndex <= 9) {
+                    return {
+                        ...item,
+                        shortcut: systemControlKey
+                            ? `${systemControlKey}${globalIndex}`
+                            : item.shortcut,
+                    };
+                }
+                return item;
+            }),
+        }));
+    }, [paletteGroups, paletteInput, systemControlKey]);
+
+    useHotkeys(
+        "mod+1, mod+2, mod+3, mod+4, mod+5, mod+6, mod+7, mod+8, mod+9",
+        (event) => {
+            const digit = Number(event.key);
+            if (Number.isNaN(digit)) {
+                return;
+            }
+            const index = digit - 1;
+            const flatItems = visiblePaletteGroups.flatMap((g) => g.items);
+            const item = flatItems[index];
+            if (item) {
+                item.onSelect();
+            }
+        },
+        {
+            enabled: commandListOpen,
+            enableOnFormTags: true,
+            preventDefault: true,
+        },
+        [visiblePaletteGroups, commandListOpen]
     );
 
     let inputPlaceholder = "Change the layout…";
@@ -2008,8 +2047,6 @@ export function LibraryBrowser({
             }) as CSSProperties,
         [commandPanelShellHeight]
     );
-
-    const systemControlKey = useClientOnlyValue(getSystemControlKey());
 
     const libraryGridBody = renderLibraryGridBody({
         clearLibraryPalette,

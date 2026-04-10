@@ -36,7 +36,7 @@ const TruncateAfter = ({
     const numTruncated = remaining.length;
 
     return (
-        <div className={cn("flex flex-wrap items-center gap-2", className)}>
+        <div className={cn("flex flex-wrap items-center gap-1", className)}>
             {displayed}
             {numTruncated > 0 && (
                 <Popover>

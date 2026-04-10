@@ -19,6 +19,7 @@ import {
     ContextMenuSeparator,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { Kbd } from "@/components/ui/kbd";
 import { Masonry, MasonryItem } from "@/components/ui/masonry";
 import {
     PreviewDrawer,
@@ -49,6 +50,7 @@ import {
 } from "lucide-react";
 import type { CSSProperties, MouseEvent, ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 
 /** Stable placeholders for empty-library masonry sneak peek (opacity fades by order). */
 const EMPTY_LIBRARY_PEEK_PLACEHOLDERS = [
@@ -76,7 +78,7 @@ interface GridProps {
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly paywallPreviewCount?: number;
     readonly paywallTotalCount?: number;
@@ -108,7 +110,7 @@ interface LibraryGridCardProps {
     readonly onOpenInNewTab?: (item: LibraryItemWithCollections) => void;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
     readonly pendingDeleteItemId?: string | null;
@@ -159,19 +161,26 @@ function CollectionComboboxPicker({
     item,
     onUpdateItemCollections,
     pendingCollectionItemIds,
+    open: openProp,
+    onOpenChange,
 }: {
     readonly collections: readonly LibraryCollectionSummary[];
     readonly item: LibraryItemWithCollections;
     readonly onUpdateItemCollections: (
         itemId: string,
-        collectionIds: string[],
+        collectionIds: string[]
     ) => void;
     readonly pendingCollectionItemIds: readonly string[];
+    readonly open?: boolean;
+    readonly onOpenChange?: (open: boolean) => void;
 }): ReactElement {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpenInternal, setIsOpenInternal] = useState(false);
+    const isOpen = openProp ?? isOpenInternal;
+    const setIsOpen = onOpenChange ?? setIsOpenInternal;
+
     const inputRef = useRef<HTMLInputElement>(null);
     const selectedCollectionIds = item.collections.map(
-        (collection) => collection.id,
+        (collection) => collection.id
     );
     const isPending = pendingCollectionItemIds.includes(item.id);
     const selectedCount = selectedCollectionIds.length;
@@ -210,7 +219,7 @@ function CollectionComboboxPicker({
                                 ? `Edit collections (${selectedCount} selected)`
                                 : "Add to collections"
                         }
-                        className="rounded-full"
+                        className="rounded-full opacity-80 hover:opacity-100"
                         loading={isPending}
                         size="icon-sm"
                         variant="ghost"
@@ -227,6 +236,7 @@ function CollectionComboboxPicker({
                 <div className="border-b">
                     <ComboboxInput
                         className="border-none! ring-0!"
+                        endAddon={<Kbd>S</Kbd>}
                         placeholder="Assign collections..."
                         ref={inputRef}
                         showTrigger={false}
@@ -279,8 +289,16 @@ function LibraryGridCard({
     const isDeletePending = pendingDeleteItemId === item.id;
     const [isDownloading, setIsDownloading] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isCollectionPickerOpen, setIsCollectionPickerOpen] = useState(false);
+
     const cardRef = useRef<HTMLDivElement>(null);
     const canPreview = href !== "about:blank";
+
+    useHotkeys("s", () => setIsCollectionPickerOpen(true), {
+        enabled: isHovered && !isCollectionPickerOpen,
+        preventDefault: true,
+    });
 
     const handlePrimaryClick = (event: MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault();
@@ -321,8 +339,11 @@ function LibraryGridCard({
     return (
         <ContextMenu>
             <ContextMenuTrigger render={<div className="contents" />}>
-                <div
+                {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: TEMP */}
+                <article
                     className="group relative flex flex-col overflow-hidden rounded-xl ring-1 ring-border/50"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
                     ref={cardRef}
                 >
                     <a
@@ -374,14 +395,19 @@ function LibraryGridCard({
                         <CollectionComboboxPicker
                             collections={collections}
                             item={item}
+                            onOpenChange={setIsCollectionPickerOpen}
                             onUpdateItemCollections={onUpdateItemCollections}
+                            open={isCollectionPickerOpen}
                             pendingCollectionItemIds={pendingCollectionItemIds}
                         />
-                        <p className="line-clamp-2 truncate text-foreground text-xs leading-tight">
+                        <p
+                            className="line-clamp-2 truncate text-foreground text-xs leading-tight"
+                            title={item.caption?.trim() || item.url}
+                        >
                             {item.caption?.trim() || item.url}
                         </p>
                     </div>
-                </div>
+                </article>
             </ContextMenuTrigger>
             <ContextMenuPopup>
                 <div className="relative mx-auto flex max-w-56 items-center gap-2 pt-2 pb-1.5 pl-2.5 opacity-50">
@@ -511,7 +537,7 @@ function renderLibraryMasonry({
                     className={cn(
                         "grid gap-2",
                         !columnCount &&
-                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+                            "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
                     )}
                     style={fallbackGridStyle(columnCount)}
                 >
@@ -531,7 +557,7 @@ function renderLibraryMasonry({
                 const previewDescription =
                     domain === "Other" ? item.url : domain;
                 const addedLabel = itemDateLabel(
-                    item.scrapedAt ?? item.createdAt,
+                    item.scrapedAt ?? item.createdAt
                 );
                 const postedLabel = itemDateLabel(item.postedAt);
                 const hasBothDates =
@@ -641,7 +667,7 @@ export function ExtensionLibraryGrid({
 
     const resolvedPreviewCount = Math.max(
         0,
-        Math.min(paywallPreviewCount ?? items.length, items.length),
+        Math.min(paywallPreviewCount ?? items.length, items.length)
     );
     const showPaywall = resolvedPreviewCount < items.length;
     const previewItems = showPaywall
@@ -766,7 +792,7 @@ export function ExtensionLibrarySection({
                 className={cn(
                     "flex items-center justify-between gap-3 py-1 pr-5",
                     stickyHeader &&
-                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50",
+                        "sticky z-10 rounded-xl bg-muted/92 backdrop-blur-sm supports-backdrop-filter:bg-muted/50"
                 )}
                 style={
                     stickyHeader

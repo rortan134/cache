@@ -61,6 +61,7 @@ export function ComboboxInput({
     showTrigger = true,
     showClear = false,
     startAddon,
+    endAddon,
     size,
     triggerProps,
     clearProps,
@@ -69,6 +70,7 @@ export function ComboboxInput({
     showTrigger?: boolean;
     showClear?: boolean;
     startAddon?: React.ReactNode;
+    endAddon?: React.ReactNode;
     size?: "sm" | "default" | "lg" | number;
     ref?: React.Ref<HTMLInputElement>;
     triggerProps?: ComboboxPrimitive.Trigger.Props;
@@ -90,10 +92,28 @@ export function ComboboxInput({
                     {startAddon}
                 </div>
             )}
+            {endAddon && (
+                <div
+                    aria-hidden="true"
+                    className={cn(
+                        "pointer-events-none absolute inset-y-0 end-px z-10 flex items-center pe-[calc(--spacing(3)-1px)] opacity-80 has-[+[data-size=sm]]:pe-[calc(--spacing(2.5)-1px)] [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:-mx-0.5",
+                        (showTrigger || showClear) &&
+                            (sizeValue === "sm" ? "end-7" : "end-8.5")
+                    )}
+                    data-slot="combobox-end-addon"
+                >
+                    {endAddon}
+                </div>
+            )}
             <ComboboxPrimitive.Input
                 className={cn(
                     startAddon &&
                         "data-[size=sm]:*:data-[slot=combobox-input]:ps-[calc(--spacing(7.5)-1px)] *:data-[slot=combobox-input]:ps-[calc(--spacing(8.5)-1px)] sm:data-[size=sm]:*:data-[slot=combobox-input]:ps-[calc(--spacing(7)-1px)] sm:*:data-[slot=combobox-input]:ps-[calc(--spacing(8)-1px)]",
+                    endAddon &&
+                        "data-[size=sm]:*:data-[slot=combobox-input]:pe-[calc(--spacing(7.5)-1px)] *:data-[slot=combobox-input]:pe-[calc(--spacing(8.5)-1px)] sm:data-[size=sm]:*:data-[slot=combobox-input]:pe-[calc(--spacing(7)-1px)] sm:*:data-[slot=combobox-input]:pe-[calc(--spacing(8)-1px)]",
+                    endAddon &&
+                        (showTrigger || showClear) &&
+                        "data-[size=sm]:*:data-[slot=combobox-input]:pe-[calc(--spacing(13.5)-1px)] *:data-[slot=combobox-input]:pe-[calc(--spacing(14.5)-1px)] sm:data-[size=sm]:*:data-[slot=combobox-input]:pe-[calc(--spacing(12.5)-1px)] sm:*:data-[slot=combobox-input]:pe-[calc(--spacing(13.5)-1px)]",
                     sizeValue === "sm"
                         ? "has-[+[data-slot=combobox-trigger],+[data-slot=combobox-clear]]:*:data-[slot=combobox-input]:pe-6.5"
                         : "has-[+[data-slot=combobox-trigger],+[data-slot=combobox-clear]]:*:data-[slot=combobox-input]:pe-7",
