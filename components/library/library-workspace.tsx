@@ -8,8 +8,18 @@ import {
     type DeleteCollectionResult,
     type UpdateLibraryItemCollectionsResult,
 } from "@/app/[locale]/library/actions";
+import {
+    CollectionsList,
+    CollectionsListAction,
+    CollectionsListContent,
+    CollectionsListEmpty,
+    CollectionsListFeedback,
+    CollectionsListFilterClear,
+    CollectionsListItem,
+    CollectionsListTrigger,
+    SmartCollectionsCallout,
+} from "@/components/library/collections-list";
 import { LibraryBrowser } from "@/components/library/library-browser";
-import { SmartCollectionsCallout } from "@/components/library/smart-collections-callout";
 import {
     AlertDialog,
     AlertDialogClose,
@@ -22,11 +32,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Collapsible,
-    CollapsiblePanel,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
     Dialog,
     DialogClose,
     DialogFooter,
@@ -36,20 +41,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-    Menu,
-    MenuItem,
-    MenuPopup,
-    MenuSeparator,
-    MenuSub,
-    MenuSubPopup,
-    MenuSubTrigger,
-    MenuTrigger,
-} from "@/components/ui/menu";
 import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { getColorFromName } from "@/lib/colors";
 import { saveFile } from "@/lib/file";
 import type {
     LibraryCollectionSummary,
@@ -59,19 +53,9 @@ import type {
 import { normalizeURL } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import AppIconSmall from "@/public/cache-icon-small.png";
-import {
-    ChevronDown,
-    ChevronRight,
-    Component,
-    CopyIcon,
-    EllipsisIcon,
-    ExternalLinkIcon,
-    FileSpreadsheetIcon,
-    PlusIcon,
-    Trash2Icon,
-} from "lucide-react";
+import { ChevronRight, PlusIcon } from "lucide-react";
 import Image from "next/image";
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useCallback, useId, useMemo, useState, useTransition } from "react";
 
 const COLLECTION_NAME_COLLATOR = new Intl.Collator(undefined, {
@@ -93,17 +77,17 @@ interface CollectionActionFeedback {
 }
 
 function sortCollectionsByName<T extends { readonly name: string }>(
-    collections: readonly T[]
+    collections: readonly T[],
 ): T[] {
     return [...collections].sort((a, b) =>
-        COLLECTION_NAME_COLLATOR.compare(a.name, b.name)
+        COLLECTION_NAME_COLLATOR.compare(a.name, b.name),
     );
 }
 
 function replaceItemCollections(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collections: readonly LibraryCollectionTag[]
+    collections: readonly LibraryCollectionTag[],
 ): LibraryItemWithCollections[] {
     return items.map((item) =>
         item.id === itemId
@@ -111,14 +95,14 @@ function replaceItemCollections(
                   ...item,
                   collections: [...collections],
               }
-            : item
+            : item,
     );
 }
 
 function appendCollectionToItem(
     items: readonly LibraryItemWithCollections[],
     itemId: string,
-    collection: LibraryCollectionTag
+    collection: LibraryCollectionTag,
 ): LibraryItemWithCollections[] {
     return items.map((item) => {
         if (item.id !== itemId) {
@@ -139,7 +123,7 @@ function appendCollectionToItem(
 
 function deriveCollectionSummaries(
     collections: readonly LibraryCollectionTag[],
-    items: readonly LibraryItemWithCollections[]
+    items: readonly LibraryItemWithCollections[],
 ): LibraryCollectionSummary[] {
     const counts = new Map<string, number>();
     for (const item of items) {
@@ -154,22 +138,8 @@ function deriveCollectionSummaries(
             id: collection.id,
             itemCount: counts.get(collection.id) ?? 0,
             name: collection.name,
-        }))
+        })),
     );
-}
-
-function getCollectionButtonStyle(
-    name: string,
-    isSelected: boolean
-): CSSProperties {
-    const assignedColor = getColorFromName(name);
-    const backgroundOpacity = isSelected ? 20 : 6;
-
-    return {
-        backgroundColor: `color-mix(in srgb, ${assignedColor} ${backgroundOpacity}%, transparent)`,
-        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.18)",
-        color: "var(--color-foreground)",
-    };
 }
 
 function openSavedItemInNewTab(url: string): void {
@@ -186,7 +156,7 @@ function openSavedItemInNewTab(url: string): void {
 }
 
 function getCollectionItemUrls(
-    items: readonly LibraryItemWithCollections[]
+    items: readonly LibraryItemWithCollections[],
 ): string[] {
     return items.map((item) => normalizeURL(item.url));
 }
@@ -197,7 +167,7 @@ function escapeCsvCell(value: string): string {
 
 function buildCollectionCsv(
     collection: LibraryCollectionSummary,
-    items: readonly LibraryItemWithCollections[]
+    items: readonly LibraryItemWithCollections[],
 ): string {
     const header = [
         "Collection",
@@ -250,8 +220,8 @@ export function LibraryWorkspace({
                 description: collection.description,
                 id: collection.id,
                 name: collection.name,
-            }))
-        )
+            })),
+        ),
     );
     const [selectedCollectionIds, setSelectedCollectionIds] = useState<
         string[]
@@ -261,7 +231,7 @@ export function LibraryWorkspace({
     const [createDialogDescriptionDraft, setCreateDialogDescriptionDraft] =
         useState("");
     const [createDialogError, setCreateDialogError] = useState<string | null>(
-        null
+        null,
     );
     const [createDialogAssignItemId, setCreateDialogAssignItemId] = useState<
         string | null
@@ -315,7 +285,7 @@ export function LibraryWorkspace({
             }
             setIsCreateDialogOpen(open);
         },
-        [isCreatePending]
+        [isCreatePending],
     );
 
     const handleCreateCollectionRequest = useCallback((itemId?: string) => {
@@ -330,12 +300,20 @@ export function LibraryWorkspace({
         setSelectedCollectionIds([]);
     }, []);
 
+    const handleToggleCollectionSelection = useCallback((id: string) => {
+        setSelectedCollectionIds((current) =>
+            current.includes(id)
+                ? current.filter((entryId) => entryId !== id)
+                : [...current, id],
+        );
+    }, []);
+
     const handleRequestDeleteCollection = useCallback(
         (collection: LibraryCollectionSummary) => {
             setCollectionActionFeedback(null);
             setPendingDeleteCollection(collection);
         },
-        []
+        [],
     );
 
     const handleDeleteCollectionDialogOpenChange = useCallback(
@@ -344,7 +322,7 @@ export function LibraryWorkspace({
                 setPendingDeleteCollection(null);
             }
         },
-        [isDeletePending]
+        [isDeletePending],
     );
 
     const handleCopyCollectionLinks = useCallback(
@@ -364,7 +342,7 @@ export function LibraryWorkspace({
             setCollectionActionFeedback(null);
             copyToClipboard(urls.join("\n"));
         },
-        [copyToClipboard, itemsByCollectionId]
+        [copyToClipboard, itemsByCollectionId],
     );
 
     const handleOpenCollectionLinks = useCallback(
@@ -390,7 +368,7 @@ export function LibraryWorkspace({
                 openSavedItemInNewTab(url);
             }
         },
-        [itemsByCollectionId]
+        [itemsByCollectionId],
     );
 
     const handleExportCollectionToCsv = useCallback(
@@ -412,13 +390,13 @@ export function LibraryWorkspace({
                         [buildCollectionCsv(collection, collectionItems)],
                         {
                             type: "text/csv;charset=utf-8",
-                        }
+                        },
                     ),
                     {
                         description: "CSV file",
                         extension: "csv",
                         name: collectionExportFileName(collection.name),
-                    }
+                    },
                 );
 
                 setCollectionActionFeedback({
@@ -432,7 +410,7 @@ export function LibraryWorkspace({
                 });
             }
         },
-        [itemsByCollectionId]
+        [itemsByCollectionId],
     );
 
     const handleConfirmDeleteCollection = useCallback(() => {
@@ -465,19 +443,19 @@ export function LibraryWorkspace({
 
             setCollections((current) =>
                 current.filter(
-                    (collection) => collection.id !== result.collection.id
-                )
+                    (collection) => collection.id !== result.collection.id,
+                ),
             );
             setItems((current) =>
                 current.map((item) => ({
                     ...item,
                     collections: item.collections.filter(
-                        (collection) => collection.id !== result.collection.id
+                        (collection) => collection.id !== result.collection.id,
                     ),
-                }))
+                })),
             );
             setSelectedCollectionIds((current) =>
-                current.filter((id) => id !== result.collection.id)
+                current.filter((id) => id !== result.collection.id),
             );
             setPendingDeleteCollection(null);
             setCollectionActionFeedback({
@@ -517,10 +495,10 @@ export function LibraryWorkspace({
 
             setCollections((current) =>
                 current.some(
-                    (collection) => collection.id === nextCollection.id
+                    (collection) => collection.id === nextCollection.id,
                 )
                     ? current
-                    : sortCollectionsByName([...current, nextCollection])
+                    : sortCollectionsByName([...current, nextCollection]),
             );
 
             if (result.assignedItemId) {
@@ -529,8 +507,8 @@ export function LibraryWorkspace({
                     appendCollectionToItem(
                         current,
                         assignedItemId,
-                        nextCollection
-                    )
+                        nextCollection,
+                    ),
                 );
             }
 
@@ -552,15 +530,15 @@ export function LibraryWorkspace({
                 items.find((item) => item.id === itemId)?.collections ?? [];
             const optimisticCollections = sortCollectionsByName(
                 collections.filter((collection) =>
-                    collectionIds.includes(collection.id)
-                )
+                    collectionIds.includes(collection.id),
+                ),
             );
 
             setItems((current) =>
-                replaceItemCollections(current, itemId, optimisticCollections)
+                replaceItemCollections(current, itemId, optimisticCollections),
             );
             setPendingCollectionItemIds((current) =>
-                current.includes(itemId) ? current : [...current, itemId]
+                current.includes(itemId) ? current : [...current, itemId],
             );
 
             const runUpdate = async () => {
@@ -584,34 +562,34 @@ export function LibraryWorkspace({
                         replaceItemCollections(
                             current,
                             itemId,
-                            result.collections
-                        )
+                            result.collections,
+                        ),
                     );
                 } else {
                     setItems((current) =>
                         replaceItemCollections(
                             current,
                             itemId,
-                            previousCollections
-                        )
+                            previousCollections,
+                        ),
                     );
                 }
 
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId)
+                    current.filter((id) => id !== itemId),
                 );
             };
 
             runUpdate().catch(() => {
                 setItems((current) =>
-                    replaceItemCollections(current, itemId, previousCollections)
+                    replaceItemCollections(current, itemId, previousCollections),
                 );
                 setPendingCollectionItemIds((current) =>
-                    current.filter((id) => id !== itemId)
+                    current.filter((id) => id !== itemId),
                 );
             });
         },
-        [collections, items]
+        [collections, items],
     );
 
     return (
@@ -619,32 +597,12 @@ export function LibraryWorkspace({
             <Sidebar>
                 <SidebarHeader>
                     {sidebarHeader}
-                    <Collapsible>
+                    <CollectionsList>
                         <div className="flex w-full items-center gap-1.5">
-                            <CollapsibleTrigger
-                                className="flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight"
-                                type="button"
-                            >
-                                <Component
-                                    aria-hidden
-                                    className="inline-block size-5 shrink-0"
-                                    focusable="false"
-                                />
-                                <span className="min-w-0 flex-1 font-medium text-sm">
-                                    Collections
-                                </span>
-                                <ChevronDown
-                                    aria-hidden
-                                    className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
-                                    focusable="false"
-                                />
-                            </CollapsibleTrigger>
-                            <Button
+                            <CollectionsListTrigger />
+                            <CollectionsListAction
                                 aria-label="Create new collection"
-                                className="rounded-full"
                                 onClick={() => handleCreateCollectionRequest()}
-                                size="icon-xl"
-                                variant="secondary"
                             >
                                 <PlusIcon
                                     aria-hidden
@@ -654,204 +612,67 @@ export function LibraryWorkspace({
                                 <span className="sr-only">
                                     Create new collection
                                 </span>
-                            </Button>
+                            </CollectionsListAction>
                         </div>
-                        <CollapsiblePanel>
+                        <CollectionsListContent>
                             <SmartCollectionsCallout />
                             {collectionSummaries.length > 0 ? (
                                 <>
-                                    {collectionSummaries.map((collection) => {
-                                        const isSelected =
-                                            selectedCollectionIds.includes(
-                                                collection.id
-                                            );
-                                        const hasItems =
-                                            collection.itemCount > 0;
-
-                                        return (
-                                            <div
-                                                className="group relative flex select-none items-center"
-                                                key={collection.id}
-                                            >
-                                                <Button
-                                                    className={cn(
-                                                        "min-w-0 flex-1 select-none justify-start rounded-full pr-11 pl-3.5 text-left transition-[filter,box-shadow] hover:brightness-95"
-                                                    )}
-                                                    onClick={() =>
-                                                        setSelectedCollectionIds(
-                                                            (current) =>
-                                                                current.includes(
-                                                                    collection.id
-                                                                )
-                                                                    ? current.filter(
-                                                                          (
-                                                                              id
-                                                                          ) =>
-                                                                              id !==
-                                                                              collection.id
-                                                                      )
-                                                                    : [
-                                                                          ...current,
-                                                                          collection.id,
-                                                                      ]
-                                                        )
-                                                    }
-                                                    style={getCollectionButtonStyle(
-                                                        collection.name,
-                                                        isSelected
-                                                    )}
-                                                    type="button"
-                                                    variant="ghost"
-                                                >
-                                                    <span className="min-w-0 flex-1 truncate font-medium text-sm leading-tight">
-                                                        {collection.name}
-                                                    </span>
-                                                </Button>
-                                                <div className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center">
-                                                    <span className="pointer-events-none text-nowrap text-xs tabular-nums opacity-50 transition-opacity duration-200 group-hover:opacity-0">
-                                                        {collection.itemCount}
-                                                    </span>
-                                                    <Menu>
-                                                        <MenuTrigger
-                                                            render={
-                                                                <Button
-                                                                    aria-label={`Collection actions for ${collection.name}`}
-                                                                    className="absolute rounded-full opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:translate-x-0 group-hover:opacity-100"
-                                                                    size="icon-sm"
-                                                                    variant="ghost"
-                                                                />
-                                                            }
-                                                        >
-                                                            <EllipsisIcon className="size-4" />
-                                                        </MenuTrigger>
-                                                        <MenuPopup className="min-w-48">
-                                                            <MenuSub>
-                                                                <MenuSubTrigger
-                                                                    disabled={
-                                                                        !hasItems
-                                                                    }
-                                                                >
-                                                                    Export to...
-                                                                </MenuSubTrigger>
-                                                                <MenuSubPopup className="min-w-48">
-                                                                    <MenuItem
-                                                                        closeOnClick
-                                                                        onClick={() =>
-                                                                            handleCopyCollectionLinks(
-                                                                                collection
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <CopyIcon className="size-4 text-muted-foreground" />
-                                                                        Copy all
-                                                                        links
-                                                                    </MenuItem>
-                                                                    <MenuItem
-                                                                        closeOnClick
-                                                                        onClick={() =>
-                                                                            handleOpenCollectionLinks(
-                                                                                collection
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <ExternalLinkIcon className="size-4 text-muted-foreground" />
-                                                                        Open all
-                                                                        links
-                                                                    </MenuItem>
-                                                                    <MenuItem
-                                                                        closeOnClick
-                                                                        onClick={() =>
-                                                                            handleExportCollectionToCsv(
-                                                                                collection
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <FileSpreadsheetIcon className="size-4 text-muted-foreground" />
-                                                                        Export
-                                                                        to CSV
-                                                                    </MenuItem>
-                                                                    <MenuItem
-                                                                        disabled
-                                                                    >
-                                                                        Send to
-                                                                        Notion
-                                                                    </MenuItem>
-                                                                </MenuSubPopup>
-                                                            </MenuSub>
-                                                            <MenuSeparator />
-                                                            <MenuItem
-                                                                closeOnClick
-                                                                onClick={() =>
-                                                                    handleRequestDeleteCollection(
-                                                                        collection
-                                                                    )
-                                                                }
-                                                                variant="destructive"
-                                                            >
-                                                                <Trash2Icon className="size-4" />
-                                                                Delete
-                                                            </MenuItem>
-                                                        </MenuPopup>
-                                                    </Menu>
-                                                </div>
-                                                <span className="sr-only">
-                                                    {collection.itemCount}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                    {collectionActionFeedback ? (
-                                        <div className="flex items-center justify-between gap-2 pt-1 pr-1 pl-3.5">
-                                            <p
-                                                className={cn(
-                                                    "text-xs",
-                                                    collectionActionFeedback.tone ===
-                                                        "error"
-                                                        ? "text-destructive"
-                                                        : "text-muted-foreground"
-                                                )}
-                                            >
-                                                {
-                                                    collectionActionFeedback.message
-                                                }
-                                            </p>
-                                            <Button
-                                                onClick={() =>
-                                                    setCollectionActionFeedback(
-                                                        null
-                                                    )
-                                                }
-                                                size="xs"
-                                                variant="ghost"
-                                            >
-                                                Dismiss
-                                            </Button>
-                                        </div>
-                                    ) : null}
-                                    {selectedCollectionIds.length > 0 ? (
-                                        <div className="flex items-center justify-between gap-2 pr-1 pl-3.5">
-                                            <p className="text-muted-foreground text-xs">
-                                                Filtering by any selected
-                                                collection
-                                            </p>
-                                            <Button
-                                                onClick={clearCollectionFilters}
-                                                size="xs"
-                                                variant="ghost"
-                                            >
-                                                Clear
-                                            </Button>
-                                        </div>
-                                    ) : null}
+                                    {collectionSummaries.map((collection) => (
+                                        <CollectionsListItem
+                                            collection={collection}
+                                            isSelected={selectedCollectionIds.includes(
+                                                collection.id,
+                                            )}
+                                            key={collection.id}
+                                            onCopyLinks={() =>
+                                                handleCopyCollectionLinks(
+                                                    collection,
+                                                )
+                                            }
+                                            onDelete={() =>
+                                                handleRequestDeleteCollection(
+                                                    collection,
+                                                )
+                                            }
+                                            onExportCsv={() =>
+                                                handleExportCollectionToCsv(
+                                                    collection,
+                                                )
+                                            }
+                                            onOpenLinks={() =>
+                                                handleOpenCollectionLinks(
+                                                    collection,
+                                                )
+                                            }
+                                            onSelect={() =>
+                                                handleToggleCollectionSelection(
+                                                    collection.id,
+                                                )
+                                            }
+                                        />
+                                    ))}
+                                    <CollectionsListFeedback
+                                        message={
+                                            collectionActionFeedback?.message
+                                        }
+                                        onDismiss={() =>
+                                            setCollectionActionFeedback(null)
+                                        }
+                                        tone={collectionActionFeedback?.tone}
+                                    />
+                                    <CollectionsListFilterClear
+                                        isVisible={
+                                            selectedCollectionIds.length > 0
+                                        }
+                                        onClear={clearCollectionFilters}
+                                    />
                                 </>
                             ) : (
-                                <p className="rounded-xl border border-border/60 border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
-                                    Create your first collection to start
-                                    grouping saved items.
-                                </p>
+                                <CollectionsListEmpty />
                             )}
-                        </CollapsiblePanel>
-                    </Collapsible>
+                        </CollectionsListContent>
+                    </CollectionsList>
                 </SidebarHeader>
                 <SidebarFooter>{sidebarBottom}</SidebarFooter>
             </Sidebar>
@@ -911,7 +732,7 @@ export function LibraryWorkspace({
                                     maxLength={64}
                                     onChange={(event) => {
                                         setCreateDialogDraft(
-                                            event.currentTarget.value
+                                            event.currentTarget.value,
                                         );
                                         if (createDialogError) {
                                             setCreateDialogError(null);
@@ -937,7 +758,7 @@ export function LibraryWorkspace({
                                     maxLength={1024}
                                     onChange={(event) => {
                                         setCreateDialogDescriptionDraft(
-                                            event.currentTarget.value
+                                            event.currentTarget.value,
                                         );
                                     }}
                                     placeholder="Add description..."

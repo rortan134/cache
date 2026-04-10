@@ -21,7 +21,7 @@ interface LogoContextMenuProps {
     src: StaticImageData;
 }
 
-export function LogoContextMenu({
+function LogoContextMenu({
     href,
     src,
 }: LogoContextMenuProps): React.ReactElement {
@@ -31,7 +31,7 @@ export function LogoContextMenu({
                 fetch(src.src).then((response) => {
                     if (!response.ok) {
                         throw new Error(
-                            `Failed to fetch logo image (${response.status})`
+                            `Failed to fetch logo image (${response.status})`,
                         );
                     }
                     return response.blob();
@@ -40,7 +40,7 @@ export function LogoContextMenu({
                     description: "PNG image",
                     extension: "png",
                     name: "cache-logo",
-                }
+                },
             );
         } catch (error) {
             log.error("Failed to save logo image", error);
@@ -77,3 +77,5 @@ export function LogoContextMenu({
         </ContextMenu>
     );
 }
+
+export { LogoContextMenu };

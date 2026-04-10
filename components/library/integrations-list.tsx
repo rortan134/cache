@@ -1,6 +1,6 @@
 "use client";
 
-import { IntegrationSetupWizardButton } from "@/components/library/setup-wizard";
+import { IntegrationsSetupWizardButton } from "@/components/library/integrations-setup";
 import { SidebarIntegrationAction } from "@/components/library/sidebar-integration-action";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -18,9 +18,9 @@ import type { LibraryItemSource } from "@/prisma/client/enums";
 import { Info } from "lucide-react";
 
 interface LibrarySidebarIntegrationsProps {
-    items: readonly { readonly source: LibraryItemSource }[];
-    parkedIntegrationIds?: readonly IntegrationId[];
-    serverConnectedIntegrationIds: readonly IntegrationId[];
+    items: { source: LibraryItemSource }[];
+    parkedIntegrationIds?: IntegrationId[];
+    serverConnectedIntegrationIds: IntegrationId[];
 }
 
 const EXTENSION_INTEGRATION_IDS = [
@@ -46,7 +46,7 @@ function isConnectedOnClient(args: {
     );
 }
 
-export function IntegrationsList({
+function IntegrationsList({
     items,
     parkedIntegrationIds = [],
     serverConnectedIntegrationIds,
@@ -57,14 +57,14 @@ export function IntegrationsList({
     const connectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
         isConnectedOnClient({ extensionInstalled, id, serverConnectedIds })
             ? [id]
-            : []
+            : [],
     );
 
     return (
         <Collapsible defaultOpen>
             <CollapsibleTrigger
                 render={
-                    <IntegrationSetupWizardButton
+                    <IntegrationsSetupWizardButton
                         connectedIntegrationIds={connectedIntegrationIds}
                         items={items}
                     />
@@ -107,3 +107,5 @@ export function IntegrationsList({
         </Collapsible>
     );
 }
+
+export { IntegrationsList };

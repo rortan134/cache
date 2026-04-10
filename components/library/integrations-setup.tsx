@@ -12,7 +12,7 @@ const SIGNUP_PROGRESS_BASELINE_PERCENT = 10;
 
 function integrationSetupProgressPercent(
     connectedCount: number,
-    syncable: number
+    syncable: number,
 ): number {
     if (syncable < 1) {
         return 0;
@@ -29,7 +29,7 @@ function syncableLibrarySourceTotal(): number {
 
 function integrationMatchesSource(
     id: IntegrationId,
-    source: LibraryItemSource
+    source: LibraryItemSource,
 ): boolean {
     if (id === "chrome") {
         return source === "chrome_bookmarks";
@@ -44,15 +44,15 @@ function integrationMatchesSource(
 }
 
 function partitionLibrarySyncLabels(
-    items: readonly { readonly source: LibraryItemSource }[],
-    connectedIntegrationIds: readonly IntegrationId[] = []
+    items: { source: LibraryItemSource }[],
+    connectedIntegrationIds: IntegrationId[] = [],
 ): { connectedLabels: string[]; missingLabels: string[] } {
     const connectedLabels: string[] = [];
     const missingLabels: string[] = [];
     const connectedIntegrationIdSet = new Set(connectedIntegrationIds);
     for (const id of LIBRARY_BOOKMARK_SYNC_INTEGRATION_IDS) {
         const count = items.filter((item) =>
-            integrationMatchesSource(id, item.source)
+            integrationMatchesSource(id, item.source),
         ).length;
         const label = getIntegration(id).label;
         if (count > 0 || connectedIntegrationIdSet.has(id)) {
@@ -65,10 +65,10 @@ function partitionLibrarySyncLabels(
 }
 
 function integrationSetupHeadingText(args: {
-    readonly syncable: number;
-    readonly connectedCount: number;
-    readonly connectedLabels: readonly string[];
-    readonly missingLabels: readonly string[];
+    syncable: number;
+    connectedCount: number;
+    connectedLabels: string[];
+    missingLabels: string[];
 }): string {
     const { syncable, connectedCount } = args;
     if (syncable < 1) {
@@ -84,11 +84,11 @@ function integrationSetupHeadingText(args: {
 }
 
 interface IntegrationSetupHeadingProps extends React.ComponentProps<"button"> {
-    readonly connectedIntegrationIds?: readonly IntegrationId[];
-    readonly items: readonly { readonly source: LibraryItemSource }[];
+    connectedIntegrationIds?: IntegrationId[];
+    items: { source: LibraryItemSource }[];
 }
 
-export function IntegrationSetupWizardButton({
+function IntegrationsSetupWizardButton({
     connectedIntegrationIds,
     items,
     className,
@@ -97,7 +97,7 @@ export function IntegrationSetupWizardButton({
     const syncable = syncableLibrarySourceTotal();
     const { connectedLabels, missingLabels } = partitionLibrarySyncLabels(
         items,
-        connectedIntegrationIds
+        connectedIntegrationIds,
     );
 
     const connectedCount = connectedLabels.length;
@@ -109,7 +109,7 @@ export function IntegrationSetupWizardButton({
     });
     const progressPercent = integrationSetupProgressPercent(
         connectedCount,
-        syncable
+        syncable,
     );
 
     return (
@@ -117,7 +117,7 @@ export function IntegrationSetupWizardButton({
             {...props}
             className={cn(
                 "flex select-none items-center gap-2 rounded-full bg-muted/94 px-3 py-1.5 text-left text-foreground leading-tight",
-                className
+                className,
             )}
             type="button"
         >
@@ -133,3 +133,5 @@ export function IntegrationSetupWizardButton({
         </button>
     );
 }
+
+export { IntegrationsSetupWizardButton };
