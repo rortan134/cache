@@ -25,7 +25,7 @@ const Ticker = ({
                     "overflow-fade-x pl-1": isHorizontal,
                     "overflow-fade-y": isVertical,
                 },
-                className,
+                className
             )}
         >
             <div

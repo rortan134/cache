@@ -42,7 +42,7 @@ const COLLECTIONS_PREVIEW_OPEN_DELAY_MS = 450;
 
 function getCollectionButtonStyle(
     name: string,
-    isSelected: boolean,
+    isSelected: boolean
 ): CSSProperties {
     const assignedColor = getColorFromName(name);
     const backgroundOpacity = isSelected ? 20 : 7;
@@ -107,7 +107,7 @@ export function CollectionsListTrigger({
                     <CollapsibleTrigger
                         className={cn(
                             "flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight",
-                            className,
+                            className
                         )}
                         onMouseEnter={(event) => {
                             onMouseEnter?.(event);
@@ -204,7 +204,7 @@ export function CollectionsListItem({
         <div className="group relative flex select-none items-center">
             <Button
                 className={cn(
-                    "min-w-0 flex-1 justify-start rounded-full border-[var(--focus-ring-color)]/7 pr-10 pl-3.5 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]",
+                    "min-w-0 flex-1 justify-start rounded-full border-[var(--focus-ring-color)]/7 pr-10 pl-3.5 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]"
                 )}
                 onClick={onSelect}
                 style={getCollectionButtonStyle(collection.name, isSelected)}
@@ -297,7 +297,7 @@ export function CollectionsListFeedback({
                     "text-xs",
                     tone === "error"
                         ? "text-destructive"
-                        : "text-muted-foreground",
+                        : "text-muted-foreground"
                 )}
             >
                 {message}

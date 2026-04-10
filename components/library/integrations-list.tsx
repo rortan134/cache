@@ -62,7 +62,7 @@ function IntegrationsList({
     const connectedIntegrationIds = INTEGRATIONS.flatMap(({ id }) =>
         isConnectedOnClient({ extensionInstalled, id, serverConnectedIds })
             ? [id]
-            : [],
+            : []
     );
 
     return (
