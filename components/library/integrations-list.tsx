@@ -70,9 +70,12 @@ function IntegrationsList({
                     />
                 }
             />
-            <CollapsiblePanel className="gap-3">
+            <CollapsiblePanel>
                 {INTEGRATIONS.map(({ id, label, description, Icon }) => (
-                    <div className="flex items-center gap-2 pl-1" key={id}>
+                    <div
+                        className="flex items-center gap-2 pl-1 first:mt-3"
+                        key={id}
+                    >
                         <Avatar
                             aria-label={label}
                             className="size-9 rounded-lg ring-1 ring-border/60"

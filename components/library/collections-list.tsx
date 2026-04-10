@@ -78,7 +78,7 @@ export function CollectionsList({
     className,
     ...props
 }: React.ComponentProps<typeof Collapsible>): ReactElement {
-    return <Collapsible className={cn(className)} {...props} />;
+    return <Collapsible className={cn("gap-3", className)} {...props} />;
 }
 
 export function CollectionsListTrigger({
