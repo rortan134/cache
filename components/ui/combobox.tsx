@@ -181,6 +181,7 @@ export function ComboboxPopup({
     alignOffset,
     align = "start",
     anchor: anchorProp,
+    positionMethod,
     ...props
 }: ComboboxPrimitive.Popup.Props & {
     align?: ComboboxPrimitive.Positioner.Props["align"];
@@ -188,6 +189,7 @@ export function ComboboxPopup({
     alignOffset?: ComboboxPrimitive.Positioner.Props["alignOffset"];
     side?: ComboboxPrimitive.Positioner.Props["side"];
     anchor?: ComboboxPrimitive.Positioner.Props["anchor"];
+    positionMethod?: ComboboxPrimitive.Positioner.Props["positionMethod"];
 }): React.ReactElement {
     const { chipsRef } = React.useContext(ComboboxContext);
     const anchor = anchorProp ?? chipsRef;
@@ -200,6 +202,7 @@ export function ComboboxPopup({
                 anchor={anchor}
                 className="z-50 select-none"
                 data-slot="combobox-positioner"
+                positionMethod={positionMethod}
                 side={side}
                 sideOffset={sideOffset}
             >
@@ -225,18 +228,25 @@ export function ComboboxPopup({
 export function ComboboxItem({
     className,
     children,
+    showIndicatorLast,
     ...props
-}: ComboboxPrimitive.Item.Props): React.ReactElement {
+}: ComboboxPrimitive.Item.Props & {
+    showIndicatorLast?: boolean;
+}): React.ReactElement {
     return (
         <ComboboxPrimitive.Item
             className={cn(
                 "grid min-h-8 in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-default grid-cols-[1rem_1fr] items-center gap-2 rounded-sm py-1 ps-2 pe-4 text-base outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+                { "grid-cols-[1fr_1rem]": showIndicatorLast },
                 className
             )}
             data-slot="combobox-item"
             {...props}
         >
-            <ComboboxPrimitive.ItemIndicator className="col-start-1">
+            {showIndicatorLast && <div className="col-start-1">{children}</div>}
+            <ComboboxPrimitive.ItemIndicator
+                className={showIndicatorLast ? "col-start-2" : "col-start-1"}
+            >
                 <svg
                     aria-hidden="true"
                     fill="none"
@@ -252,7 +262,9 @@ export function ComboboxItem({
                     <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
                 </svg>
             </ComboboxPrimitive.ItemIndicator>
-            <div className="col-start-2">{children}</div>
+            {!showIndicatorLast && (
+                <div className="col-start-2">{children}</div>
+            )}
         </ComboboxPrimitive.Item>
     );
 }

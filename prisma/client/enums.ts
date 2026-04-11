@@ -31,3 +31,14 @@ export const LibraryItemKind = {
 } as const
 
 export type LibraryItemKind = (typeof LibraryItemKind)[keyof typeof LibraryItemKind]
+
+
+export const CollectionPriority = {
+  none: 'none',
+  very_relevant: 'very_relevant',
+  relevant: 'relevant',
+  peripheral: 'peripheral',
+  archive: 'archive'
+} as const
+
+export type CollectionPriority = (typeof CollectionPriority)[keyof typeof CollectionPriority]

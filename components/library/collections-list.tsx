@@ -1,5 +1,4 @@
 "use client";
-
 import { Avatar, AvatarGroup } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +6,18 @@ import {
     CollapsiblePanel,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+    Combobox,
+    ComboboxCollection,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+    ComboboxPopup,
+    ComboboxTrigger,
+} from "@/components/ui/combobox";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
+import { PriorityNoneIcon } from "@/components/ui/integration-icons";
 import {
     Menu,
     MenuItem,
@@ -23,7 +33,9 @@ import { getColorFromName } from "@/lib/colors";
 import { getSourceLabel } from "@/lib/integrations/supports";
 import type { LibraryCollectionSummary } from "@/lib/library/types";
 import { cn } from "@/lib/utils";
+import type { CollectionPriority } from "@/prisma/client/enums";
 import {
+    ArchiveIcon,
     ChevronDown,
     Component,
     CopyIcon,
@@ -32,6 +44,10 @@ import {
     FileSpreadsheetIcon,
     Group,
     Info,
+    type LucideIcon,
+    SignalHigh,
+    SignalMedium,
+    Sparkle,
     Sparkles,
     Trash2Icon,
 } from "lucide-react";
@@ -39,6 +55,12 @@ import type { CSSProperties, ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const COLLECTIONS_PREVIEW_OPEN_DELAY_MS = 450;
+
+interface CollectionPriorityOption {
+    readonly icon: LucideIcon;
+    readonly label: string;
+    readonly value: CollectionPriority;
+}
 
 function getCollectionButtonStyle(
     name: string,
@@ -181,30 +203,187 @@ export function CollectionsListContent({
     return <CollapsiblePanel className={cn(className)} {...props} />;
 }
 
+const DEFAULT_COLLECTION_PRIORITY_OPTION: CollectionPriorityOption = {
+    icon: PriorityNoneIcon as LucideIcon,
+    label: "No priority",
+    value: "none",
+};
+
+const COLLECTION_PRIORITY_OPTIONS = [
+    DEFAULT_COLLECTION_PRIORITY_OPTION,
+    {
+        icon: Sparkle,
+        label: "Very relevant",
+        value: "very_relevant",
+    },
+    {
+        icon: SignalHigh,
+        label: "Relevant",
+        value: "relevant",
+    },
+    {
+        icon: SignalMedium,
+        label: "Background",
+        value: "peripheral",
+    },
+    {
+        icon: ArchiveIcon,
+        label: "Archive",
+        value: "archive",
+    },
+] satisfies readonly CollectionPriorityOption[];
+
+const COLLECTION_PRIORITY_OPTION_BY_VALUE = new Map(
+    COLLECTION_PRIORITY_OPTIONS.map((option) => [option.value, option])
+);
+
+function getCollectionPriorityOption(
+    priority: CollectionPriority
+): CollectionPriorityOption {
+    const option = COLLECTION_PRIORITY_OPTION_BY_VALUE.get(priority);
+    if (option) {
+        return option;
+    }
+    return DEFAULT_COLLECTION_PRIORITY_OPTION;
+}
+
+/** @internal */
+function CollectionItemPriorityComboboxPicker({
+    collection,
+    isPending = false,
+    onUpdatePriority,
+    open: openProp,
+    onOpenChange,
+}: {
+    readonly collection: Pick<
+        LibraryCollectionSummary,
+        "id" | "name" | "priority"
+    >;
+    readonly isPending?: boolean;
+    readonly onUpdatePriority: (
+        collectionId: string,
+        priority: CollectionPriority
+    ) => void;
+    readonly open?: boolean;
+    readonly onOpenChange?: (open: boolean) => void;
+}): ReactElement {
+    const [isOpenInternal, setIsOpenInternal] = useState(false);
+    const isOpen = openProp ?? isOpenInternal;
+    const setIsOpen = onOpenChange ?? setIsOpenInternal;
+    const inputRef = useRef<HTMLInputElement>(null);
+    const selectedOption = getCollectionPriorityOption(collection.priority);
+
+    useEffect(() => {
+        if (!isOpen || isPending) {
+            return;
+        }
+
+        const frame = window.requestAnimationFrame(() => {
+            inputRef.current?.focus();
+        });
+
+        return () => {
+            window.cancelAnimationFrame(frame);
+        };
+    }, [isOpen, isPending]);
+
+    return (
+        <Combobox
+            autoHighlight
+            items={COLLECTION_PRIORITY_OPTIONS}
+            onOpenChange={setIsOpen}
+            onValueChange={(nextPriority) => {
+                if (!nextPriority || nextPriority === collection.priority) {
+                    return;
+                }
+
+                onUpdatePriority(collection.id, nextPriority);
+                setIsOpen(false);
+            }}
+            open={isOpen}
+            value={collection.priority}
+        >
+            <ComboboxTrigger
+                render={
+                    <Button
+                        aria-label={`Set priority for ${collection.name}`}
+                        className="absolute top-1/2 left-1 z-10 -translate-y-1/2 rounded-full opacity-80 group-hover:opacity-100"
+                        disabled={isPending}
+                        size="icon-sm"
+                        variant="ghost"
+                    />
+                }
+            >
+                <selectedOption.icon className="size-4" />
+            </ComboboxTrigger>
+            <ComboboxPopup positionMethod="fixed">
+                <div className="border-b">
+                    <ComboboxInput
+                        className="border-none! ring-0!"
+                        placeholder="Set priority..."
+                        ref={inputRef}
+                        showTrigger={false}
+                    />
+                </div>
+                <ComboboxEmpty>No matching priorities</ComboboxEmpty>
+                <ComboboxList>
+                    <ComboboxCollection>
+                        {(priorityOption) => (
+                            <ComboboxItem
+                                key={priorityOption.value}
+                                showIndicatorLast
+                                value={priorityOption.value}
+                            >
+                                <div className="flex min-w-0 items-center justify-between gap-3">
+                                    <span className="flex min-w-0 items-center gap-2 text-foreground text-sm">
+                                        <priorityOption.icon className="size-4 text-muted-foreground" />
+                                        <span className="truncate">
+                                            {priorityOption.label}
+                                        </span>
+                                    </span>
+                                </div>
+                            </ComboboxItem>
+                        )}
+                    </ComboboxCollection>
+                </ComboboxList>
+            </ComboboxPopup>
+        </Combobox>
+    );
+}
+
 export function CollectionsListItem({
     collection,
     isSelected,
+    isUpdatePriorityPending = false,
     onCopyLinks,
     onDelete,
     onExportCsv,
     onOpenLinks,
     onSelect,
+    onUpdatePriority,
 }: {
     readonly collection: LibraryCollectionSummary;
     readonly isSelected: boolean;
+    readonly isUpdatePriorityPending?: boolean;
     readonly onCopyLinks: () => void;
     readonly onDelete: () => void;
     readonly onExportCsv: () => void;
     readonly onOpenLinks: () => void;
     readonly onSelect: () => void;
+    readonly onUpdatePriority: (priority: CollectionPriority) => void;
 }): ReactElement {
     const hasItems = collection.itemCount > 0;
 
     return (
         <div className="group relative flex select-none items-center">
+            <CollectionItemPriorityComboboxPicker
+                collection={collection}
+                isPending={isUpdatePriorityPending}
+                onUpdatePriority={(_, priority) => onUpdatePriority(priority)}
+            />
             <Button
                 className={cn(
-                    "min-w-0 flex-1 justify-start rounded-full border-[var(--focus-ring-color)]/7 pr-10 pl-3.5 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]"
+                    "min-w-0 flex-1 justify-start rounded-full border-[var(--focus-ring-color)]/7 px-8 text-left focus-visible:ring-1 focus-visible:ring-[var(--focus-ring-color)]"
                 )}
                 onClick={onSelect}
                 style={getCollectionButtonStyle(collection.name, isSelected)}
@@ -272,7 +451,6 @@ export function CollectionsListItem({
                     </MenuPopup>
                 </Menu>
             </div>
-            <span className="sr-only">{collection.itemCount}</span>
         </div>
     );
 }
@@ -366,7 +544,6 @@ export function SmartCollectionsCallout(): ReactElement {
                             >
                                 <GradientWaveText
                                     ariaLabel="Smart Collections"
-                                    delay={0}
                                     speed={2.2}
                                 >
                                     Smart Collections

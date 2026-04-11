@@ -17,7 +17,10 @@ import type {
 } from "@/lib/library/types";
 import { createLogger } from "@/lib/logs/console/logger";
 import { prisma } from "@/prisma";
-import { LibraryItemSource } from "@/prisma/client/enums";
+import {
+    type CollectionPriority,
+    LibraryItemSource,
+} from "@/prisma/client/enums";
 import { headers } from "next/headers";
 import { z } from "zod";
 
@@ -48,6 +51,17 @@ const UpdateLibraryItemCollectionsInputSchema = z.object({
 
 const DeleteCollectionInputSchema = z.object({
     collectionId: z.string().trim().min(1, "Select a collection to delete."),
+});
+
+const UpdateCollectionPriorityInputSchema = z.object({
+    collectionId: z.string().trim().min(1, "Select a collection to update."),
+    priority: z.enum([
+        "none",
+        "very_relevant",
+        "relevant",
+        "peripheral",
+        "archive",
+    ] satisfies [CollectionPriority, ...CollectionPriority[]]),
 });
 
 const CreateNoteInputSchema = z.object({
@@ -114,6 +128,16 @@ export type DeleteCollectionResult =
     | {
           collection: Pick<LibraryCollectionSummary, "id" | "name">;
           status: "DELETED";
+      }
+    | {
+          message: string;
+          status: "ERROR" | "INVALID" | "NOT_FOUND" | "UNAUTHORIZED";
+      };
+
+export type UpdateCollectionPriorityResult =
+    | {
+          collection: LibraryCollectionTag;
+          status: "UPDATED";
       }
     | {
           message: string;
@@ -202,6 +226,7 @@ async function getNoteItemForUser(
                     description: true,
                     id: true,
                     name: true,
+                    priority: true,
                 },
             },
         },
@@ -675,6 +700,66 @@ export async function deleteCollection(input: {
     }
 }
 
+export async function updateCollectionPriority(input: {
+    collectionId: string;
+    priority: CollectionPriority;
+}): Promise<UpdateCollectionPriorityResult> {
+    const parsed = UpdateCollectionPriorityInputSchema.safeParse(input);
+    if (!parsed.success) {
+        return {
+            message:
+                parsed.error.issues[0]?.message ??
+                "Pick a valid priority before saving.",
+            status: "INVALID",
+        };
+    }
+
+    const userId = await getSessionUserId();
+    if (!userId) {
+        return {
+            message: "Sign in again to manage collections.",
+            status: "UNAUTHORIZED",
+        };
+    }
+
+    try {
+        const updatedCollection = await prisma.collection.updateManyAndReturn({
+            data: {
+                priority: parsed.data.priority,
+            },
+            select: {
+                description: true,
+                id: true,
+                name: true,
+                priority: true,
+            },
+            where: {
+                id: parsed.data.collectionId,
+                userId,
+            },
+        });
+
+        const collection = updatedCollection[0];
+        if (!collection) {
+            return {
+                message: "That collection is no longer available.",
+                status: "NOT_FOUND",
+            };
+        }
+
+        return {
+            collection,
+            status: "UPDATED",
+        };
+    } catch (error) {
+        log.error("Unexpected collection priority update failure", error);
+        return {
+            message: "We couldn't update this collection priority right now.",
+            status: "ERROR",
+        };
+    }
+}
+
 export async function createCollection(input: {
     assignToItemId?: string;
     description?: string;
@@ -763,6 +848,7 @@ export async function createCollection(input: {
                     description: true,
                     id: true,
                     name: true,
+                    priority: true,
                 },
             });
 
@@ -773,6 +859,7 @@ export async function createCollection(input: {
                     id: collection.id,
                     itemCount: assignToItemId ? 1 : 0,
                     name: collection.name,
+                    priority: collection.priority,
                     sources: [],
                 } satisfies LibraryCollectionSummary,
             };
@@ -867,6 +954,7 @@ export async function updateLibraryItemCollections(input: {
                       description: true,
                       id: true,
                       name: true,
+                      priority: true,
                   },
                   where: {
                       id: {
@@ -901,6 +989,7 @@ export async function updateLibraryItemCollections(input: {
                         description: true,
                         id: true,
                         name: true,
+                        priority: true,
                     },
                 },
                 id: true,

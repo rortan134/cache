@@ -98,6 +98,7 @@ export const CollectionScalarFieldEnum = {
   name: 'name',
   nameKey: 'nameKey',
   description: 'description',
+  priority: 'priority',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

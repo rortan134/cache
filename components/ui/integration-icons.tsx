@@ -207,3 +207,23 @@ export const Chrome = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
         />
     </svg>
 );
+
+export const PriorityNoneIcon = ({
+    className,
+    ...props
+}: SVGProps<SVGSVGElement>) => (
+    <svg
+        aria-label="No Priority"
+        className={cn("size-6 shrink-0", className)}
+        focusable="false"
+        height="16"
+        role="img"
+        viewBox="0 0 16 16"
+        width="16"
+        {...props}
+    >
+        <rect height="1.5" opacity="0.9" rx="0.5" width="3" x="1.5" y="7.25" />
+        <rect height="1.5" opacity="0.9" rx="0.5" width="3" x="6.5" y="7.25" />
+        <rect height="1.5" opacity="0.9" rx="0.5" width="3" x="11.5" y="7.25" />
+    </svg>
+);

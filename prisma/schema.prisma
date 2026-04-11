@@ -25,6 +25,14 @@ enum LibraryItemKind {
     note
 }
 
+enum CollectionPriority {
+    none
+    very_relevant
+    relevant
+    peripheral
+    archive
+}
+
 model User {
     id                   String        @id
     name                 String
@@ -47,15 +55,16 @@ model User {
 }
 
 model Collection {
-    id          String        @id @default(cuid())
+    id          String             @id @default(cuid())
     userId      String
-    user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
     name        String
     nameKey     String
     description String?
+    priority    CollectionPriority @default(none)
     items       LibraryItem[]
-    createdAt   DateTime      @default(now())
-    updatedAt   DateTime      @updatedAt
+    createdAt   DateTime           @default(now())
+    updatedAt   DateTime           @updatedAt
 
     @@unique([userId, nameKey])
     @@index([userId])

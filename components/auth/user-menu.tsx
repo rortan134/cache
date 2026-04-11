@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Group } from "@/components/ui/group";
-import { XSocial } from "@/components/ui/integration-icons";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -297,14 +296,15 @@ export function UserMenuContent() {
                     <BillingPortalButton returnPath={returnPath} />
                 ) : (
                     <>
+                        <UpgradeButton returnPath={returnPath} />
                         <Button
-                            className="justify-start"
+                            className="justify-between"
                             render={<Link href="/pricing" />}
                             variant="ghost"
                         >
                             <T>Pricing</T>
+                            <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0 text-muted-foreground" />
                         </Button>
-                        <UpgradeButton returnPath={returnPath} />
                     </>
                 )}
                 <Button
@@ -313,7 +313,7 @@ export function UserMenuContent() {
                     variant="ghost"
                 >
                     <T>Changelog</T>
-                    <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
+                    <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0 text-muted-foreground" />
                 </Button>
                 <Button
                     className="justify-between"
@@ -321,7 +321,7 @@ export function UserMenuContent() {
                     variant="ghost"
                 >
                     <T>Support</T>
-                    <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0" />
+                    <ArrowUpRight className="ml-auto inline-block size-4.5 shrink-0 text-muted-foreground" />
                 </Button>
                 <LogoutDialogButton
                     render={
@@ -345,7 +345,7 @@ export function UserMenuFooter() {
             <div className="relative -my-1">
                 <Separator className="absolute left-1/2 -translate-x-1/2 data-horizontal:w-[400px]" />
             </div>
-            <div className="-mx-1 flex flex-wrap opacity-80">
+            <div className="-mx-1 -mb-1 flex flex-wrap opacity-80">
                 <Button
                     render={<Link href="/legal/privacy-policy" />}
                     size="xs"
@@ -361,18 +361,11 @@ export function UserMenuFooter() {
                     <T>Terms</T>
                 </Button>
                 <Button
-                    className="ml-auto"
-                    render={
-                        <Link
-                            href="https://x.com/gsmmtt_"
-                            rel="noopener noreferrer"
-                            target="_blank"
-                        />
-                    }
-                    size="icon-xs"
+                    render={<Link href="/security" />}
+                    size="xs"
                     variant="ghost"
                 >
-                    <XSocial className="size-4" />
+                    <T>Security</T>
                 </Button>
             </div>
         </>

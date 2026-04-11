@@ -1063,6 +1063,7 @@ export const CollectionScalarFieldEnum = {
   name: 'name',
   nameKey: 'nameKey',
   description: 'description',
+  priority: 'priority',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1254,6 +1255,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CollectionPriority'
+ */
+export type EnumCollectionPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollectionPriority'>
+    
+
+
+/**
+ * Reference to a field of type 'CollectionPriority[]'
+ */
+export type ListEnumCollectionPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollectionPriority[]'>
     
 
 

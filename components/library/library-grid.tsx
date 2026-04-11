@@ -429,7 +429,7 @@ function LibraryGridCard({
                     ref={cardRef}
                 >
                     <a
-                        className="flex flex-col focus-visible:-translate-y-0.5 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                        className="flex flex-col focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                         href={href}
                         onClick={handlePrimaryClick}
                         rel="noopener noreferrer"
@@ -663,7 +663,7 @@ function renderLibraryMasonry({
                     ))}
                 </div>
             }
-            gap={6}
+            gap={5}
             linear
         >
             {items.map((item) => {
@@ -742,7 +742,7 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
     );
 
     return (
-        <Masonry columnCount={5} fallback={fallback} gap={6} linear>
+        <Masonry columnCount={5} fallback={fallback} gap={5} linear>
             {EMPTY_LIBRARY_PEEK_PLACEHOLDERS.map(({ aspect, id }, index) => {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
                 return (

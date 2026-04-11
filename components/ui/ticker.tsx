@@ -18,7 +18,7 @@ const Ticker = ({
         <figure
             {...props}
             className={cn(
-                "group relative inline-flex size-full select-none overflow-hidden [--duration:8s] [--gap:1rem]",
+                "group relative inline-flex size-full select-none overflow-hidden [--duration:9s] [--gap:1rem]",
                 {
                     "flex-col": isVertical,
                     "flex-row": isHorizontal,

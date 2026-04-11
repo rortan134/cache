@@ -123,6 +123,23 @@ export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
 }
 
+export type EnumCollectionPriorityFilter<$PrismaModel = never> = {
+  equals?: $Enums.CollectionPriority | Prisma.EnumCollectionPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCollectionPriorityFilter<$PrismaModel> | $Enums.CollectionPriority
+}
+
+export type EnumCollectionPriorityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.CollectionPriority | Prisma.EnumCollectionPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCollectionPriorityWithAggregatesFilter<$PrismaModel> | $Enums.CollectionPriority
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumCollectionPriorityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumCollectionPriorityFilter<$PrismaModel>
+}
+
 export type EnumLibraryItemSourceFilter<$PrismaModel = never> = {
   equals?: $Enums.LibraryItemSource | Prisma.EnumLibraryItemSourceFieldRefInput<$PrismaModel>
   in?: $Enums.LibraryItemSource[] | Prisma.ListEnumLibraryItemSourceFieldRefInput<$PrismaModel>
@@ -393,6 +410,23 @@ export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
+}
+
+export type NestedEnumCollectionPriorityFilter<$PrismaModel = never> = {
+  equals?: $Enums.CollectionPriority | Prisma.EnumCollectionPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCollectionPriorityFilter<$PrismaModel> | $Enums.CollectionPriority
+}
+
+export type NestedEnumCollectionPriorityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.CollectionPriority | Prisma.EnumCollectionPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CollectionPriority[] | Prisma.ListEnumCollectionPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCollectionPriorityWithAggregatesFilter<$PrismaModel> | $Enums.CollectionPriority
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumCollectionPriorityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumCollectionPriorityFilter<$PrismaModel>
 }
 
 export type NestedEnumLibraryItemSourceFilter<$PrismaModel = never> = {

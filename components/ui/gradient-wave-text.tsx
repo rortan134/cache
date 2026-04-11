@@ -43,7 +43,7 @@ function GradientWaveText({
 
     speed = 1.6,
     paused = false,
-    delay = 0.1,
+    delay = 0,
     repeat = false,
     inView = false,
     once = true,

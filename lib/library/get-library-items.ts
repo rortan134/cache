@@ -1,10 +1,10 @@
 import "server-only";
 
-import { prisma } from "@/prisma";
 import type {
     LibraryCollectionSummary,
     LibraryItemWithCollections,
 } from "@/lib/library/types";
+import { prisma } from "@/prisma";
 
 export async function getLibraryItemsForUser(userId: string) {
     const [items, collections] = await Promise.all([
@@ -18,6 +18,7 @@ export async function getLibraryItemsForUser(userId: string) {
                         description: true,
                         id: true,
                         name: true,
+                        priority: true,
                     },
                 },
             },
@@ -47,6 +48,7 @@ export async function getLibraryItemsForUser(userId: string) {
                     },
                 },
                 name: true,
+                priority: true,
             },
             where: {
                 userId,
@@ -61,6 +63,7 @@ export async function getLibraryItemsForUser(userId: string) {
                 id: collection.id,
                 itemCount: collection._count.items,
                 name: collection.name,
+                priority: collection.priority,
                 sources: Array.from(
                     new Set(collection.items.map((item) => item.source))
                 ),

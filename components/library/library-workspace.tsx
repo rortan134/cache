@@ -3,9 +3,11 @@
 import {
     createCollection,
     deleteCollection,
+    updateCollectionPriority,
     updateLibraryItemCollections,
     type CreateCollectionResult,
     type DeleteCollectionResult,
+    type UpdateCollectionPriorityResult,
     type UpdateLibraryItemCollectionsResult,
 } from "@/app/[locale]/library/actions";
 import {
@@ -43,7 +45,10 @@ import type {
     LibraryItemWithCollections,
 } from "@/lib/library/types";
 import { normalizeURL } from "@/lib/url";
-import type { LibraryItemSource } from "@/prisma/client/enums";
+import type {
+    CollectionPriority,
+    LibraryItemSource,
+} from "@/prisma/client/enums";
 import AppIconSmall from "@/public/cache-icon-small.png";
 import { ChevronRight, PlusIcon } from "lucide-react";
 import Image from "next/image";
@@ -54,6 +59,14 @@ const COLLECTION_NAME_COLLATOR = new Intl.Collator(undefined, {
     numeric: true,
     sensitivity: "base",
 });
+
+const COLLECTION_PRIORITY_ORDER = {
+    archive: 3,
+    none: 4,
+    peripheral: 2,
+    relevant: 1,
+    very_relevant: 0,
+} satisfies Record<CollectionPriority, number>;
 
 interface Props {
     readonly initialCollections: readonly LibraryCollectionSummary[];
@@ -68,12 +81,20 @@ interface CollectionActionFeedback {
     readonly tone: "error" | "success";
 }
 
-function sortCollectionsByName<T extends { readonly name: string }>(
+function sortCollections<T extends LibraryCollectionTag>(
     collections: readonly T[]
 ): T[] {
-    return [...collections].sort((a, b) =>
-        COLLECTION_NAME_COLLATOR.compare(a.name, b.name)
-    );
+    return [...collections].sort((a, b) => {
+        const priorityDifference =
+            COLLECTION_PRIORITY_ORDER[a.priority] -
+            COLLECTION_PRIORITY_ORDER[b.priority];
+
+        if (priorityDifference !== 0) {
+            return priorityDifference;
+        }
+
+        return COLLECTION_NAME_COLLATOR.compare(a.name, b.name);
+    });
 }
 
 function replaceItemCollections(
@@ -105,12 +126,36 @@ function appendCollectionToItem(
         }
         return {
             ...item,
-            collections: sortCollectionsByName([
-                ...item.collections,
-                collection,
-            ]),
+            collections: sortCollections([...item.collections, collection]),
         };
     });
+}
+
+function replaceCollectionPriority<T extends LibraryCollectionTag>(
+    collections: readonly T[],
+    collectionId: string,
+    priority: CollectionPriority
+): T[] {
+    return collections.map((collection) =>
+        collection.id === collectionId
+            ? { ...collection, priority }
+            : collection
+    );
+}
+
+function replaceItemsCollectionPriority(
+    items: readonly LibraryItemWithCollections[],
+    collectionId: string,
+    priority: CollectionPriority
+): LibraryItemWithCollections[] {
+    return items.map((item) => ({
+        ...item,
+        collections: replaceCollectionPriority(
+            item.collections,
+            collectionId,
+            priority
+        ),
+    }));
 }
 
 function deriveCollectionSummaries(
@@ -130,12 +175,13 @@ function deriveCollectionSummaries(
         }
     }
 
-    return sortCollectionsByName(
+    return sortCollections(
         collections.map((collection) => ({
             description: collection.description ?? null,
             id: collection.id,
             itemCount: counts.get(collection.id) ?? 0,
             name: collection.name,
+            priority: collection.priority,
             sources: Array.from(collectionSources.get(collection.id) ?? []),
         }))
     );
@@ -214,11 +260,12 @@ export function LibraryWorkspace({
         ...initialItems,
     ]);
     const [collections, setCollections] = useState<LibraryCollectionTag[]>(
-        sortCollectionsByName(
+        sortCollections(
             initialCollections.map((collection) => ({
                 description: collection.description,
                 id: collection.id,
                 name: collection.name,
+                priority: collection.priority,
             }))
         )
     );
@@ -239,6 +286,8 @@ export function LibraryWorkspace({
     const [pendingCollectionItemIds, setPendingCollectionItemIds] = useState<
         string[]
     >([]);
+    const [pendingPriorityCollectionIds, setPendingPriorityCollectionIds] =
+        useState<string[]>([]);
     const [pendingDeleteCollection, setPendingDeleteCollection] =
         useState<LibraryCollectionSummary | null>(null);
     const [collectionActionFeedback, setCollectionActionFeedback] =
@@ -465,6 +514,113 @@ export function LibraryWorkspace({
         });
     }, [pendingDeleteCollection]);
 
+    const handleUpdateCollectionPriority = useCallback(
+        (collectionId: string, priority: CollectionPriority) => {
+            const previousPriority = collections.find(
+                (collection) => collection.id === collectionId
+            )?.priority;
+
+            if (!previousPriority || previousPriority === priority) {
+                return;
+            }
+
+            setCollections((current) =>
+                replaceCollectionPriority(current, collectionId, priority)
+            );
+            setItems((current) =>
+                replaceItemsCollectionPriority(current, collectionId, priority)
+            );
+            setPendingPriorityCollectionIds((current) =>
+                current.includes(collectionId)
+                    ? current
+                    : [...current, collectionId]
+            );
+
+            const runUpdate = async () => {
+                let result: UpdateCollectionPriorityResult;
+
+                try {
+                    result = await updateCollectionPriority({
+                        collectionId,
+                        priority,
+                    });
+                } catch {
+                    result = {
+                        message:
+                            "We couldn't update this collection priority right now.",
+                        status: "ERROR",
+                    };
+                }
+
+                if (result.status === "UPDATED") {
+                    setCollections((current) =>
+                        replaceCollectionPriority(
+                            current,
+                            result.collection.id,
+                            result.collection.priority
+                        )
+                    );
+                    setItems((current) =>
+                        replaceItemsCollectionPriority(
+                            current,
+                            result.collection.id,
+                            result.collection.priority
+                        )
+                    );
+                } else {
+                    setCollections((current) =>
+                        replaceCollectionPriority(
+                            current,
+                            collectionId,
+                            previousPriority
+                        )
+                    );
+                    setItems((current) =>
+                        replaceItemsCollectionPriority(
+                            current,
+                            collectionId,
+                            previousPriority
+                        )
+                    );
+                    setCollectionActionFeedback({
+                        message: result.message,
+                        tone: "error",
+                    });
+                }
+
+                setPendingPriorityCollectionIds((current) =>
+                    current.filter((id) => id !== collectionId)
+                );
+            };
+
+            runUpdate().catch(() => {
+                setCollections((current) =>
+                    replaceCollectionPriority(
+                        current,
+                        collectionId,
+                        previousPriority
+                    )
+                );
+                setItems((current) =>
+                    replaceItemsCollectionPriority(
+                        current,
+                        collectionId,
+                        previousPriority
+                    )
+                );
+                setPendingPriorityCollectionIds((current) =>
+                    current.filter((id) => id !== collectionId)
+                );
+                setCollectionActionFeedback({
+                    message:
+                        "We couldn't update this collection priority right now.",
+                    tone: "error",
+                });
+            });
+        },
+        [collections]
+    );
+
     const handleCreateCollectionSubmit = useCallback(() => {
         startCreateTransition(async () => {
             let result: CreateCollectionResult;
@@ -491,6 +647,7 @@ export function LibraryWorkspace({
                 description: result.collection.description,
                 id: result.collection.id,
                 name: result.collection.name,
+                priority: result.collection.priority,
             } satisfies LibraryCollectionTag;
 
             setCollections((current) =>
@@ -498,7 +655,7 @@ export function LibraryWorkspace({
                     (collection) => collection.id === nextCollection.id
                 )
                     ? current
-                    : sortCollectionsByName([...current, nextCollection])
+                    : sortCollections([...current, nextCollection])
             );
 
             if (result.assignedItemId) {
@@ -528,7 +685,7 @@ export function LibraryWorkspace({
         (itemId: string, collectionIds: string[]) => {
             const previousCollections =
                 items.find((item) => item.id === itemId)?.collections ?? [];
-            const optimisticCollections = sortCollectionsByName(
+            const optimisticCollections = sortCollections(
                 collections.filter((collection) =>
                     collectionIds.includes(collection.id)
                 )
@@ -632,6 +789,9 @@ export function LibraryWorkspace({
                                             isSelected={selectedCollectionIds.includes(
                                                 collection.id
                                             )}
+                                            isUpdatePriorityPending={pendingPriorityCollectionIds.includes(
+                                                collection.id
+                                            )}
                                             key={collection.id}
                                             onCopyLinks={() =>
                                                 handleCopyCollectionLinks(
@@ -656,6 +816,12 @@ export function LibraryWorkspace({
                                             onSelect={() =>
                                                 handleToggleCollectionSelection(
                                                     collection.id
+                                                )
+                                            }
+                                            onUpdatePriority={(priority) =>
+                                                handleUpdateCollectionPriority(
+                                                    collection.id,
+                                                    priority
                                                 )
                                             }
                                         />
