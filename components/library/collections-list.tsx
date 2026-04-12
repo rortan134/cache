@@ -17,7 +17,10 @@ import {
     ComboboxTrigger,
 } from "@/components/ui/combobox";
 import { GradientWaveText } from "@/components/ui/gradient-wave-text";
-import { PriorityNoneIcon } from "@/components/ui/integration-icons";
+import {
+    ChevronDownFilledIcon,
+    PriorityNoneIcon,
+} from "@/components/ui/integration-icons";
 import {
     Menu,
     MenuItem,
@@ -36,7 +39,6 @@ import { cn } from "@/lib/utils";
 import type { CollectionPriority } from "@/prisma/client/enums";
 import {
     ArchiveIcon,
-    ChevronDown,
     Component,
     CopyIcon,
     EllipsisIcon,
@@ -128,7 +130,7 @@ export function CollectionsListTrigger({
                 render={
                     <CollapsibleTrigger
                         className={cn(
-                            "flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground leading-tight",
+                            "flex select-none items-center gap-3 rounded-full bg-muted/94 px-3 py-2.5 text-left text-foreground",
                             className
                         )}
                         onMouseEnter={(event) => {
@@ -157,19 +159,15 @@ export function CollectionsListTrigger({
                                 focusable="false"
                             />
                             {collectionLabels.length > 0 ? (
-                                <span className="absolute -bottom-[7px] left-[17px] text-nowrap text-[10px] tabular-nums opacity-80 transition-opacity group-data-panel-open:opacity-100">
+                                <span className="absolute -bottom-[6px] left-[17px] text-nowrap text-[10px] tabular-nums opacity-80 transition-opacity group-data-panel-open:opacity-100">
                                     {collectionLabels.length}
                                 </span>
                             ) : null}
                         </div>
-                        <span className="min-w-0 flex-1 font-medium text-sm">
+                        <span className="min-w-0 flex-1 font-medium text-sm leading-tight">
                             Collections
                         </span>
-                        <ChevronDown
-                            aria-hidden
-                            className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
-                            focusable="false"
-                        />
+                        <ChevronDownFilledIcon />
                     </CollapsibleTrigger>
                 }
             />

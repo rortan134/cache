@@ -227,3 +227,24 @@ export const PriorityNoneIcon = ({
         <rect height="1.5" opacity="0.9" rx="0.5" width="3" x="11.5" y="7.25" />
     </svg>
 );
+
+export const ChevronDownFilledIcon = ({
+    className,
+    ...props
+}: SVGProps<SVGSVGElement>) => (
+    <svg
+        aria-hidden="true"
+        className={cn(
+            "pointer-events-none ml-auto inline-block size-5 shrink-0 opacity-80 transition-transform group-data-panel-open:rotate-90",
+            className
+        )}
+        focusable="false"
+        height="16"
+        role="img"
+        viewBox="0 0 16 16"
+        width="16"
+        {...props}
+    >
+        <path d="M7.00194 10.6239C6.66861 10.8183 6.25 10.5779 6.25 10.192V5.80802C6.25 5.42212 6.66861 5.18169 7.00194 5.37613L10.7596 7.56811C11.0904 7.76105 11.0904 8.23895 10.7596 8.43189L7.00194 10.6239Z" />
+    </svg>
+);

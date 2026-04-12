@@ -1,3 +1,4 @@
+import { ChevronDownFilledIcon } from "@/components/ui/integration-icons";
 import { RadialChart } from "@/components/ui/radial-chart";
 import {
     getIntegration,
@@ -6,7 +7,6 @@ import {
 } from "@/lib/integrations/supports";
 import { cn } from "@/lib/utils";
 import type { LibraryItemSource } from "@/prisma/client/enums";
-import { ChevronDown } from "lucide-react";
 
 const SIGNUP_PROGRESS_BASELINE_PERCENT = 10;
 
@@ -116,7 +116,7 @@ function IntegrationsSetupWizardButton({
         <button
             {...props}
             className={cn(
-                "flex select-none items-center gap-2 rounded-full bg-muted/94 px-3 py-1.5 text-left text-foreground leading-tight",
+                "flex select-none items-center gap-2 rounded-full bg-muted/94 px-3 py-2 text-left text-foreground",
                 className
             )}
             type="button"
@@ -124,12 +124,10 @@ function IntegrationsSetupWizardButton({
             <span aria-hidden="true" className="shrink-0 leading-none">
                 <RadialChart size={36} value={progressPercent} />
             </span>
-            <span className="min-w-0 flex-1 font-medium text-sm">{text}</span>
-            <ChevronDown
-                aria-hidden
-                className="pointer-events-none ml-auto inline-block size-4 shrink-0 transition-transform group-data-panel-open:rotate-180"
-                focusable="false"
-            />
+            <span className="min-w-0 flex-1 font-medium text-sm leading-tight">
+                {text}
+            </span>
+            <ChevronDownFilledIcon />
         </button>
     );
 }
