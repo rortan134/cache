@@ -32,10 +32,18 @@ function useAccess() {
 
     const { data: subscription, isLoading: _isLoading } = useSWR<
         Awaited<ReturnType<typeof getActiveSubscription>>
-    >(() =>
-        session?.user.email
-            ? getActiveSubscription({ email: session?.user.email })
-            : null
+    >(
+        () =>
+            session?.user.email
+                ? getActiveSubscription({ email: session?.user.email })
+                : null,
+        {
+            dedupingInterval: 5000,
+            keepPreviousData: true,
+            refreshWhenHidden: true,
+            refreshWhenOffline: true,
+            revalidateOnMount: false,
+        }
     );
 
     const hasAccess =

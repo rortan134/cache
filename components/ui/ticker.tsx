@@ -15,7 +15,7 @@ const Ticker = ({
     const isVertical = direction === "up" || direction === "down";
 
     return (
-        <figure
+        <span
             {...props}
             className={cn(
                 "group relative inline-flex size-full select-none overflow-hidden [--duration:9s] [--gap:1rem]",
@@ -28,7 +28,7 @@ const Ticker = ({
                 className
             )}
         >
-            <div
+            <span
                 className={cn("group-hover:running paused flex shrink-0", {
                     "animate-marquee flex-row gap-(--gap)": isHorizontal,
                     "animate-marquee-vertical flex-col gap-(--gap)": isVertical,
@@ -42,7 +42,7 @@ const Ticker = ({
                 }
             >
                 {[...(new Array(repeatInstances) as never[])].map((_, i) => (
-                    <div
+                    <span
                         className={cn("flex shrink-0 gap-(--gap)", {
                             "flex-col": isVertical,
                             "flex-row": isHorizontal,
@@ -51,10 +51,10 @@ const Ticker = ({
                         key={i}
                     >
                         {children}
-                    </div>
+                    </span>
                 ))}
-            </div>
-        </figure>
+            </span>
+        </span>
     );
 };
 

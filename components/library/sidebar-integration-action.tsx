@@ -138,42 +138,6 @@ export function SidebarIntegrationAction({
         );
     }, [extensionInstalled, id]);
 
-    const handleChromePurge = useCallback(async () => {
-        setErrorMessage(null);
-        setSuccessMessage(null);
-        setIsConnecting(true);
-
-        try {
-            const response = await fetch("/api/sync/bookmarks/chrome", {
-                method: "DELETE",
-            });
-            const payload = (await response.json()) as
-                | { ok: true; purged: number }
-                | { error: string };
-
-            if (!(response.ok && "ok" in payload)) {
-                throw new Error(
-                    "error" in payload
-                        ? payload.error
-                        : "Could not purge Chrome bookmarks right now."
-                );
-            }
-
-            setSuccessMessage(
-                `Purged ${payload.purged} Chrome item${payload.purged === 1 ? "" : "s"} from Cache.`
-            );
-            router.refresh();
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "Could not purge Chrome bookmarks right now."
-            );
-        } finally {
-            setIsConnecting(false);
-        }
-    }, [router]);
-
     const handleGoogleConnect = useCallback(async () => {
         setErrorMessage(null);
         setSuccessMessage(null);
@@ -339,17 +303,6 @@ export function SidebarIntegrationAction({
                     >
                         {extensionLabel}
                     </Button>
-                    {isChromeIntegration && connected ? (
-                        <Button
-                            loading={isConnecting}
-                            onClick={handleChromePurge}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                        >
-                            Disconnect
-                        </Button>
-                    ) : null}
                 </div>
             </div>
         );
