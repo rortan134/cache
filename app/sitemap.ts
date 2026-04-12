@@ -2,26 +2,44 @@ import { BASE_URL } from "@/lib/constants";
 import { getDefaultLocale, getLocales } from "gt-next/server";
 import type { MetadataRoute } from "next";
 
-/** Path segments after `/{locale}` that should be indexed. */
-const publicPaths = ["", "/library", "/legal"] as const;
+interface SitemapRoute {
+    path: `/${string}`;
+    priority: number;
+}
+
+const PUBLIC_STATIC_ROUTES = [
+    { path: "/", priority: 1 },
+    { path: "/library", priority: 1 },
+    { path: "/legal", priority: 1 },
+    { path: "/legal/terms-of-service", priority: 0.8 },
+    { path: "/legal/privacy-policy", priority: 0.8 },
+    { path: "/legal/cookie-policy", priority: 0.8 },
+    { path: "/manifesto", priority: 0.8 },
+    { path: "/pricing", priority: 0.8 },
+] satisfies SitemapRoute[];
+
+function getLocalizedUrl(locale: string, path: SitemapRoute["path"]) {
+    return path === "/"
+        ? `${BASE_URL}/${locale}`
+        : `${BASE_URL}/${locale}${path}`;
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const locales = getLocales();
     const defaultLocale = getDefaultLocale();
-    const lastModified = new Date();
 
-    return publicPaths.map((pathSuffix) => ({
+    return PUBLIC_STATIC_ROUTES.map((entry) => ({
         alternates: {
             languages: Object.fromEntries(
                 locales.map((locale) => [
                     locale,
-                    `${BASE_URL}/${locale}${pathSuffix}`,
+                    getLocalizedUrl(locale, entry.path),
                 ])
             ),
         },
-        changeFrequency: pathSuffix === "" ? "weekly" : "monthly",
-        lastModified,
-        priority: pathSuffix === "" ? 1 : 0.8,
-        url: `${BASE_URL}/${defaultLocale}${pathSuffix}`,
+        changeFrequency: "weekly",
+        lastModified: new Date().toISOString(),
+        priority: entry.priority,
+        url: getLocalizedUrl(defaultLocale, entry.path),
     }));
 }

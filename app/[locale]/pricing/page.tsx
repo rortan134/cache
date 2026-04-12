@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Footer } from "@/components/ui/footer";
 import { PageShell } from "@/components/ui/page-shell";
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { T } from "gt-next";
 import { Check, Lock, ShieldCheck, TrendingDown } from "lucide-react";
@@ -22,6 +23,7 @@ export async function generateMetadata({
     const { locale } = await params;
 
     return {
+        alternates: buildLocaleAlternates("/pricing"),
         description: gtPublicString(
             locale,
             "pricing.metadata.description",

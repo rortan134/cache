@@ -745,16 +745,19 @@ export function ExtensionLibraryEmptyMasonryPeek(): ReactElement {
         <Masonry columnCount={5} fallback={fallback} gap={5} linear>
             {EMPTY_LIBRARY_PEEK_PLACEHOLDERS.map(({ aspect, id }, index) => {
                 const opacity = Math.max(0.06, 1 - index * 0.095);
+
                 return (
-                    <MasonryItem asChild key={id} style={{ opacity }}>
-                        <div className="group flex flex-col overflow-hidden rounded-lg bg-card/40">
-                            <Skeleton
-                                className={cn("w-full rounded-none", aspect)}
-                            />
-                            <div className="flex min-h-14 flex-col gap-1.5 p-3">
-                                <Skeleton className="h-2.5 w-[92%]" />
-                                <Skeleton className="h-2.5 w-[72%]" />
-                            </div>
+                    <MasonryItem
+                        className="group flex flex-col overflow-hidden rounded-lg bg-card/40"
+                        key={id}
+                        style={{ opacity }}
+                    >
+                        <Skeleton
+                            className={cn("w-full rounded-none", aspect)}
+                        />
+                        <div className="flex min-h-14 flex-col gap-1.5 p-3">
+                            <Skeleton className="h-2.5 w-[92%]" />
+                            <Skeleton className="h-2.5 w-[72%]" />
                         </div>
                     </MasonryItem>
                 );

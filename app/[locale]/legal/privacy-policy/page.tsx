@@ -1,10 +1,14 @@
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { SITE_APP_NAME } from "@/lib/constants";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-    description: `Privacy Policy for ${SITE_APP_NAME}.`,
-    title: "Privacy Policy",
-};
+export async function generateMetadata(): Promise<Metadata> {
+    return {
+        alternates: buildLocaleAlternates("/legal/privacy-policy"),
+        description: `Privacy Policy for ${SITE_APP_NAME}.`,
+        title: "Privacy Policy",
+    };
+}
 
 function LinkText({
     children,

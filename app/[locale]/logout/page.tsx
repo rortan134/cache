@@ -1,3 +1,4 @@
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { gtPublicString } from "@/lib/gt-public-json";
 import type { Metadata } from "next";
 import { LogoutPageClient } from "./client";
@@ -9,6 +10,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale } = await params;
     return {
+        alternates: buildLocaleAlternates("/logout"),
         description: gtPublicString(
             locale,
             "logout.metadata.description",

@@ -8,6 +8,7 @@ import { IntegrationsList } from "@/components/library/integrations-list";
 import { LibraryWorkspace } from "@/components/library/library-workspace";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
 import { PageShell } from "@/components/ui/page-shell";
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
@@ -26,6 +27,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale } = await params;
     return {
+        alternates: buildLocaleAlternates("/library"),
         description: gtPublicString(
             locale,
             "library.metadata.description",

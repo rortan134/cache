@@ -7,6 +7,7 @@ import { Chrome } from "@/components/ui/integration-icons";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
 import { PageShell } from "@/components/ui/page-shell";
 import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { getServerSession } from "@/lib/auth/server";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { INTEGRATIONS } from "@/lib/integrations/supports";
@@ -25,6 +26,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale } = await params;
     return {
+        alternates: buildLocaleAlternates("/"),
         description: gtPublicString(
             locale,
             "home.metadata.description",

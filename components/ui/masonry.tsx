@@ -1,7 +1,6 @@
 "use client";
 
 import { useComposedRefs } from "@/hooks/compose-refs";
-import { Slot as SlotPrimitive } from "@radix-ui/react-slot";
 import * as React from "react";
 
 const NODE_COLOR = {
@@ -1321,7 +1320,7 @@ const MASONRY_ERROR = {
     [ITEM_NAME]: `\`${ITEM_NAME}\` must be within \`${VIEWPORT_NAME}\``,
 } as const;
 
-interface DivProps extends React.ComponentProps<"div"> {}
+interface DivProps extends React.ComponentPropsWithRef<"div"> {}
 
 type RootElement = React.ComponentRef<typeof Masonry>;
 type ItemElement = React.ComponentRef<typeof MasonryItem>;
@@ -1350,7 +1349,6 @@ function useMasonryContext(name: keyof typeof MASONRY_ERROR) {
 }
 
 interface MasonryProps extends DivProps {
-    asChild?: boolean;
     columnCount?: number;
     columnWidth?: number;
     defaultHeight?: number;
@@ -1378,7 +1376,6 @@ function Masonry(props: MasonryProps) {
         scrollFps = SCROLL_FPS,
         fallback,
         linear = false,
-        asChild,
         deps = [],
         children,
         style,
@@ -1491,11 +1488,9 @@ function Masonry(props: MasonryProps) {
         ]
     );
 
-    const RootPrimitive = asChild ? SlotPrimitive : "div";
-
     return (
         <MasonryContext.Provider value={contextValue}>
-            <RootPrimitive
+            <div
                 {...rootProps}
                 data-slot="masonry"
                 ref={composedRef}
@@ -1507,13 +1502,9 @@ function Masonry(props: MasonryProps) {
                 }}
             >
                 <MasonryViewport>{children}</MasonryViewport>
-            </RootPrimitive>
+            </div>
         </MasonryContext.Provider>
     );
-}
-
-interface MasonryItemPropsWithRef extends MasonryItemProps {
-    ref: React.Ref<ItemElement | null>;
 }
 
 function MasonryViewport(props: DivProps) {
@@ -1528,7 +1519,7 @@ function MasonryViewport(props: DivProps) {
     }, []);
 
     const validChildren = React.Children.toArray(children).filter(
-        (child): child is React.ReactElement<MasonryItemPropsWithRef> =>
+        (child): child is React.ReactElement<DivProps> =>
             React.isValidElement(child) &&
             (child.type === MasonryItem || child.type === MasonryItem)
     );
@@ -1689,24 +1680,11 @@ function MasonryViewport(props: DivProps) {
     );
 }
 
-interface MasonryItemProps extends DivProps {
-    asChild?: boolean;
-}
-
-function MasonryItem(props: MasonryItemProps) {
-    const { asChild, ref, ...itemProps } = props;
-
-    const ItemPrimitive = asChild ? SlotPrimitive : "div";
-
-    return <ItemPrimitive data-slot="masonry-item" {...itemProps} ref={ref} />;
+function MasonryItem(props: DivProps) {
+    return <div data-slot="masonry-item" {...props} />;
 }
 
 const useIsomorphicLayoutEffect =
     typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
 
-export {
-    Masonry,
-    MasonryItem,
-    //
-    type MasonryProps,
-};
+export { Masonry, MasonryItem };

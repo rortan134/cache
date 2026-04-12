@@ -12,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const locale = await getLocale();
 
     return {
+        metadataBase: new URL(BASE_URL),
         openGraph: {
             locale,
         },

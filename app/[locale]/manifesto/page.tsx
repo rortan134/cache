@@ -10,6 +10,7 @@ import { GradientWaveText } from "@/components/ui/gradient-wave-text";
 import { LogoContextMenu } from "@/components/ui/logo-context-menu";
 import { PageShell } from "@/components/ui/page-shell";
 import { Sidebar, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { gtPublicString } from "@/lib/gt-public-json";
 import LogoIconImage from "@/public/cache-app-icon.png";
 import { LocaleSelector, T } from "gt-next";
@@ -24,6 +25,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale } = await params;
     return {
+        alternates: buildLocaleAlternates("/manifesto"),
         description: gtPublicString(
             locale,
             "manifesto.metadata.description",

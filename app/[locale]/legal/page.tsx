@@ -1,3 +1,4 @@
+import { buildLocaleAlternates } from "@/lib/alternates";
 import { SITE_APP_NAME } from "@/lib/constants";
 import { gtPublicString } from "@/lib/gt-public-json";
 import { T, Var } from "gt-next";
@@ -13,6 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale } = await params;
     return {
+        alternates: buildLocaleAlternates("/legal"),
         description: gtPublicString(
             locale,
             "legal.index.metadata.description",
